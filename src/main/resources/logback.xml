@@ -1,0 +1,34 @@
+<configuration debug="true" scan="true" scanPeriod="30 seconds">
+
+    <timestamp key="bySecond" datePattern="yyyy-MM-dd:HH-mm-ss.SSS"/>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/etc/.files/logs/pooler-backend.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>/etc/.files/logs/archive/pooler-backend.%d{yyyy-MM-dd_HH}.%i.log.gz</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%date %X{x_request_id} %-5level [%thread] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="async-FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE" />
+    </appender>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date %X{x_request_id} %highlight(%-5level) [%thread] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.pooler" level="ALL" />
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="async-FILE" />
+    </root>
+
+</configuration>
