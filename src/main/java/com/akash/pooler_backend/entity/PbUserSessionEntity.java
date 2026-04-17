@@ -13,11 +13,14 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "pb_refresh_token")
-public class PbRefreshTokenEntity extends BaseEntity{
+@Table(name = "pb_user")
+public class PbUserSessionEntity extends BaseEntity{
 
-    @Column(name = "refresh_token")
-    private String refreshToken;
+    @Column(name = "session_id", length = 64, nullable = false)
+    private String sessionId;
+
+    @Column(name = "entity_id", nullable = false)
+    private Long entityId;
 
 
 }
