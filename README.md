@@ -8,8 +8,7 @@
         5. Location - Near by and your home location
     
         security work Flow ---
-
-        ![img.png](img.png)
+        
     
     
       
