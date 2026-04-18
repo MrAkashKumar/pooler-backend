@@ -4,16 +4,13 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+/**
+ * @author Akash Kumar
+ */
 @Data
-public class LoginRequest{
+public class ForgotPasswordRequest {
+
     @NotBlank
     @Email
     private String email;
-    @NotBlank
-    private String password;
-    private String deviceId;
-    private String platform;
-    private String appVersion;
-
-
 }
