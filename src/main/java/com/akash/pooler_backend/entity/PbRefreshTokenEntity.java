@@ -1,13 +1,12 @@
 package com.akash.pooler_backend.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.akash.pooler_backend.enums.TokenStatus;
+import jakarta.persistence.*;
+import lombok.*;
 
+import java.time.Instant;
+
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -16,8 +15,42 @@ import lombok.Setter;
 @Table(name = "pb_refresh_token")
 public class PbRefreshTokenEntity extends BaseEntity{
 
-    @Column(name = "refresh_token")
+    @Column(name = "refresh_token", nullable=false, unique=true,length=512)
     private String refreshToken;
 
+    @Column(name="entity_id", nullable=false)
+    private String entityId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable=false,length=20)
+    @Builder.Default
+    private TokenStatus status = TokenStatus.ACTIVE;
+
+    @Column(length=200)
+    private String deviceId;
+
+    @Column(length=50)
+    private String platform;
+
+    @Column(length=50)
+    private String appVersion;
+
+    @Column(length=45)
+    private String ipAddress;
+
+    @Column(nullable=false)
+    private Instant expiresAt;
+
+    public boolean isExpired() {
+        return Instant.now().isAfter(expiresAt);
+    }
+
+    public boolean isRevoked() {
+        return status == TokenStatus.REVOKED;
+    }
+
+    public boolean isActiveStatus()  {
+        return status == TokenStatus.ACTIVE && !isExpired();
+    }
 
 }
