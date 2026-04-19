@@ -26,19 +26,19 @@ public class PbRefreshTokenEntity extends BaseEntity{
     @Builder.Default
     private TokenStatus status = TokenStatus.ACTIVE;
 
-    @Column(length=200)
+    @Column(name = "device_id", length=200)
     private String deviceId;
 
-    @Column(length=50)
+    @Column(name = "platform", length=50)
     private String platform;
 
-    @Column(length=50)
+    @Column(name = "app_version", length=50)
     private String appVersion;
 
-    @Column(length=45)
+    @Column(name = "ip_address", length=45)
     private String ipAddress;
 
-    @Column(nullable=false)
+    @Column(name = "expires_at", nullable=false)
     private Instant expiresAt;
 
     public boolean isExpired() {
