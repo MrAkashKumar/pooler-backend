@@ -1,14 +1,10 @@
 package com.akash.pooler_backend.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.akash.pooler_backend.enums.Role;
+import jakarta.persistence.*;
+import lombok.*;
 
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -34,5 +30,9 @@ public class PbUserEntity extends BaseEntity{
 
     @Column(name = "entity_id")
     private String entityId;
+
+    @Enumerated(EnumType.STRING) @Column(nullable=false,length=30)
+    @Builder.Default
+    private Role role = Role.ROLE_USER;
 
 }
