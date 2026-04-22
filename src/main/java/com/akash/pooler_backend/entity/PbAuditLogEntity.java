@@ -15,7 +15,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name="audit_logs",
+@Table(name="pb_audit_logs",
         indexes={@Index(name="idx_al_entity_id",columnList="entity_id"),
                 @Index(name="idx_al_action",columnList="action"),
                 @Index(name="idx_al_created",columnList="createdAt")})

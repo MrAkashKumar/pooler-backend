@@ -12,7 +12,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "pb_user")
+@Table(name = "pb_user_session")
 public class PbUserSessionEntity extends BaseEntity{
 
     @Column(name = "session_id", length = 64, nullable = false)
@@ -46,8 +46,16 @@ public class PbUserSessionEntity extends BaseEntity{
 
     @Column(name = "ip_address", length=45)
     private String ipAddress;
-    public boolean isExpired() { return Instant.now().isAfter(expiresAt); }
-    public boolean isActiveStatus()  { return status == TokenStatus.ACTIVE && !isExpired(); }
-    public void touch()        { this.lastAccessedAt = Instant.now(); }
+
+    public boolean isExpired() {
+        return Instant.now().isAfter(expiresAt);
+    }
+
+    public boolean isActiveStatus() {
+        return status == TokenStatus.ACTIVE && !isExpired();
+    }
+
+    public void touch() {
+        this.lastAccessedAt = Instant.now(); }
 
 }

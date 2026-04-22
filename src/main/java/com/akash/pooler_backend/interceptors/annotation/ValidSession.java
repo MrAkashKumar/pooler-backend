@@ -1,4 +1,4 @@
-package com.akash.pooler_backend.interceptors;
+package com.akash.pooler_backend.interceptors.annotation;
 
 import java.lang.annotation.*;
 

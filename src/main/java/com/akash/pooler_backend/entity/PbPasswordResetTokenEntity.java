@@ -7,7 +7,7 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name="password_reset_tokens",
+@Table(name="pb_password_reset_tokens",
         indexes={@Index(name="idx_prt_token",columnList="token",unique=true),
                 @Index(name="idx_prt_user_id",columnList="entity_id")})
 @Getter
