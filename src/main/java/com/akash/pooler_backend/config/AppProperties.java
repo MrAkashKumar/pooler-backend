@@ -53,16 +53,16 @@ public class AppProperties {
         @Positive
         private long sessionTokenExpiryMs = 1_800_000L;     // 30 min
         @NotBlank
-        private String issuer   = "enterprise-auth";
+        private String issuer = "pooler-auth";
         @NotBlank
-        private String audience = "enterprise-mobile-app";
+        private String audience = "pooler-mobile-app";
     }
 
     @Getter @Setter
     public static class Security {
-        private int maxFailedAttempts    = 5;
-        private int lockDurationMinutes  = 30;
-        private int bcryptStrength       = 12;
+        private int maxFailedAttempts = 5;
+        private int lockDurationMinutes = 30;
+        private int bcryptStrength = 12;
         private Cors cors = new Cors();
 
         @Getter
@@ -77,13 +77,14 @@ public class AppProperties {
     @Setter
     public static class Mail {
         @NotBlank
-        private String from = "noreply@enterprise.com";
-        private String fromName = "Enterprise Auth";
+        private String from = "noreply@pooler.com";
+        private String fromName = "pooler Auth";
     }
 
-    @Getter @Setter
+    @Getter
+    @Setter
     public static class PasswordReset {
         private int tokenExpiryMinutes = 30;
-        private int maxAttempts        = 3;
+        private int maxAttempts = 3;
     }
 }

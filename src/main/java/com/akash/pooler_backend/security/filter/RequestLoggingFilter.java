@@ -1,4 +1,4 @@
-package com.akash.pooler_backend.security;
+package com.akash.pooler_backend.security.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

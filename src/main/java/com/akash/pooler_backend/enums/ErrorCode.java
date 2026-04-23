@@ -20,6 +20,7 @@ public enum ErrorCode {
     ACCOUNT_LOCKED("AUTH-009", "Account is locked", HttpStatus.FORBIDDEN),
     ACCOUNT_SUSPENDED("AUTH-010", "Account is suspended", HttpStatus.FORBIDDEN),
     ACCOUNT_INACTIVE("AUTH-011", "Account is not active", HttpStatus.FORBIDDEN),
+    MISSING_AUTH_HEADER("AUTH-012","Authorization header is missing",HttpStatus.UNAUTHORIZED),
 
     // User
     USER_NOT_FOUND("USR-001", "User not found", HttpStatus.NOT_FOUND),

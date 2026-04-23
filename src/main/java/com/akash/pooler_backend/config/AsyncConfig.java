@@ -33,5 +33,10 @@ public class AsyncConfig implements AsyncConfigurer {
         return executor;
     }
 
+    @Bean("auditExecutor")
+    public Executor auditExecutor() {
+        return Thread.ofVirtual().name("audit-vt-", 0).factory()::newThread;
+    }
+
 
 }

@@ -19,7 +19,7 @@ public class PbUserSessionEntity extends BaseEntity{
     private String sessionId;
 
     @Column(name = "entity_id", nullable = false)
-    private Long entityId;
+    private String entityId;
     
     @Column(name = "token", nullable=false,unique=true,length=512)
     private String token;

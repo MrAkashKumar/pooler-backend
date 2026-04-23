@@ -8,7 +8,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 /*
 Request util
  */
-@Component
 public class RequestUtil {
 
     private static final String[] IP_HEADERS = {
