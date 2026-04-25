@@ -31,4 +31,6 @@ public interface PbUserRepository extends JpaRepository<PbUserEntity, Long> {
     @Modifying
     @Query("UPDATE PbUserEntity u SET u.lockedUntil=:until, u.status=:status WHERE u.entityId=:entityId")
     void lockAccount(String entityId, Instant until, UserStatus status);
+
+    Optional<PbUserEntity> findByEntityId(String entityId);
 }

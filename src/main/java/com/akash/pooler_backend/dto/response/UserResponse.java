@@ -13,7 +13,7 @@ import java.util.UUID;
 @Builder
 public class UserResponse {
 
-    private UUID id;
+    private String entityId;
     private String email;
     private String firstName;
     private String lastName;
@@ -23,5 +23,16 @@ public class UserResponse {
     private Instant createdAt;
     private Instant lastLoginAt;
     private String profilePictureUrl;
+
+    public static UserResponse from(PbUserEntity pbUserEntity) {
+        return UserResponse.builder()
+                .entityId(pbUserEntity.getEntityId()).email(pbUserEntity.getEmail())
+                .firstName(pbUserEntity.getFirstName()).lastName(pbUserEntity.getLastName())
+                .fullName(pbUserEntity.getFullName()).role(pbUserEntity.getRole())
+                .status(pbUserEntity.getStatus()).createdAt(pbUserEntity.getCreatedAt())
+                .lastLoginAt(pbUserEntity.getLastLoginAt())
+                .profilePictureUrl(pbUserEntity.getProfilePictureUrl())
+                .build();
+    }
 
 }

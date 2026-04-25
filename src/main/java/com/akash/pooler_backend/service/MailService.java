@@ -1,4 +1,10 @@
 package com.akash.pooler_backend.service;
 
-public class MailService {
+import com.akash.pooler_backend.entity.PbUserEntity;
+
+public interface MailService {
+
+    void sendPasswordResetMail(PbUserEntity pbUserEntity, String resetToken);
+    void sendWelcomeMail(PbUserEntity pbUserEntity);
+    void sendAccountLockedMail(PbUserEntity pbUserEntity);
 }
