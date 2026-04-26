@@ -1,5 +1,8 @@
 package com.akash.pooler_backend.constants;
 
+/**
+ * @author Akash Kumar
+ */
 public class ApiMapping {
 
     private ApiMapping(){

@@ -1,16 +1,53 @@
-# 1. Use a base image with Java installed
-FROM eclipse-temurin:21-jdk-alpine
+# ══════════════════════════════════════════════════════
+#  Multi-stage Dockerfile — Pooler Backend
+#  JDK 21 + Virtual Threads
+# ══════════════════════════════════════════════════════
 
-# 2. Set the working directory inside the container
+# ── Stage 1: Build ────────────────────────────────────
+FROM eclipse-temurin:21-jdk-alpine AS builder
+
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+
+# Install Maven and build (skip tests for Docker image)
+RUN apk add --no-cache maven \
+    && mvn clean package -DskipTests -q
+
+# ── Stage 2: Extract layers (Spring Boot layertools) ──
+# - Check work dir and place this project that location then will be read
+FROM eclipse-temurin:21-jdk-alpine AS layers
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
+RUN java -Djarmode=layertools -jar app.jar extract
+
+# ── Stage 3: Runtime image ────────────────────────────
+FROM eclipse-temurin:21-jre-alpine AS runtime
+
+# Security: non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 WORKDIR /app
 
-# 3. Copy the JAR file from your build folder to the container
-# For Maven: target/*.jar | For Gradle: build/libs/*.jar
-ARG JAR_FILE=target/*.jar
-COPY ${JAR_FILE} poolerBackendApplication.jar
+# Copy layers in dependency-change order (best layer cache)
+COPY --from=layers /app/dependencies/           ./
+COPY --from=layers /app/spring-boot-loader/     ./
+COPY --from=layers /app/snapshot-dependencies/  ./
+COPY --from=layers /app/application/            ./
 
-# 4. Expose the port your app runs on (default is 8080)
+RUN chown -R appuser:appgroup /app
+USER appuser
+
+# JVM tuning for containers + Virtual Threads
+ENV JAVA_OPTS="-XX:+UseContainerSupport \
+               -XX:MaxRAMPercentage=75.0 \
+               -XX:+UseZGC \
+               -Djava.security.egd=file:/dev/./urandom \
+               -Dspring.profiles.active=prod"
+
 EXPOSE 8080
 
-# 5. Define the command to run your app
-ENTRYPOINT ["java", "-jar", "app.jar"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD wget -qO- http://localhost:8080/actuator/health || exit 1
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]

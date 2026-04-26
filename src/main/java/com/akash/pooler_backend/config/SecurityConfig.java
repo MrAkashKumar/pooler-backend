@@ -50,6 +50,10 @@ import java.util.List;
  * │       → Controller                                              │
  * └─────────────────────────────────────────────────────────────────┘
  */
+
+/**
+ * @author Akash kumar
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true) /* enables @PreAuthorize / @PostAuthorize */

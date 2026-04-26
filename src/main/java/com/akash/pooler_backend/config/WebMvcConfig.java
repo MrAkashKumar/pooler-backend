@@ -15,6 +15,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.util.List;
 import java.util.concurrent.Executors;
 
+/**
+ * @author Akash kumar
+ */
 @Configuration
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {

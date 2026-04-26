@@ -51,9 +51,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     private final ObjectMapper objectMapper;
 
     @Override
-    public void handle(
-            HttpServletRequest request,
-            HttpServletResponse response,
+    public void handle(HttpServletRequest request,HttpServletResponse response,
             AccessDeniedException accessDeniedException) throws IOException {
 
         // Extract authenticated user's role if available (helpful for debugging)

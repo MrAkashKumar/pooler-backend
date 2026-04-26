@@ -45,4 +45,6 @@ public class ApiResponse<T> {
     public static ApiResponse<Void> noContent(String message) {
         return ApiResponse.<Void>builder().success(true).message(message).build();
     }
+    public static ApiResponse<Void> message(String msg) {
+        return ApiResponse.<Void>builder().success(true).message(msg).build(); }
 }
