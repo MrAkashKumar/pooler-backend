@@ -95,5 +95,8 @@ docker compose down
         | PUT    | /api/v1/admin/users/{id}/suspend  | 🔒ADMIN | Suspend user            |
         | PUT    | /api/v1/admin/users/{id}/activate | 🔒ADMIN | Activate user           |
 
+        -------------------------------- H2 Console -----------------------------------------
+        http://localhost:<PORT>/api/v1/h2-console/ - connect database
+
 
       

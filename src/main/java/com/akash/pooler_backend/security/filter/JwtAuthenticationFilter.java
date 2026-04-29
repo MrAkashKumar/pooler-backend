@@ -112,12 +112,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * Skip this filter entirely for paths that never carry tokens.
      * Reduces DB load — UserDetails won't be loaded for public routes.
      */
+    /**
+     * Skip JWT validation for paths that never carry tokens.
+     * NOTE: getServletPath() returns path WITHOUT the context-path (/api/v1).
+     * So  public/health is "/public/health".
+     *
+     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
         return path.startsWith("/actuator")
                 || path.startsWith("/h2-console")
-                || path.equals("/api/v1/public/health")
-                || path.equals("/api/v1/public/version");
+                || path.equals("/public/health")
+                || path.equals("/public/version");
     }
 }
