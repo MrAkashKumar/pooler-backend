@@ -5,13 +5,13 @@ import com.akash.pooler_backend.security.CustomAuthEntryPoint;
 import com.akash.pooler_backend.security.filter.RequestLoggingFilter;
 import com.akash.pooler_backend.security.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.security.autoconfigure.web.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -49,6 +49,7 @@ import java.util.List;
  * │       → AuthInterceptor (MVC HandlerInterceptor)               │
  * │       → Controller                                              │
  * └─────────────────────────────────────────────────────────────────┘
+ *
  */
 
 /**
@@ -61,29 +62,27 @@ import java.util.List;
 public class SecurityConfig {
 
     // ─── Injected dependencies ─────────────────────────────────────────
-    private final JwtAuthenticationFilter jwtAuthFilter;       // validates JWT on every request
-    private final RequestLoggingFilter requestLoggingFilter; // structured request/response logs
-    private final UserDetailsService userDetailsService;  // loads User entity from DB
-    private final CustomAuthEntryPoint authEntryPoint;      // 401 JSON response
-    private final CustomAccessDeniedHandler accessDeniedHandler; // 403 JSON response
+    private final JwtAuthenticationFilter jwtAuthFilter;
+    private final RequestLoggingFilter requestLoggingFilter;
+    private final UserDetailsService userDetailsService;
+    private final CustomAuthEntryPoint authEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
     private final AppProperties appProps;
 
     // ─── Public routes (no token required) ────────────────────────────
     private static final String[] PUBLIC_MATCHERS = {
             // Auth lifecycle
-            "/api/v1/auth/register",
-            "/api/v1/auth/login",
-            "/api/v1/auth/refresh",
-            "/api/v1/auth/forgot-password",
-            "/api/v1/auth/reset-password",
+            "/auth/register",
+            "/auth/login",
+            "/auth/refresh",
+            "/auth/forgot-password",
+            "/auth/reset-password",
             // Public info
-            "/api/v1/public/**",
+            "/public/**",
             // API documentation
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
-            // Dev tooling (H2 — gated by profile in application-prod.yml)
-            "/h2-console/**",
             // Monitoring
             "/actuator/health",
             "/actuator/info"
@@ -93,73 +92,71 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                // ① Disable CSRF — stateless REST API, no cookie sessions
+                //  Disable CSRF — stateless REST API, no cookie sessions
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // ② CORS — configured for mobile client origins
+                //  CORS — configured for mobile client origins
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // ③ No HttpSession — every request must carry a JWT
+                //  No HttpSession — every request must carry a JWT
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // ④ Custom error handlers for mobile JSON clients
+                //  Custom error handlers for mobile JSON clients
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authEntryPoint)   // 401
                         .accessDeniedHandler(accessDeniedHandler))  // 403
 
-                // ⑤ Authorization rules
+                //  Authorization rules
                 .authorizeHttpRequests(auth -> auth
+                        //  PathRequest.toH2Console() — works correctly for H2 servlet
+                        // in Spring Security 6; MvcRequestMatcher("/h2-console/**") does NOT.
+                        .requestMatchers(PathRequest.toH2Console()).permitAll()
                         // Public — no token needed
                         .requestMatchers(PUBLIC_MATCHERS).permitAll()
                         // CORS preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Role-restricted admin routes
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/moderator/**").hasAnyRole("ADMIN", "MODERATOR")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/moderator/**").hasAnyRole("ADMIN", "MODERATOR")
                         // Everything else requires a valid JWT
                         .anyRequest().authenticated())
 
-                // ⑥ Allow H2 console iframes (dev only — disabled in prod via config)
+                //     Allow H2 console iframes — sameOrigin needed so H2's embedded
+                //    iframe can render inside the same browser origin. The matcher
+                //    mirrors ⑤ above so the header rule covers exactly the same paths.
                 .headers(headers ->
                         headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
 
-                // ⑦ Wire DaoAuthenticationProvider for login
-                .authenticationProvider(authenticationProvider())
+                // AuthenticationProvider is NOT a @Bean anymore.
+                //    It is wired directly into the ProviderManager inside
+                //    authenticationManager() below. This eliminates the Spring Boot WARN:
+                //    "Global AuthenticationManager configured with an AuthenticationProvider
+                //     bean. UserDetailsService beans will not be used…"
+                .authenticationManager(authenticationManager())
 
                 // ⑧ Filter chain order:
                 //    1st — RequestLoggingFilter (attaches correlation ID, logs request)
                 //    2nd — JwtAuthenticationFilter (validates token, sets SecurityContext)
                 .addFilterBefore(requestLoggingFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthFilter, RequestLoggingFilter.class)
 
                 .build();
     }
 
-    // ─── Authentication provider ───────────────────────────────────────
+    // ─── Authentication manager ────────────────────────────────────────
 
     /**
-     * DaoAuthenticationProvider — Spring Security's standard username/password
-     * authenticator backed by our UserDetailsServiceImpl + BCrypt.
-     * Used during POST /api/v1/auth/login.
+     * This bean is still injectable by AuthServiceImpl via @Autowired /
+     * constructor injection as it is a @Bean here.
      */
     @Bean
-    public AuthenticationProvider authenticationProvider() {
+    public AuthenticationManager authenticationManager() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         // Do NOT hide UserNotFoundException — we handle generic messages ourselves
         provider.setHideUserNotFoundExceptions(false);
-        return provider;
-    }
-
-    /**
-     * Exposes AuthenticationManager as a bean so AuthServiceImpl can inject it
-     * and call authManager.authenticate() during login.
-     */
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+        return new ProviderManager(provider);
     }
 
     /**
@@ -203,16 +200,16 @@ public class SecurityConfig {
 
         // Standard + mobile-specific headers
         config.setAllowedHeaders(List.of(
-                "Authorization",         // Bearer <token>
-                "Content-Type",          // application/json
+                "Authorization",
+                "Content-Type",
                 "Accept",
                 "X-Requested-With",
-                "X-Device-Id",           // Unique device identifier
-                "X-Platform",            // ANDROID | IOS | WEB
-                "X-App-Version",         // semver app version
-                "X-FCM-Token",           // Firebase push token
-                "X-Session-Token",       // Server-side session token
-                "X-Correlation-ID"       // Request tracing
+                "X-Device-Id",
+                "X-Platform",
+                "X-App-Version",
+                "X-FCM-Token",
+                "X-Session-Token",
+                "X-Correlation-ID"
         ));
 
         // Headers visible to mobile client JS/Kotlin
@@ -222,8 +219,8 @@ public class SecurityConfig {
                 "X-Refresh-Token"
         ));
 
-        config.setAllowCredentials(false); // Must be false with wildcard origins
-        config.setMaxAge(3600L);           // Cache CORS preflight for 1 hour
+        config.setAllowCredentials(false);
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
