@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 3. Refresh access token before expiry using /auth/refresh
  */
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping(value = "/api/v1/auth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "Register, login, token management, password reset")
 public class AuthController {

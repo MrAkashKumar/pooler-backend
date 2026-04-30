@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Akash Kumar
@@ -69,6 +70,7 @@ public class AuthServiceImpl implements AuthService {
         PbUserEntity pbUserEntity = PbUserEntity.builder()
                 .email(req.getEmail().toLowerCase().trim())
                 .passwordHash(passwordEncoder.encode(req.getPassword()))
+                .entityId(generateNextUserId())
                 .firstName(req.getFirstName().trim())
                 .lastName(req.getLastName().trim())
                 .status(UserStatus.ACTIVE)
@@ -76,6 +78,8 @@ public class AuthServiceImpl implements AuthService {
 
         pbUserEntity = userRepo.save(pbUserEntity);
         log.info("New pbUserEntity registered: {}", pbUserEntity.getEmail());
+
+
 
         mailService.sendWelcomeMail(pbUserEntity);
         return buildAuthResponse(pbUserEntity, httpReq);
@@ -264,5 +268,16 @@ public class AuthServiceImpl implements AuthService {
             throw new AccountLockedException("Account locked after " + max + " failed attempts");
         }
         userRepo.save(pbUserEntity);
+    }
+
+
+
+    public static String generateNextUserId() {
+        final String PREFIX = "USER";
+        // Start at 1
+        final AtomicInteger counter = new AtomicInteger(1);
+        // .getAndIncrement() returns the current value and then adds 1
+        int currentNumber = counter.getAndIncrement();
+        return String.format("%s%07d", PREFIX, currentNumber);
     }
 }
