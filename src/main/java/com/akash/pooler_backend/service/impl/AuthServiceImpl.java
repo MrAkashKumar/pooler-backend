@@ -5,14 +5,12 @@ import com.akash.pooler_backend.dto.request.*;
 import com.akash.pooler_backend.dto.response.AuthResponse;
 import com.akash.pooler_backend.dto.response.TokenRefreshResponse;
 import com.akash.pooler_backend.dto.response.UserResponse;
-import com.akash.pooler_backend.entity.PbPasswordResetTokenEntity;
-import com.akash.pooler_backend.entity.PbRefreshTokenEntity;
-import com.akash.pooler_backend.entity.PbUserEntity;
-import com.akash.pooler_backend.entity.PbUserSessionEntity;
+import com.akash.pooler_backend.entity.*;
 import com.akash.pooler_backend.enums.TokenStatus;
 import com.akash.pooler_backend.enums.UserStatus;
 import com.akash.pooler_backend.exception.*;
 import com.akash.pooler_backend.interceptors.annotation.AuditAction;
+import com.akash.pooler_backend.repository.PbEntitySequenceRepository;
 import com.akash.pooler_backend.repository.PbPasswordResetTokenRepository;
 import com.akash.pooler_backend.repository.PbRefreshTokenRepository;
 import com.akash.pooler_backend.repository.PbUserRepository;
@@ -34,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Akash Kumar
@@ -54,6 +51,7 @@ public class AuthServiceImpl implements AuthService {
     private final PbUserRepository userRepo;
     private final PbRefreshTokenRepository refreshTokenRepo;
     private final PbPasswordResetTokenRepository resetTokenRepo;
+    private final PbEntitySequenceRepository pbEntitySequenceRepository;
     private final UserService userService;
 
 
@@ -67,10 +65,14 @@ public class AuthServiceImpl implements AuthService {
             throw new UserAlreadyExistsException(req.getEmail());
         }
 
+        //Get entity id
+        PbEntityIdSequence pbEntityIdSequence  = pbEntitySequenceRepository.save(new PbEntityIdSequence());
+
+        //Save user id
         PbUserEntity pbUserEntity = PbUserEntity.builder()
                 .email(req.getEmail().toLowerCase().trim())
                 .passwordHash(passwordEncoder.encode(req.getPassword()))
-                .entityId(generateNextUserId())
+                .entityId(Long.toString(pbEntityIdSequence.getId()))
                 .firstName(req.getFirstName().trim())
                 .lastName(req.getLastName().trim())
                 .status(UserStatus.ACTIVE)
@@ -268,16 +270,5 @@ public class AuthServiceImpl implements AuthService {
             throw new AccountLockedException("Account locked after " + max + " failed attempts");
         }
         userRepo.save(pbUserEntity);
-    }
-
-
-
-    public static String generateNextUserId() {
-        final String PREFIX = "USER";
-        // Start at 1
-        final AtomicInteger counter = new AtomicInteger(1);
-        // .getAndIncrement() returns the current value and then adds 1
-        int currentNumber = counter.getAndIncrement();
-        return String.format("%s%07d", PREFIX, currentNumber);
     }
 }
