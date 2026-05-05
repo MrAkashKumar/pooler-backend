@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Configuration;
                 title       = "Pooler Auth API",
                 version     = "1.0.0",
                 description = """
-                JWT-based authentication service for Android/iOS mobile backends.
+                Pooler service for Android/iOS mobile backends.
                 
                 **Auth flow:**
                 1. `POST /api/v1/auth/register` — create account
@@ -27,12 +27,17 @@ import org.springframework.context.annotation.Configuration;
                 3. Attach `Authorization: Bearer <access_token>` to all requests
                 4. `POST /api/v1/auth/refresh` — exchange refresh token for new access token
                 5. `POST /api/v1/auth/logout` — revoke tokens
+                
+                **Swagger UI:** `/swagger-ui/index.html`  
+                **OpenAPI JSON:** `/v3/api-docs`
                 """,
                 contact = @Contact(name = "Enterprise Team", email = "dev@enterprise.com"),
                 license = @License(name = "MIT", url = "https://opensource.org/licenses/MIT")
         ),
         servers = {
-                @Server(url = "http://localhost:8080", description = "Local Dev"),
+                // Servers point to the host root — controller paths already include /api/v1.
+                @Server(url = "http://localhost:8080", description = "Local Dev (default profile)"),
+                @Server(url = "http://localhost:8888", description = "Local (no-profile / 8888)"),
                 @Server(url = "https://staging.pooler.com", description = "Staging"),
                 @Server(url = "https://api.pooler.com", description = "Production")
         }

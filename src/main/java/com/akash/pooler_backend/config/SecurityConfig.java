@@ -70,19 +70,25 @@ public class SecurityConfig {
     private final AppProperties appProps;
 
     // ─── Public routes (no token required) ────────────────────────────
+    // NOTE: Paths are matched against the full request URI (no context path is
+    // configured anymore — controllers carry the /api/v1 prefix themselves).
     private static final String[] PUBLIC_MATCHERS = {
             // Auth lifecycle
-            "/auth/register",
-            "/auth/login",
-            "/auth/refresh",
-            "/auth/forgot-password",
-            "/auth/reset-password",
-            // Public info
-            "/public/**",
+            "/api/v1/auth/register",
+            "/api/v1/auth/login",
+            "/api/v1/auth/refresh",
+            "/api/v1/auth/forgot-password",
+            "/api/v1/auth/reset-password",
+            // Public info (health, version)
+            "/api/v1/public/**",
             // API documentation
+            "/v3/api-docs",
             "/v3/api-docs/**",
+            "/v3/api-docs.yaml",
             "/swagger-ui/**",
             "/swagger-ui.html",
+            "/swagger-resources/**",
+            "/webjars/**",
             // Monitoring
             "/actuator/health",
             "/actuator/info"
