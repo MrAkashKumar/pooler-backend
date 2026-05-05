@@ -2,12 +2,15 @@ package com.akash.pooler_backend.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import lombok.*;
 
 /**
  * @author Akash Kumar
  */
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ForgotPasswordRequest {
 
     @NotBlank

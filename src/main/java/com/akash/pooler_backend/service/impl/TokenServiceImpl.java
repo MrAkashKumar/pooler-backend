@@ -61,9 +61,11 @@ public class TokenServiceImpl implements TokenService {
                 .entityId(pbUserEntity.getEntityId())
                 .status(TokenStatus.ACTIVE)
                 .expiresAt(Instant.now().plusMillis(props.getJwt().getSessionTokenExpiryMs()))
+                .lastAccessedAt(Instant.now())
                 .deviceId(RequestUtil.getDeviceId(req))
                 .platform(RequestUtil.getPlatform(req))
                 .ipAddress(RequestUtil.getClientIp(req))
+                .appVersion(RequestUtil.getClientIp(req))
                 .build();
         return userSessionRepository.save(pbUserSessionEntity);
     }

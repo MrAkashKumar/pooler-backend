@@ -15,9 +15,6 @@ import java.time.Instant;
 @Table(name = "pb_user_session")
 public class PbUserSessionEntity extends BaseEntity{
 
-    @Column(name = "session_id", length = 64, nullable = false)
-    private String sessionId;
-
     @Column(name = "entity_id", nullable = false)
     private String entityId;
     

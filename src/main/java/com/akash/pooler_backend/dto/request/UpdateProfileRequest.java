@@ -1,12 +1,15 @@
 package com.akash.pooler_backend.dto.request;
 
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.*;
 
 /**
  * @author Akash Kumar
  */
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpdateProfileRequest {
 
     @Size(min=2,max=100)

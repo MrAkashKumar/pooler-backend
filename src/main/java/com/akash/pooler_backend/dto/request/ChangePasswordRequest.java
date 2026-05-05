@@ -2,9 +2,12 @@ package com.akash.pooler_backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ChangePasswordRequest {
     @NotBlank
     private String currentPassword;
