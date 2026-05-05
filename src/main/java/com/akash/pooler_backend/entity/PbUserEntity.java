@@ -25,9 +25,6 @@ import java.util.List;
 )
 public class PbUserEntity extends BaseEntity implements UserDetails {
 
-    @Column(name = "name")
-    private String name;
-
     @Column(name = "username")
     private String username;
 

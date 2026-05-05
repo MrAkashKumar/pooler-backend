@@ -4,12 +4,14 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Data;
 
 /**
  * @author Akash Kumar
  */
 @Data
+@Builder
 public class RegisterRequest {
 
     @NotBlank(message="First name is required")

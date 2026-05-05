@@ -6,6 +6,7 @@ import com.akash.pooler_backend.dto.response.AuthResponse;
 import com.akash.pooler_backend.dto.response.TokenRefreshResponse;
 import com.akash.pooler_backend.dto.response.UserResponse;
 import com.akash.pooler_backend.entity.*;
+import com.akash.pooler_backend.enums.Role;
 import com.akash.pooler_backend.enums.TokenStatus;
 import com.akash.pooler_backend.enums.UserStatus;
 import com.akash.pooler_backend.exception.*;
@@ -73,6 +74,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(req.getEmail().toLowerCase().trim())
                 .passwordHash(passwordEncoder.encode(req.getPassword()))
                 .entityId(Long.toString(pbEntityIdSequence.getId()))
+                .username("user-"+ pbEntityIdSequence.getId())
+                .role(Role.ROLE_USER)
                 .firstName(req.getFirstName().trim())
                 .lastName(req.getLastName().trim())
                 .status(UserStatus.ACTIVE)
@@ -80,8 +83,6 @@ public class AuthServiceImpl implements AuthService {
 
         pbUserEntity = userRepo.save(pbUserEntity);
         log.info("New pbUserEntity registered: {}", pbUserEntity.getEmail());
-
-
 
         mailService.sendWelcomeMail(pbUserEntity);
         return buildAuthResponse(pbUserEntity, httpReq);
