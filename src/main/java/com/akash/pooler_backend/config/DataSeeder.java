@@ -1,13 +1,11 @@
 package com.akash.pooler_backend.config;
 
-import com.akash.pooler_backend.dto.request.RegisterRequest;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.enums.Role;
 import com.akash.pooler_backend.enums.UserStatus;
 import com.akash.pooler_backend.repository.PbUserRepository;
 import com.akash.pooler_backend.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletRequestWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;

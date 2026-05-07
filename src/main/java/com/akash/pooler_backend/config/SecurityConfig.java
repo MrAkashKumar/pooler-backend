@@ -74,11 +74,12 @@ public class SecurityConfig {
     // configured anymore — controllers carry the /api/v1 prefix themselves).
     private static final String[] PUBLIC_MATCHERS = {
             // Auth lifecycle
-            "/api/v1/auth/register",
-            "/api/v1/auth/login",
-            "/api/v1/auth/refresh",
-            "/api/v1/auth/forgot-password",
-            "/api/v1/auth/reset-password",
+            // as per requirement, need then do versioning
+            "/**/auth/register",
+            "/**/auth/login",
+            "/**/auth/refresh",
+            "/**/auth/forgot-password",
+            "/**/auth/reset-password",
             // Public info (health, version)
             "/api/v1/public/**",
             // API documentation

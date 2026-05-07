@@ -28,7 +28,7 @@ The collection uses `{{baseUrl}}` (default `http://localhost:8080`).
 
 After the fix in `application.properties` and `SecurityConfig.java`:
 
-- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- Swagger UI: `http://localhost:8080/pooler-backend/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
 > The `server.servlet.contextPath=/api/v1` was removed because every controller already declares `@RequestMapping("/api/v1/...")`; the duplicated prefix was breaking Swagger and the public-route matchers.
