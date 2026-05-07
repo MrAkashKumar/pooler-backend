@@ -42,6 +42,33 @@ public enum ErrorCode {
     // Mail
     MAIL_SEND_FAILED("MAIL-001", "Failed to send email", HttpStatus.INTERNAL_SERVER_ERROR),
 
+    // Saved Location
+    LOCATION_NOT_FOUND("LOC-001", "Saved location not found", HttpStatus.NOT_FOUND),
+    LOCATION_ALIAS_CONFLICT("LOC-002", "A location with this unique alias already exists", HttpStatus.CONFLICT),
+    INVALID_COORDINATES("LOC-003", "Latitude or longitude is out of range", HttpStatus.BAD_REQUEST),
+
+    // Contacts
+    CONTACT_NOT_FOUND("CON-001", "Contact not found", HttpStatus.NOT_FOUND),
+    CONTACT_ALREADY_EXISTS("CON-002", "Contact is already in your list", HttpStatus.CONFLICT),
+    CONTACT_SELF_NOT_ALLOWED("CON-003", "You cannot add yourself as a contact", HttpStatus.BAD_REQUEST),
+
+    // Discovery
+    DISCOVERY_NOT_ENABLED("DSC-001", "Discovery mode is not enabled for this user", HttpStatus.BAD_REQUEST),
+    DISCOVERY_LOCATION_REQUIRED("DSC-002", "Current location is required to enable discovery mode", HttpStatus.BAD_REQUEST),
+
+    // Invitation
+    INVITATION_NOT_FOUND("INV-001", "Ride invitation not found", HttpStatus.NOT_FOUND),
+    INVITATION_EXPIRED("INV-002", "Ride invitation has expired", HttpStatus.GONE),
+    INVITATION_ALREADY_RESOLVED("INV-003", "Ride invitation has already been resolved", HttpStatus.CONFLICT),
+    INVITATION_FORBIDDEN("INV-004", "You are not allowed to act on this invitation", HttpStatus.FORBIDDEN),
+    INVITATION_SELF_NOT_ALLOWED("INV-005", "You cannot send a ride invitation to yourself", HttpStatus.BAD_REQUEST),
+
+    // Ride
+    RIDE_NOT_FOUND("RIDE-001", "Ride not found", HttpStatus.NOT_FOUND),
+    RIDE_FORBIDDEN("RIDE-002", "You are not a participant of this ride", HttpStatus.FORBIDDEN),
+    RIDE_INVALID_STATE("RIDE-003", "Ride is not in a valid state for this operation", HttpStatus.CONFLICT),
+    INCOMPATIBLE_ROUTE("RIDE-004", "Routes are not compatible for ride sharing", HttpStatus.UNPROCESSABLE_ENTITY),
+
     // Generic
     INTERNAL_ERROR("SYS-001", "An internal server error occurred", HttpStatus.INTERNAL_SERVER_ERROR),
     RESOURCE_NOT_FOUND("SYS-002", "Requested resource not found", HttpStatus.NOT_FOUND);
