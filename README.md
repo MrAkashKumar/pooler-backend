@@ -1,15 +1,23 @@
     Pooler-backend
 
-    Feature
-        1. Authentication
-        2. Community
-        3. Search NearBy Location
-        4. Invitation - Accept/Decline/Pending
-        5. Location - Near by and your home location
-    
-        security work Flow ---
-        
-       ```
+    A brief description of what this Spring Boot service does.
+
+    ### Prerequisites
+    * **Java 21+** (or your specific version)
+    * **Maven 3.6+** or **Gradle**
+    * **Docker** (if using databases like H2/PostgreSQL/MySQL)
+    * **IDE** (IntelliJ IDEA, VS Code, or Eclipse)
+
+    ### Installation & Setup
+
+    1. **Clone the repository:**
+   
+    git clone https://github.com/MrAkashKumar/pooler-backend.git
+    cd pooler-backend
+
+    2. **Configure Environment:**
+
+    Update src/main/resources/application.properties (or .yml) with your local database credentials.
 ---
 
 ## 🚀 Quick Start
@@ -21,7 +29,7 @@
 ./mvnw spring-boot:run
 
 # Staging profile
-./mvnw spring-boot:run -Dspring-boot.run.profiles=staging
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev //staging or prod 
 
 # Prod profile
 JWT_SECRET=<64-char-hex> DB_URL=<url> ./mvnw spring-boot:run -P prod
@@ -31,7 +39,7 @@ JWT_SECRET=<64-char-hex> DB_URL=<url> ./mvnw spring-boot:run -P prod
 
 ```bash
 # Copy env file
-cp .env.example .env
+cp .env.pooler .env
 
 # Start dev stack (app + Mailhog mail catcher)
 docker compose --profile dev up -d
@@ -42,7 +50,36 @@ docker compose logs -f auth-service
 # Stop
 docker compose down
 ```
+
+## 📖 API Documentation (Swagger & Postman)
+
+This is the section you specifically asked for. It’s best to provide both for flexibility.
+
+### 3. Swagger UI (OpenAPI)
+Since Spring Boot usually uses **SpringDoc OpenAPI**, the documentation is generated automatically.
+
+```markdown
+
+### Interactive API Docs (Swagger)
+Once the application is running, you can access the interactive Swagger UI to test the endpoints directly from your browser:
+
+* **Swagger UI:** [http://localhost:8080/pooler-backend/swagger-ui/index.html](http://localhost:8080/pooler-backend/swagger-ui/index.html)
+
+* **API Spec (JSON):** [http://localhost:8080/pooler-backend/v3/api-docs](http://localhost:8080/pooler-backend/v3/api-docs)
         
+
+
+### Postman Collection
+We have provided a pre-configured Postman collection for easy testing.
+
+1. Locate the file in `/doc/Pooler-API.postman_collection.json`.
+                      `/doc/Pooler-Local.postman_environment.json`.
+2. Open **Postman**.
+3. Click **Import** and drag the JSON file into the window.
+4. (Optional) Set up a Postman **Environment** with a variable `base_url = http://localhost:8080`.
+
+
+
         ## 🔑 Auth Flow (Mobile / Kotlin)
            1. POST /api/v1/auth/register      → { accessToken, refreshToken, sessionToken, user }
            2. POST /api/v1/auth/login         → { accessToken, refreshToken, sessionToken, user }
@@ -52,10 +89,7 @@ docker compose down
            6. POST /api/v1/auth/logout-all    → revoke all devices
            7. POST /api/v1/auth/forgot-password → sends reset email
            8. POST /api/v1/auth/reset-password  → { token, newPassword, confirmPassword }
-
-        
-        
-        
+      
         
         Mobile Request Headers
         |-----------------------------------------------------------------------------------|
@@ -97,6 +131,3 @@ docker compose down
 
         -------------------------------- H2 Console -----------------------------------------
         http://localhost:<PORT>/api/v1/h2-console/ - connect database
-
-
-      
