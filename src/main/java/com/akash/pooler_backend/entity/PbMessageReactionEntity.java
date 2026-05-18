@@ -19,16 +19,15 @@ import java.time.Instant;
 @Builder
 public class PbMessageReactionEntity extends BaseEntity {
 
-    @Column(name = "message_entity_id", nullable = false)
-    private String messageEntityId;
+    @Column(name = "entity_id", unique = true, nullable = false)
+    private String entityId;
 
-    @Column(name = "user_entity_id", nullable = false)
-    private String userEntityId;
+    @Column(name = "message_id", nullable = false)
+    private String messageId;
+
+    @Column(name = "user_id", nullable = false)
+    private String userId;
 
     @Column(name = "reaction", length = 4, nullable = false)
     private String reaction;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
 }

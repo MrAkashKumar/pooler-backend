@@ -22,6 +22,9 @@ import java.time.Instant;
 @Builder
 public class PbChatThreadEntity extends BaseEntity {
 
+    @Column(name = "entity_id", unique = true, nullable = false)
+    private String entityId;
+
     @Column(name = "invitation_entity_id", nullable = false)
     private String invitationEntityId;
 
@@ -37,10 +40,6 @@ public class PbChatThreadEntity extends BaseEntity {
 
     @Column(name = "ride_entity_id")
     private String rideEntityId;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
 
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;

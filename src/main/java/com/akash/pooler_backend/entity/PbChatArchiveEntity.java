@@ -8,10 +8,15 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
+/**
+ * @author Akash kumar
+ *
+ */
+
 @Entity
 @Table(name = "pb_chat_archives", indexes = {
-        @Index(name = "idx_archive_thread_id", columnList = "thread_entity_id", unique = true),
-        @Index(name = "idx_archive_archived_at", columnList = "archived_at")
+        @Index(name = "idx_archive_entity_id", columnList = "entity_id"),
+        @Index(name = "idx_archive_thread_id", columnList = "thread_id", unique = true)
 })
 @Getter
 @Setter
@@ -20,11 +25,14 @@ import java.time.Instant;
 @Builder
 public class PbChatArchiveEntity extends BaseEntity {
 
-    @Column(name = "thread_entity_id", nullable = false, unique = true)
-    private String threadEntityId;
+    @Column(name = "entity_id", unique = true, nullable = false)
+    private String entityId;
+
+    @Column(name = "thread_id", nullable = false, unique = true)
+    private String threadId;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "archive_data", columnDefinition = "jsonb", nullable = false)
+    @Column(name = "archive_data", nullable = false)
     private Object archiveData;
 
     @Column(name = "size_bytes")

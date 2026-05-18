@@ -12,14 +12,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/***
- * @author Akash Kumar
- */
-
 @Entity
 @Table(name = "pb_chat_messages", indexes = {
-        @Index(name = "idx_chat_msg_thread", columnList = "thread_entity_id"),
-        @Index(name = "idx_chat_msg_sender", columnList = "sender_user_id"),
+        @Index(name = "idx_chat_msg_thread", columnList = "thread_id"),
+        @Index(name = "idx_chat_msg_sender", columnList = "sender"),
+        @Index(name = "idx_chat_msg_entity_id", columnList = "entity_id"),
         @Index(name = "idx_chat_msg_created", columnList = "created_at"),
         @Index(name = "idx_chat_msg_indexed", columnList = "is_indexed")
 })
@@ -30,11 +27,14 @@ import java.util.Map;
 @Builder
 public class PbChatMessageEntity extends BaseEntity {
 
-    @Column(name = "thread_entity_id", nullable = false)
-    private String threadEntityId;
+    @Column(name = "entity_id", unique = true, nullable = false)
+    private String entityId;
 
-    @Column(name = "sender_user_id", nullable = false)
-    private String senderUserId;
+    @Column(name = "thread_id", nullable = false)
+    private String threadId;
+
+    @Column(name = "sender", nullable = false)
+    private String sender;
 
     @Column(name = "content", length = 1000, nullable = false)
     private String content;

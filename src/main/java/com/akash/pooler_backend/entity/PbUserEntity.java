@@ -48,6 +48,9 @@ public class PbUserEntity extends BaseEntity implements UserDetails {
     @Column(nullable=false,length=100)
     private String lastName;
 
+    @Column(length=500)
+    private String profilePictureUrl;
+
     @Enumerated(EnumType.STRING) @Column(nullable=false,length=30)
     @Builder.Default
     private UserStatus status = UserStatus.ACTIVE;
@@ -58,9 +61,6 @@ public class PbUserEntity extends BaseEntity implements UserDetails {
     private int failedLoginAttempts = 0;
 
     private Instant lockedUntil;
-
-    @Column(length=500)
-    private String profilePictureUrl;
 
     @Override
     public List<? extends GrantedAuthority> getAuthorities() {
