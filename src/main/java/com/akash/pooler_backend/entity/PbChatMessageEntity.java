@@ -44,30 +44,25 @@ public class PbChatMessageEntity extends BaseEntity {
     private MessageType messageType = MessageType.TEXT;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "metadata", columnDefinition = "jsonb")
+    @Column(name = "metadata")
     private Map<String, Object> metadata = new HashMap<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "read_by_user_ids", columnDefinition = "jsonb")
+    @Column(name = "read_by_user_ids")
     private List<String> readByUserIds;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "reactions", columnDefinition = "jsonb")
+    @Column(name = "reactions")
     private Map<String, List<String>> reactions = new HashMap<>();
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at")
-    private Instant updatedAt;
 
     @Column(name = "edited_at")
     private Instant editedAt;
 
     @Column(name = "is_read")
+    @Builder.Default
     private Boolean isRead = false;
 
     @Column(name = "is_indexed")
+    @Builder.Default
     private Boolean isIndexed = false;
 }

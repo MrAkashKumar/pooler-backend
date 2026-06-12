@@ -28,7 +28,7 @@ public class PbChatSearchIndexEntity extends BaseEntity {
     @Column(name = "thread_id", nullable = false)
     private String threadId;
 
-    @Column(name = "message_text", columnDefinition = "TEXT")
+    @Column(name = "message_text")
     private String messageText;
 
     @JdbcTypeCode(SqlTypes.JSON)

@@ -22,9 +22,6 @@ public class PbTelegramProfileEntity extends BaseEntity {
     @Column(name = "entity_id", unique = true, nullable = false)
     private String entityId;
 
-    @Column(name = "user_id", nullable = false, unique = true)
-    private String userId;
-
     @Column(name = "telegram_handle", unique = true)
     private String telegramHandle;
 
