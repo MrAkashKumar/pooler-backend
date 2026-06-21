@@ -6,6 +6,8 @@ This folder contains a ready-to-import Postman collection and environment for th
 
 - `Pooler-Auth-API.postman_collection.json` — full collection with all endpoints, headers, request bodies, query/path params, and example responses (success + common error cases).
 - `Pooler-Auth-API.postman_environment.json` — environment with `baseUrl` and token variables.
+- `Pooler-API.postman_environment.json` — full collection with all endpoints, headers, request bodies, query/path params, and example responses (success + common error cases).
+- `Pooler-Local.postman_environment.json` — environment with `baseUrl` and token variables.
 
 ## Import
 

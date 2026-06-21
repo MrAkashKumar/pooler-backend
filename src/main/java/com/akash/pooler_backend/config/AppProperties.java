@@ -58,7 +58,8 @@ public class AppProperties {
         private String audience = "pooler-mobile-app";
     }
 
-    @Getter @Setter
+    @Getter
+    @Setter
     public static class Security {
         private int maxFailedAttempts = 5;
         private int lockDurationMinutes = 30;

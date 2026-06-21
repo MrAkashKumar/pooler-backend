@@ -69,6 +69,19 @@ public enum ErrorCode {
     RIDE_INVALID_STATE("RIDE-003", "Ride is not in a valid state for this operation", HttpStatus.CONFLICT),
     INCOMPATIBLE_ROUTE("RIDE-004", "Routes are not compatible for ride sharing", HttpStatus.UNPROCESSABLE_ENTITY),
 
+    // Chat & Messaging
+    CHAT_NOT_FOUND("CHAT-001", "Chat thread not found", HttpStatus.NOT_FOUND),
+    CHAT_EXPIRED("CHAT-002", "Chat session has expired (2-hour window closed)", HttpStatus.GONE),
+    CHAT_ACCESS_DENIED("CHAT-003", "You do not have access to this chat", HttpStatus.FORBIDDEN),
+    CHAT_INVITATION_NOT_ACCEPTED("CHAT-004", "Chat can only be created when both users accept the invitation", HttpStatus.CONFLICT),
+    MESSAGE_EDIT_LIMIT_EXCEEDED("CHAT-005", "Messages can only be edited within 15 minutes of sending", HttpStatus.BAD_REQUEST),
+    FILE_UPLOAD_TOO_LARGE("FILE-001", "File size exceeds the 10MB limit", HttpStatus.PAYLOAD_TOO_LARGE),
+    FILE_UPLOAD_EXPIRED("FILE-002", "File upload has expired", HttpStatus.GONE),
+    INVALID_REACTION("CHAT-006", "Invalid emoji reaction", HttpStatus.BAD_REQUEST),
+    TELEGRAM_PROFILE_NOT_FOUND("TLG-001", "Telegram profile not found", HttpStatus.NOT_FOUND),
+    WEBSOCKET_AUTH_FAILED("WS-001", "WebSocket authentication failed", HttpStatus.UNAUTHORIZED),
+    ARCHIVE_NOT_FOUND("ARC-001", "Archived chat not found", HttpStatus.NOT_FOUND),
+
     // Generic
     INTERNAL_ERROR("SYS-001", "An internal server error occurred", HttpStatus.INTERNAL_SERVER_ERROR),
     RESOURCE_NOT_FOUND("SYS-002", "Requested resource not found", HttpStatus.NOT_FOUND);

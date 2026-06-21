@@ -103,6 +103,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
 
                 //  CORS — configured for mobile client origins
+                //  CORS — handled by CorsConfig with highest precedence filter
+                //  This enables Spring Security's CORS support to work with our CorsFilter
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 //  No HttpSession — every request must carry a JWT
@@ -181,12 +183,13 @@ public class SecurityConfig {
     // ─── CORS configuration ────────────────────────────────────────────
 
     /**
-     * CORS policy for Android/iOS clients.
+     * CORS configuration source for Spring Security.
+     * Works in conjunction with CorsConfig's filter which runs at highest precedence.
      *
-     * Key decisions:
-     * - allowedOriginPatterns("*") in dev; restrict to real origins in prod
-     * - Mobile-specific headers explicitly allowed (X-Device-Id, X-Platform, etc.)
-     * - No allowCredentials (incompatible with wildcard origins; we use Bearer tokens)
+     * This ensures:
+     * 1. Spring Security honors CORS headers set by our filter
+     * 2. Swagger UI at localhost can call /v3/api-docs and /api/v1/** endpoints
+     * 3. Mobile apps from any origin can access the API in dev mode
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -199,10 +202,14 @@ public class SecurityConfig {
         if ("*".equals(originsProperty)) {
             config.setAllowedOriginPatterns(List.of("*"));
         } else {
-            config.setAllowedOrigins(Arrays.asList(originsProperty.split(",")));
+            // Split and trim origins
+            List<String> origins = Arrays.stream(originsProperty.split(","))
+                    .map(String::trim)
+                    .toList();
+            config.setAllowedOrigins(origins);
         }
 
-        // HTTP methods
+        // HTTP methods - include all REST methods
         config.setAllowedMethods(Arrays.asList(methodsProperty.split(",")));
 
         // Standard + mobile-specific headers
@@ -219,14 +226,20 @@ public class SecurityConfig {
                 "X-Correlation-ID"
         ));
 
-        // Headers visible to mobile client JS/Kotlin
+        //Check if any-other happen
+
+        // Headers visible to clients (Swagger UI needs to read some of these)
         config.setExposedHeaders(List.of(
                 "Authorization",
                 "X-Correlation-ID",
-                "X-Refresh-Token"
+                "X-Refresh-Token",
+                "Content-Disposition",
+                "X-Total-Count"
         ));
+        // Credentials - only if not using wildcard origins
 
-        config.setAllowCredentials(false);
+        // config.setAllowCredentials(false);
+        config.setAllowCredentials(!"*".equals(originsProperty));
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

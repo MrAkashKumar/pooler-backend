@@ -81,7 +81,7 @@ public class OpenApiConfig {
 
         private Info buildInfo() {
                 return new Info()
-                        .title("Pooler Cab-Share API")
+                        .title("Pooler API")
                         .version(appVersion)
                         .description("""
                         Production-grade Spring Boot backend for the **Pooler** Android / iOS cab-sharing app.

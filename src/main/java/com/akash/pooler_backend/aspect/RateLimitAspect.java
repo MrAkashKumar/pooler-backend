@@ -44,12 +44,12 @@ public class RateLimitAspect {
             return; // can't enforce without request context — fail open
         }
 
-        String ip       = RequestUtil.getClientIp(req);
+        String ip = RequestUtil.getClientIp(req);
         String endpoint = buildEndpointKey(jp);
-        String key      = rateLimit.key().isBlank() ? ip + ":" + endpoint : rateLimit.key() + ":" + ip;
+        String key = rateLimit.key().isBlank() ? ip + ":" + endpoint : rateLimit.key() + ":" + ip;
 
         long windowMs = rateLimit.windowSeconds() * 1000L;
-        long now      = Instant.now().toEpochMilli();
+        long now = Instant.now().toEpochMilli();
 
         WindowCounter counter = counters.compute(key, (k, existing) -> {
             if (existing == null || (now - existing.windowStart) > windowMs) {
