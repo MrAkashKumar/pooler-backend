@@ -43,6 +43,8 @@ public class RideResponse {
     private Instant completedAt;
     private Instant cancelledAt;
     private String cancelReason;
+    private boolean primaryArrived;
+    private boolean secondaryArrived;
     private Instant createdAt;
 
     public static RideResponse from(PbRideEntity r) {
@@ -66,6 +68,8 @@ public class RideResponse {
                 .completedAt(r.getCompletedAt())
                 .cancelledAt(r.getCancelledAt())
                 .cancelReason(r.getCancelReason())
+                .primaryArrived(r.isPrimaryArrived())
+                .secondaryArrived(r.isSecondaryArrived())
                 .createdAt(r.getCreatedAt())
                 .build();
     }

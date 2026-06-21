@@ -61,7 +61,7 @@ public class ChatSearchServiceImpl implements ChatSearchService {
 
     @Override
     public List<String> search(String threadId, String query) {
-        PbChatSearchIndexEntity index = searchIndexRepository.findByThreadEntityId(threadId)
+        PbChatSearchIndexEntity index = searchIndexRepository.findByThreadId(threadId)
                 .orElse(null);
 
         if (index == null) {
@@ -82,7 +82,7 @@ public class ChatSearchServiceImpl implements ChatSearchService {
     @Override
     @Transactional
     public void archiveSearchIndex(String threadId) {
-        searchIndexRepository.findByThreadEntityId(threadId).ifPresent(index -> {
+        searchIndexRepository.findByThreadId(threadId).ifPresent(index -> {
             log.info("Archiving search index for thread: {}", threadId);
         });
     }

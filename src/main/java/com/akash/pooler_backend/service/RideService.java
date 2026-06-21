@@ -3,6 +3,7 @@ package com.akash.pooler_backend.service;
 import com.akash.pooler_backend.dto.request.CancelRideRequest;
 import com.akash.pooler_backend.dto.request.UpdateRideStatusRequest;
 import com.akash.pooler_backend.dto.response.RideResponse;
+import com.akash.pooler_backend.dto.response.ArrivalConfirmationResponse;
 import com.akash.pooler_backend.entity.PbRideInvitationEntity;
 import com.akash.pooler_backend.entity.PbUserEntity;
 
@@ -30,4 +31,6 @@ public interface RideService {
     RideResponse updateStatus(PbUserEntity user, String rideEntityId, UpdateRideStatusRequest req);
 
     RideResponse cancel(PbUserEntity user, String rideEntityId, CancelRideRequest req);
+
+    ArrivalConfirmationResponse confirmArrival(PbUserEntity user, String rideEntityId);
 }

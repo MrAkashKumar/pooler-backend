@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PbChatThreadRepository extends JpaRepository<PbChatThreadEntity, String> {
+public interface PbChatThreadRepository extends JpaRepository<PbChatThreadEntity, Long> {
+
+    Optional<PbChatThreadEntity> findByEntityId(String entityId);
 
     Optional<PbChatThreadEntity> findByInvitationEntityId(String invitationEntityId);
 

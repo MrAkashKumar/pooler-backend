@@ -36,6 +36,7 @@ public class PbChatThreadEntity extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
+    @Builder.Default
     private ChatThreadStatus status = ChatThreadStatus.ACTIVE;
 
     @Column(name = "ride_entity_id")
@@ -48,6 +49,7 @@ public class PbChatThreadEntity extends BaseEntity {
     private Instant archivedAt;
 
     @Column(name = "message_count")
+    @Builder.Default
     private Long messageCount = 0L;
 
     @Column(name = "last_message_at")

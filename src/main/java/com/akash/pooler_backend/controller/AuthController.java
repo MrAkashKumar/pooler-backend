@@ -62,6 +62,15 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok(authService.login(req, httpReq)));
     }
 
+    @PostMapping("/google")
+    @RateLimit(maxRequests = 10, windowSeconds = 60)
+    @Operation(summary = "Google sign-in", description = "Verifies a Google ID token and returns Pooler mobile tokens.")
+    public ResponseEntity<ApiResponse<AuthResponse>> google(
+            @Valid @RequestBody GoogleAuthRequest req,
+            HttpServletRequest httpReq) {
+        return ResponseEntity.ok(ApiResponse.ok(authService.loginWithGoogle(req, httpReq)));
+    }
+
     // ── Refresh Token ─────────────────────────────────────────────────
 
     @PostMapping("/refresh")
