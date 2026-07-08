@@ -2,9 +2,6 @@ package com.akash.pooler_backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.Instant;
 
 @Entity
 @Table(name = "pb_telegram_profiles", indexes = {
