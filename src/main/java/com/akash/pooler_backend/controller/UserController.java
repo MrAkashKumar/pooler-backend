@@ -5,15 +5,20 @@ import com.akash.pooler_backend.dto.request.UpdateProfileRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.UserResponse;
 import com.akash.pooler_backend.entity.PbUserEntity;
+import com.akash.pooler_backend.enums.ProfileMediaPurpose;
 import com.akash.pooler_backend.interceptors.annotation.CurrentUser;
+import com.akash.pooler_backend.interceptors.annotation.ValidSession;
+import com.akash.pooler_backend.service.ProfileMediaService;
 import com.akash.pooler_backend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @author Akash Kumar
@@ -26,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final ProfileMediaService profileMediaService;
 
     @GetMapping("/me")
     @Operation(summary = "Get current user profile")
@@ -39,6 +45,17 @@ public class UserController {
             @CurrentUser PbUserEntity pbUserEntity,
             @Valid @RequestBody UpdateProfileRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("Profile updated", userService.updateProfile(pbUserEntity, req)));
+    }
+
+    @PostMapping(value = "/me/media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ValidSession(reason = "Updating profile media requires an active session")
+    @Operation(summary = "Upload optional profile photo or payment QR image to S3")
+    public ResponseEntity<ApiResponse<UserResponse>> uploadProfileMedia(
+            @CurrentUser PbUserEntity pbUserEntity,
+            @RequestParam ProfileMediaPurpose purpose,
+            @RequestPart("file") MultipartFile file) {
+        return ResponseEntity.ok(ApiResponse.ok("Profile media updated",
+                profileMediaService.uploadProfileMedia(pbUserEntity, purpose, file)));
     }
 
     @PutMapping("/me/change-password")

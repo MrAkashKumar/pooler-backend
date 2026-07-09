@@ -24,6 +24,9 @@ import com.akash.pooler_backend.utils.RequestUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,7 +34,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -54,6 +66,10 @@ public class AuthServiceImpl implements AuthService {
     private final PbPasswordResetTokenRepository resetTokenRepo;
     private final PbEntitySequenceRepository pbEntitySequenceRepository;
     private final UserService userService;
+    private final ObjectMapper objectMapper;
+
+    @Value("${app.google.client-ids:}")
+    private String googleClientIds;
 
 
     // ── Register ──────────────────────────────────────────────────────
@@ -112,6 +128,35 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("User logged in: {} from platform={}", pbUserEntity.getEmail(), req.getPlatform());
         return buildAuthResponse(pbUserEntity, httpReq);
+    }
+
+    @Override
+    @Transactional
+    @AuditAction("USER_GOOGLE_LOGIN")
+    public AuthResponse loginWithGoogle(GoogleAuthRequest req, HttpServletRequest httpReq) {
+        Map<String, String> claims = verifyGoogleIdToken(req.getIdToken());
+        String email = claims.get("email").toLowerCase().trim();
+
+        PbUserEntity user = userRepo.findByEmail(email).orElseGet(() -> {
+            PbEntityIdSequence sequence = pbEntitySequenceRepository.save(new PbEntityIdSequence());
+            String givenName = claims.getOrDefault("given_name", "HubHop").trim();
+            String familyName = claims.getOrDefault("family_name", "Rider").trim();
+            return userRepo.save(PbUserEntity.builder()
+                    .email(email)
+                    .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .entityId(Long.toString(sequence.getId()))
+                    .username("user-" + sequence.getId())
+                    .role(Role.ROLE_USER)
+                    .firstName(givenName.isBlank() ? "HubHop" : givenName)
+                    .lastName(familyName.isBlank() ? "Rider" : familyName)
+                    .profilePictureUrl(claims.get("picture"))
+                    .status(UserStatus.ACTIVE)
+                    .build());
+        });
+
+        checkAccountStatus(user);
+        userRepo.updateLoginSuccess(user.getEntityId(), Instant.now());
+        return buildAuthResponse(user, httpReq);
     }
 
     // ── Refresh Token ─────────────────────────────────────────────────
@@ -250,6 +295,40 @@ public class AuthServiceImpl implements AuthService {
                 .refreshTokenExpiresIn(props.getJwt().getRefreshTokenExpiryMs() / 1000)
                 .user(UserResponse.from(pbUserEntity))
                 .build();
+    }
+
+    private Map<String, String> verifyGoogleIdToken(String idToken) {
+        if (googleClientIds == null || googleClientIds.isBlank()) {
+            throw new AuthenticationException("Google sign-in is not configured on this server");
+        }
+        try {
+            String token = URLEncoder.encode(idToken, StandardCharsets.UTF_8);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://oauth2.googleapis.com/tokeninfo?id_token=" + token))
+                    .timeout(Duration.ofSeconds(5))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build()
+                    .send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) throw new AuthenticationException("Invalid Google ID token");
+
+            Map<String, String> claims = objectMapper.readValue(response.body(), new TypeReference<>() {});
+            boolean acceptedAudience = Arrays.stream(googleClientIds.split(","))
+                    .map(String::trim)
+                    .anyMatch(clientId -> !clientId.isBlank() && clientId.equals(claims.get("aud")));
+            boolean verifiedEmail = "true".equalsIgnoreCase(claims.get("email_verified"));
+            long expiresAt = Long.parseLong(claims.getOrDefault("exp", "0"));
+            if (!acceptedAudience || !verifiedEmail || claims.get("email") == null
+                    || expiresAt <= Instant.now().getEpochSecond()) {
+                throw new AuthenticationException("Google token validation failed");
+            }
+            return claims;
+        } catch (AuthenticationException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            log.warn("Google token verification failed: {}", exception.getMessage());
+            throw new AuthenticationException("Unable to verify Google sign-in");
+        }
     }
 
     private void checkAccountStatus(PbUserEntity user) {

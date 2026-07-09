@@ -1,133 +1,110 @@
-    Pooler-backend
+# Pooler / HubHop backend
 
-    A brief description of what this Spring Boot service does.
+Spring Boot REST backend for HubHop’s identity, discovery, fair Common Point, invitation, short-lived chat, live meetup, arrival, and ride-history flows.
 
-    ### Prerequisites
-    * **Java 21+** (or your specific version)
-    * **Maven 3.6+** or **Gradle**
-    * **Docker** (if using databases like H2/PostgreSQL/MySQL)
-    * **IDE** (IntelliJ IDEA, VS Code, or Eclipse)
+## Run locally
 
-    ### Installation & Setup
-
-    1. **Clone the repository:**
-   
-    git clone https://github.com/MrAkashKumar/pooler-backend.git
-    cd pooler-backend
-
-    2. **Configure Environment:**
-
-    Update src/main/resources/application.properties (or .yml) with your local database credentials.
----
-
-## 🚀 Quick Start
-
-### Option 1 — Maven (Local)
+Requirements: Java 21+.
 
 ```bash
-# Dev profile (default)
 ./mvnw spring-boot:run
-
-# Staging profile
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev //staging or prod 
-
-# Prod profile
-JWT_SECRET=<64-char-hex> DB_URL=<url> ./mvnw spring-boot:run -P prod
 ```
 
-### Option 2 — Docker Compose
+Default base URL: `http://localhost:8888/pooler-backend`
+
+- Health: `/api/v1/public/health`
+- Swagger: `/swagger-ui/index.html`
+- OpenAPI: `/v3/api-docs`
+- H2 console: `/h2-console`
+
+The development profile uses an in-memory H2 database and seeded accounts. Do not enable the seeder or `ddl-auto=create-drop` in production.
+
+## Architecture
+
+Controllers return a consistent `ApiResponse<T>` envelope. Domain logic lives in service interfaces/implementations; repositories contain persistence queries; entities share audited timestamps through `BaseEntity`. Mobile authorization is stateless JWT plus an optional session token for sensitive actions.
+
+Core modules:
+
+- Auth, refresh/session tokens, Google ID-token exchange.
+- Profile, rider gender, match preference, contacts, saved locations, Telegram identity.
+- Discovery pings, nearby rider search with mutual `MALE`/`FEMALE`/`BOTH` preference filtering, distance/midpoint/route compatibility.
+- Invitation and ride state machines.
+- Two-hour invitation chat, messages, read receipts, reactions, search, cleanup.
+- Participant-only live location and independent physical-arrival confirmation.
+
+## Mobile headers
+
+| Header | Purpose |
+| --- | --- |
+| `Authorization` | `Bearer <accessToken>` |
+| `X-Session-Token` | Required by `@ValidSession` operations |
+| `X-Device-Id` | Stable app-install identifier |
+| `X-Platform` | `IOS`, `ANDROID`, or `WEB` |
+| `X-App-Version` | Semantic app version |
+| `X-Correlation-ID` | Optional request trace ID |
+
+## Rider preference contract
+
+`GET/PUT /api/v1/users/me` exposes safety profile fields:
+
+| Field | Values | Default | Purpose |
+| --- | --- | --- | --- |
+| `gender` | `UNKNOWN`, `MALE`, `FEMALE` | `UNKNOWN` | The rider's own profile category for mutual filtering. |
+| `matchPreference` | `BOTH`, `MALE`, `FEMALE` | `BOTH` | Who the rider wants to see in discovery. |
+| `emergencyContactName` | string, max 120 | `null` | Trusted family/contact label displayed in Safety centre. |
+| `emergencyContactPhone` | string, max 32 | `null` | Phone number used by the mobile app for dialler/SMS handoff. |
+| `emergencyMessage` | string, max 300 | `null` | Default message text used in the mobile SMS composer. |
+
+`POST /api/v1/discovery/nearby` filters candidates before returning them. A candidate is shown only when the requester's preference allows the candidate's gender and the candidate's preference allows the requester's gender. This keeps the default broad while giving riders, especially women, a safety control for who appears in search.
+
+Emergency contact fields are stored only as profile metadata. The backend does not call or text the contact; mobile clients compose the call/SMS locally and include device location at the moment the rider taps the safety action.
+
+## Profile media contract
+
+`POST /api/v1/users/me/media?purpose=PROFILE_PHOTO` and `POST /api/v1/users/me/media?purpose=PAYMENT_QR` accept `multipart/form-data` with a `file` part. Files must be JPEG, PNG, or WebP and no larger than `profile-media.max-size-mb` (default 5 MB in each profile properties file).
+
+The backend uploads the object to S3 using AWS SDK default credentials and stores the resulting public URL on the user:
+
+- `profilePictureUrl`: optional account/profile photo
+- `paymentQrCodeUrl`: optional payment QR for manual sharing after a match
+
+Configuration lives in the Spring profile properties files:
+
+```properties
+profile-media.s3-bucket=your-hubhop-profile-media-bucket
+profile-media.s3-region=ap-southeast-1
+profile-media.key-prefix=hubhop/profile-media/prod
+profile-media.public-base-url=https://cdn.yourdomain.com
+profile-media.max-size-mb=5
+```
+
+Development keeps `profile-media.s3-bucket` blank so accidental local uploads fail clearly. Staging and production can resolve the same keys from deployment-provided Spring placeholders. The S3 bucket or CloudFront distribution must allow read access for returned media URLs. HubHop does not automatically expose payment QR during discovery; the mobile client shares it only when the owner taps **Share payment QR** in meetup chat.
+
+## Fare split contract
+
+Confirmed rides store two trip distances:
+
+- `primaryTripDistanceKm`: longer rider, final drop-off, suggested booker
+- `secondaryTripDistanceKm`: shorter rider, first drop-off
+
+`POST /api/v1/rides/{rideId}/fare-split` accepts the real provider fare after the riders book in Grab, TADA, Gojek, or another cab app:
+
+```json
+{
+  "totalFare": 30.0,
+  "currency": "SGD",
+  "provider": "Grab"
+}
+```
+
+Validation requires `totalFare` from `0.01` to `99999.00`, a 3-letter currency code when supplied, and a non-blank provider name.
+
+The backend stores the total fare, provider, currency, `primaryFareShare`, and `secondaryFareShare` on the ride. Shares are proportional to each rider's trip distance. HubHop records the split for history only; it does not collect payment.
+
+## Test
 
 ```bash
-# Copy env file
-cp .env.pooler .env
-
-# Start dev stack (app + Mailhog mail catcher)
-docker compose --profile dev up -d
-
-# View logs
-docker compose logs -f auth-service
-
-# Stop
-docker compose down
+./mvnw test
 ```
 
-## 📖 API Documentation (Swagger & Postman)
-
-This is the section you specifically asked for. It’s best to provide both for flexibility.
-
-### 3. Swagger UI (OpenAPI)
-Since Spring Boot usually uses **SpringDoc OpenAPI**, the documentation is generated automatically.
-
-```markdown
-
-### Interactive API Docs (Swagger)
-Once the application is running, you can access the interactive Swagger UI to test the endpoints directly from your browser:
-
-* **Swagger UI:** [http://localhost:8080/pooler-backend/swagger-ui/index.html](http://localhost:8080/pooler-backend/swagger-ui/index.html)
-
-* **API Spec (JSON):** [http://localhost:8080/pooler-backend/v3/api-docs](http://localhost:8080/pooler-backend/v3/api-docs)
-        
-
-
-### Postman Collection
-We have provided a pre-configured Postman collection for easy testing.
-
-1. Locate the file in `/doc/Pooler-API.postman_collection.json`.
-                      `/doc/Pooler-Local.postman_environment.json`.
-2. Open **Postman**.
-3. Click **Import** and drag the JSON file into the window.
-4. (Optional) Set up a Postman **Environment** with a variable `base_url = http://localhost:8080`.
-
-
-
-        ## 🔑 Auth Flow (Mobile / Kotlin)
-           1. POST /api/v1/auth/register      → { accessToken, refreshToken, sessionToken, user }
-           2. POST /api/v1/auth/login         → { accessToken, refreshToken, sessionToken, user }
-           3. GET  /api/v1/users/me           → Authorization: Bearer <accessToken>
-           4. POST /api/v1/auth/refresh       → { refreshToken } → new accessToken
-           5. POST /api/v1/auth/logout        → revoke current device
-           6. POST /api/v1/auth/logout-all    → revoke all devices
-           7. POST /api/v1/auth/forgot-password → sends reset email
-           8. POST /api/v1/auth/reset-password  → { token, newPassword, confirmPassword }
-      
-        
-        Mobile Request Headers
-        |-----------------------------------------------------------------------------------|
-        |    Header                      Value                               Required       |
-        |-----------------------------------------------------------------------------------|
-        | Authorization               Bearer <accessToken>                       ✅         |
-        | ----------------------------------------------------------------------------------|
-        | X-Device-Id                 Unique device identifier                Recommended   |
-        |---------------------------------------------------------------------------------- |
-        | X-Platform                  ANDROID or IOS                          Recommended   |
-        | ----------------------------------------------------------------------------------|
-        | X-App-Version               e.g. 2.1.0                              Recommended   |
-        | ----------------------------------------------------------------------------------|
-        | X-Session-Token             Session token (dual auth)               Optional      |
-        | ----------------------------------------------------------------------------------|
-        | X-Correlation-ID            Request trace ID                        Optional      |
-        | ----------------------------------------------------------------------------------|
-
-        
-        ## 📋 API Endpoints
-        
-        | Method | Endpoint                          | Auth    | Description             |
-        |--------|-----------------------------------|---------|-------------------------|
-        | POST   | /api/v1/auth/register             | ❌       | Register new user       |
-        | POST   | /api/v1/auth/login                | ❌       | Login                   |
-        | POST   | /api/v1/auth/refresh              | ❌       | Refresh access token    |
-        | POST   | /api/v1/auth/logout               | ✅       | Logout current device   |
-        | POST   | /api/v1/auth/logout-all           | ✅       | Logout all devices      |
-        | POST   | /api/v1/auth/forgot-password      | ❌       | Request password reset  |
-        | POST   | /api/v1/auth/reset-password       | ❌       | Complete password reset |
-        | GET    | /api/v1/users/me                  | ✅       | Get profile             |
-        | PUT    | /api/v1/users/me                  | ✅       | Update profile          |
-        | PUT    | /api/v1/users/me/change-password  | ✅       | Change password         |
-        | DELETE | /api/v1/users/me                  | ✅       | Delete account          |
-        | GET    | /api/v1/admin/users               | 🔒ADMIN | List all users          |
-        | GET    | /api/v1/admin/users/{id}          | 🔒ADMIN | Get user by ID          |
-        | PUT    | /api/v1/admin/users/{id}/suspend  | 🔒ADMIN | Suspend user            |
-        | PUT    | /api/v1/admin/users/{id}/activate | 🔒ADMIN | Activate user           |
-
-        -------------------------------- H2 Console -----------------------------------------
-        http://localhost:<PORT>/api/v1/h2-console/ - connect database
+API collections are under `doc/`, and the executable product wireframe is under `doc/productInfo/`. New endpoints are always available from generated OpenAPI even before a Postman collection refresh.

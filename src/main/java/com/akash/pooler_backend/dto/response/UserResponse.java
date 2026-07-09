@@ -1,6 +1,8 @@
 package com.akash.pooler_backend.dto.response;
 
 import com.akash.pooler_backend.entity.PbUserEntity;
+import com.akash.pooler_backend.enums.Gender;
+import com.akash.pooler_backend.enums.MatchPreference;
 import com.akash.pooler_backend.enums.Role;
 import com.akash.pooler_backend.enums.UserStatus;
 import lombok.Builder;
@@ -23,6 +25,12 @@ public class UserResponse {
     private Instant createdAt;
     private Instant lastLoginAt;
     private String profilePictureUrl;
+    private String paymentQrCodeUrl;
+    private Gender gender;
+    private MatchPreference matchPreference;
+    private String emergencyContactName;
+    private String emergencyContactPhone;
+    private String emergencyMessage;
 
     public static UserResponse from(PbUserEntity pbUserEntity) {
         return UserResponse.builder()
@@ -32,6 +40,12 @@ public class UserResponse {
                 .status(pbUserEntity.getStatus()).createdAt(pbUserEntity.getCreatedAt())
                 .lastLoginAt(pbUserEntity.getLastLoginAt())
                 .profilePictureUrl(pbUserEntity.getProfilePictureUrl())
+                .paymentQrCodeUrl(pbUserEntity.getPaymentQrCodeUrl())
+                .gender(pbUserEntity.getGender())
+                .matchPreference(pbUserEntity.getMatchPreference())
+                .emergencyContactName(pbUserEntity.getEmergencyContactName())
+                .emergencyContactPhone(pbUserEntity.getEmergencyContactPhone())
+                .emergencyMessage(pbUserEntity.getEmergencyMessage())
                 .build();
     }
 

@@ -1,5 +1,7 @@
 package com.akash.pooler_backend.entity;
 
+import com.akash.pooler_backend.enums.Gender;
+import com.akash.pooler_backend.enums.MatchPreference;
 import com.akash.pooler_backend.enums.Role;
 import com.akash.pooler_backend.enums.UserStatus;
 import jakarta.persistence.*;
@@ -50,6 +52,28 @@ public class PbUserEntity extends BaseEntity implements UserDetails {
 
     @Column(length=500)
     private String profilePictureUrl;
+
+    @Column(length=500)
+    private String paymentQrCodeUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private Gender gender = Gender.UNKNOWN;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private MatchPreference matchPreference = MatchPreference.BOTH;
+
+    @Column(length = 120)
+    private String emergencyContactName;
+
+    @Column(length = 32)
+    private String emergencyContactPhone;
+
+    @Column(length = 300)
+    private String emergencyMessage;
 
     @Enumerated(EnumType.STRING) @Column(nullable=false,length=30)
     @Builder.Default

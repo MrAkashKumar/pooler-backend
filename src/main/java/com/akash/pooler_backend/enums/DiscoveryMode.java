@@ -1,5 +1,7 @@
 package com.akash.pooler_backend.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 /**
  * Whether the user is broadcasting their availability for ride share.
  *
@@ -7,5 +9,18 @@ package com.akash.pooler_backend.enums;
  */
 public enum DiscoveryMode {
     OFF,
-    ON
+    ON;
+
+    @JsonCreator
+    public static DiscoveryMode fromJson(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        return switch (value.trim().toUpperCase()) {
+            case "ON", "VISIBLE" -> ON;
+            case "OFF", "HIDDEN" -> OFF;
+            default -> throw new IllegalArgumentException("Unsupported discovery mode: " + value);
+        };
+    }
 }

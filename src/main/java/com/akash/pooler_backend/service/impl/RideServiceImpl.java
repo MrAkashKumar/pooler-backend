@@ -1,8 +1,10 @@
 package com.akash.pooler_backend.service.impl;
 
 import com.akash.pooler_backend.dto.request.CancelRideRequest;
+import com.akash.pooler_backend.dto.request.UpdateFareSplitRequest;
 import com.akash.pooler_backend.dto.request.UpdateRideStatusRequest;
 import com.akash.pooler_backend.dto.response.RideResponse;
+import com.akash.pooler_backend.dto.response.ArrivalConfirmationResponse;
 import com.akash.pooler_backend.dto.response.RouteCompatibilityResponse;
 import com.akash.pooler_backend.entity.PbRideEntity;
 import com.akash.pooler_backend.entity.PbRideInvitationEntity;
@@ -98,6 +100,8 @@ public class RideServiceImpl implements RideService {
                 .finalDropLat(primaryDestLat).finalDropLng(primaryDestLng)
                 .finalDropAddress(primaryDestAddr)
                 .totalDistanceKm(round(total, 4))
+                .primaryTripDistanceKm(round(total, 4))
+                .secondaryTripDistanceKm(round(leg1, 4))
                 .estimatedDurationMinutes((int) Math.round((total / DRIVE_SPEED_KMH) * 60.0))
                 .estimatedFare(round(total * FARE_PER_KM, 2))
                 .compatibility(compat.getCompatibility())
@@ -152,6 +156,37 @@ public class RideServiceImpl implements RideService {
 
     @Override
     @Transactional
+    @AuditAction("RIDE_FARE_SPLIT_UPDATE")
+    public RideResponse updateFareSplit(PbUserEntity user, String rideEntityId, UpdateFareSplitRequest req) {
+        PbRideEntity ride = loadParticipant(user, rideEntityId);
+        if (req.getTotalFare() == null || req.getTotalFare() <= 0) {
+            throw new RideInvalidStateException("Total fare must be greater than zero");
+        }
+        if (req.getTotalFare() > 99999) {
+            throw new RideInvalidStateException("Total fare is too high");
+        }
+        if (req.getProvider() == null || req.getProvider().isBlank()) {
+            throw new RideInvalidStateException("Cab provider is required");
+        }
+        double primaryKm = ride.getPrimaryTripDistanceKm() != null ? ride.getPrimaryTripDistanceKm() : ride.getTotalDistanceKm();
+        double secondaryKm = ride.getSecondaryTripDistanceKm() != null ? ride.getSecondaryTripDistanceKm() : 0.0;
+        double combinedKm = primaryKm + secondaryKm;
+        if (combinedKm <= 0) {
+            throw new RideInvalidStateException("Ride distance is not available for fare split");
+        }
+        double primaryShare = round(req.getTotalFare() * (primaryKm / combinedKm), 2);
+        double secondaryShare = round(req.getTotalFare() - primaryShare, 2);
+        ride.setFareSplitTotalFare(round(req.getTotalFare(), 2));
+        ride.setFareSplitCurrency((req.getCurrency() == null || req.getCurrency().isBlank()) ? "SGD" : req.getCurrency().trim().toUpperCase());
+        ride.setFareSplitProvider(req.getProvider().trim());
+        ride.setPrimaryFareShare(primaryShare);
+        ride.setSecondaryFareShare(secondaryShare);
+        ride.setFareSplitUpdatedAt(Instant.now());
+        return RideResponse.from(rideRepository.save(ride));
+    }
+
+    @Override
+    @Transactional
     @AuditAction("RIDE_CANCEL")
     public RideResponse cancel(PbUserEntity user, String rideEntityId, CancelRideRequest req) {
         PbRideEntity ride = loadParticipant(user, rideEntityId);
@@ -162,6 +197,24 @@ public class RideServiceImpl implements RideService {
         ride.setCancelledAt(Instant.now());
         if (req != null) ride.setCancelReason(req.getReason());
         return RideResponse.from(rideRepository.save(ride));
+    }
+
+    @Override
+    @Transactional
+    @AuditAction("RIDER_ARRIVAL_CONFIRM")
+    public ArrivalConfirmationResponse confirmArrival(PbUserEntity user, String rideEntityId) {
+        PbRideEntity ride = loadParticipant(user, rideEntityId);
+        if (ride.getStatus().isTerminal()) {
+            throw new RideInvalidStateException("Ride is already " + ride.getStatus());
+        }
+        if (ride.getPrimaryEntityId().equals(user.getEntityId())) ride.setPrimaryArrived(true);
+        else ride.setSecondaryArrived(true);
+        if (ride.bothArrived()) ride.setStatus(RideStatus.AT_PICKUP);
+        ride = rideRepository.save(ride);
+        return ArrivalConfirmationResponse.builder()
+                .ride(RideResponse.from(ride))
+                .bothArrived(ride.bothArrived())
+                .build();
     }
 
     // ─── helpers ──────────────────────────────────────────────────────

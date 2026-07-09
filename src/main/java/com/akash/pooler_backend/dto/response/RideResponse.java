@@ -33,8 +33,17 @@ public class RideResponse {
     private String finalDropAddress;
 
     private Double totalDistanceKm;
+    private Double primaryTripDistanceKm;
+    private Double secondaryTripDistanceKm;
     private Integer estimatedDurationMinutes;
     private Double estimatedFare;
+    private String suggestedBookerEntityId;
+    private Double fareSplitTotalFare;
+    private String fareSplitCurrency;
+    private String fareSplitProvider;
+    private Double primaryFareShare;
+    private Double secondaryFareShare;
+    private Instant fareSplitUpdatedAt;
 
     private RouteCompatibility compatibility;
     private RideStatus status;
@@ -43,6 +52,8 @@ public class RideResponse {
     private Instant completedAt;
     private Instant cancelledAt;
     private String cancelReason;
+    private boolean primaryArrived;
+    private boolean secondaryArrived;
     private Instant createdAt;
 
     public static RideResponse from(PbRideEntity r) {
@@ -58,14 +69,25 @@ public class RideResponse {
                 .finalDropLatitude(r.getFinalDropLat()).finalDropLongitude(r.getFinalDropLng())
                 .finalDropAddress(r.getFinalDropAddress())
                 .totalDistanceKm(r.getTotalDistanceKm())
+                .primaryTripDistanceKm(r.getPrimaryTripDistanceKm())
+                .secondaryTripDistanceKm(r.getSecondaryTripDistanceKm())
                 .estimatedDurationMinutes(r.getEstimatedDurationMinutes())
                 .estimatedFare(r.getEstimatedFare())
+                .suggestedBookerEntityId(r.getPrimaryEntityId())
+                .fareSplitTotalFare(r.getFareSplitTotalFare())
+                .fareSplitCurrency(r.getFareSplitCurrency())
+                .fareSplitProvider(r.getFareSplitProvider())
+                .primaryFareShare(r.getPrimaryFareShare())
+                .secondaryFareShare(r.getSecondaryFareShare())
+                .fareSplitUpdatedAt(r.getFareSplitUpdatedAt())
                 .compatibility(r.getCompatibility())
                 .status(r.getStatus())
                 .startedAt(r.getStartedAt())
                 .completedAt(r.getCompletedAt())
                 .cancelledAt(r.getCancelledAt())
                 .cancelReason(r.getCancelReason())
+                .primaryArrived(r.isPrimaryArrived())
+                .secondaryArrived(r.isSecondaryArrived())
                 .createdAt(r.getCreatedAt())
                 .build();
     }

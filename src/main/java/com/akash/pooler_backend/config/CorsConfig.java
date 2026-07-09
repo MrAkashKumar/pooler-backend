@@ -48,19 +48,12 @@ public class CorsConfig {
         String originsProperty = appProperties.getSecurity().getCors().getAllowedOrigins();
         String methodsProperty = appProperties.getSecurity().getCors().getAllowedMethods();
 
-        // Configure allowed origins
-        if ("*".equals(originsProperty)) {
-            // For development - allow all origins via pattern
-            config.setAllowedOriginPatterns(List.of("*"));
-            log.info("CORS: Allowing all origins (development mode)");
-        } else {
-            List<String> origins = Arrays.asList(originsProperty.split(","));
-            config.setAllowedOrigins(origins);
-            log.info("CORS: Allowing specific origins: {}", origins);
-        }
+        List<String> originPatterns = parseCsv(originsProperty);
+        config.setAllowedOriginPatterns(originPatterns);
+        log.info("CORS: Allowing origin patterns: {}", originPatterns);
 
         // Configure allowed methods
-        config.setAllowedMethods(Arrays.asList(methodsProperty.split(",")));
+        config.setAllowedMethods(parseCsv(methodsProperty));
 
         // Configure allowed headers - be generous for API clients
         config.setAllowedHeaders(List.of(
@@ -118,22 +111,28 @@ public class CorsConfig {
 
                 String origin = req.getHeader("Origin");
                 if (origin != null) {
-                    String originsProperty = appProperties.getSecurity().getCors().getAllowedOrigins();
-                    if ("*".equals(originsProperty) || originsProperty.contains(origin)) {
-                        res.setHeader("Access-Control-Allow-Origin", origin);
+                    CorsConfiguration corsConfiguration = buildCorsConfiguration();
+                    String allowedOrigin = corsConfiguration.checkOrigin(origin);
+                    if (allowedOrigin != null) {
+                        String requestedHeaders = req.getHeader("Access-Control-Request-Headers");
+
+                        res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
                         res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD");
-                        res.setHeader("Access-Control-Allow-Headers", "*");
+                        res.setHeader("Access-Control-Allow-Headers", requestedHeaders != null ? requestedHeaders : "*");
                         res.setHeader("Access-Control-Expose-Headers", "Authorization, X-Correlation-ID, X-Refresh-Token");
                         res.setHeader("Access-Control-Max-Age", "3600");
+                        res.addHeader("Vary", "Origin");
+                        res.addHeader("Vary", "Access-Control-Request-Method");
+                        res.addHeader("Vary", "Access-Control-Request-Headers");
 
-                        if (!"*".equals(originsProperty)) {
+                        if (!"*".equals(appProperties.getSecurity().getCors().getAllowedOrigins())) {
                             res.setHeader("Access-Control-Allow-Credentials", "true");
                         }
                     }
                 }
 
                 // Handle preflight
-                if ("OPTIONS".equalsIgnoreCase(req.getMethod())) {
+                if ("OPTIONS".equalsIgnoreCase(req.getMethod()) && res.getHeader("Access-Control-Allow-Origin") != null) {
                     res.setStatus(HttpServletResponse.SC_OK);
                     return;
                 }
@@ -145,5 +144,20 @@ public class CorsConfig {
         bean.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         bean.setName("additionalCorsFilter");
         return bean;
+    }
+
+    private CorsConfiguration buildCorsConfiguration() {
+        CorsConfiguration config = new CorsConfiguration();
+        String originsProperty = appProperties.getSecurity().getCors().getAllowedOrigins();
+        config.setAllowedOriginPatterns(parseCsv(originsProperty));
+        config.setAllowCredentials(!"*".equals(originsProperty));
+        return config;
+    }
+
+    private static List<String> parseCsv(String value) {
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(item -> !item.isBlank())
+                .toList();
     }
 }

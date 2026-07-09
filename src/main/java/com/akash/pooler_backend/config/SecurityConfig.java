@@ -70,13 +70,14 @@ public class SecurityConfig {
     private final AppProperties appProps;
 
     // ─── Public routes (no token required) ────────────────────────────
-    // NOTE: Paths are matched against the full request URI (no context path is
-    // configured anymore — controllers carry the /api/v1 prefix themselves).
+    // Spring Security matches paths inside the configured servlet context;
+    // controllers carry the /api/v1 prefix.
     private static final String[] PUBLIC_MATCHERS = {
             // Auth lifecycle
             // as per requirement, need then do versioning
             "/**/auth/register",
             "/**/auth/login",
+            "/**/auth/google",
             "/**/auth/refresh",
             "/**/auth/forgot-password",
             "/**/auth/reset-password",
@@ -198,19 +199,11 @@ public class SecurityConfig {
         String originsProperty = appProps.getSecurity().getCors().getAllowedOrigins();
         String methodsProperty = appProps.getSecurity().getCors().getAllowedMethods();
 
-        // Origin policy
-        if ("*".equals(originsProperty)) {
-            config.setAllowedOriginPatterns(List.of("*"));
-        } else {
-            // Split and trim origins
-            List<String> origins = Arrays.stream(originsProperty.split(","))
-                    .map(String::trim)
-                    .toList();
-            config.setAllowedOrigins(origins);
-        }
+        // Use origin patterns so local Expo dev ports such as localhost:8081 are accepted.
+        config.setAllowedOriginPatterns(parseCsv(originsProperty));
 
         // HTTP methods - include all REST methods
-        config.setAllowedMethods(Arrays.asList(methodsProperty.split(",")));
+        config.setAllowedMethods(parseCsv(methodsProperty));
 
         // Standard + mobile-specific headers
         config.setAllowedHeaders(List.of(
@@ -245,5 +238,12 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    private static List<String> parseCsv(String value) {
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(item -> !item.isBlank())
+                .toList();
     }
 }

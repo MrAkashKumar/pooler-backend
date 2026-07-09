@@ -1,5 +1,7 @@
 package com.akash.pooler_backend.dto.response;
 
+import com.akash.pooler_backend.enums.Gender;
+import com.akash.pooler_backend.enums.MatchPreference;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -15,6 +17,8 @@ public class NearbyUserResponse {
     private String userEntityId;
     private String fullName;
     private String profilePictureUrl;
+    private Gender gender;
+    private MatchPreference matchPreference;
     private Double currentLatitude;
     private Double currentLongitude;
     private Double distanceKm;

@@ -1,9 +1,11 @@
 package com.akash.pooler_backend.controller;
 
 import com.akash.pooler_backend.dto.request.CancelRideRequest;
+import com.akash.pooler_backend.dto.request.UpdateFareSplitRequest;
 import com.akash.pooler_backend.dto.request.UpdateRideStatusRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.RideResponse;
+import com.akash.pooler_backend.dto.response.ArrivalConfirmationResponse;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.interceptors.annotation.CurrentUser;
 import com.akash.pooler_backend.interceptors.annotation.ValidSession;
@@ -72,5 +74,25 @@ public class RideController {
             @Valid @RequestBody(required = false) CancelRideRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("Ride cancelled",
                 rideService.cancel(user, rideEntityId, req)));
+    }
+
+    @PostMapping("/{rideEntityId}/fare-split")
+    @ValidSession(reason = "Fare split update requires an active session")
+    @Operation(summary = "Store final provider fare and calculate distance-based rider shares")
+    public ResponseEntity<ApiResponse<RideResponse>> fareSplit(
+            @CurrentUser PbUserEntity user,
+            @PathVariable String rideEntityId,
+            @Valid @RequestBody UpdateFareSplitRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Fare split updated",
+                rideService.updateFareSplit(user, rideEntityId, req)));
+    }
+
+    @PostMapping("/{rideEntityId}/arrive")
+    @ValidSession(reason = "Arrival confirmation requires an active session")
+    @Operation(summary = "Confirm physical arrival; cab handoff unlocks after both riders confirm")
+    public ResponseEntity<ApiResponse<ArrivalConfirmationResponse>> arrive(
+            @CurrentUser PbUserEntity user,
+            @PathVariable String rideEntityId) {
+        return ResponseEntity.ok(ApiResponse.ok(rideService.confirmArrival(user, rideEntityId)));
     }
 }

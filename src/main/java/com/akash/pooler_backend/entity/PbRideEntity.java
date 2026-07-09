@@ -62,8 +62,17 @@ public class PbRideEntity extends BaseEntity {
     @Column(name = "final_drop_address", length = 500) private String finalDropAddress;
 
     @Column(name = "total_distance_km") private Double totalDistanceKm;
+    @Column(name = "primary_trip_distance_km") private Double primaryTripDistanceKm;
+    @Column(name = "secondary_trip_distance_km") private Double secondaryTripDistanceKm;
     @Column(name = "estimated_duration_minutes") private Integer estimatedDurationMinutes;
     @Column(name = "estimated_fare") private Double estimatedFare;
+
+    @Column(name = "fare_split_total_fare") private Double fareSplitTotalFare;
+    @Column(name = "fare_split_currency", length = 12) private String fareSplitCurrency;
+    @Column(name = "fare_split_provider", length = 60) private String fareSplitProvider;
+    @Column(name = "primary_fare_share") private Double primaryFareShare;
+    @Column(name = "secondary_fare_share") private Double secondaryFareShare;
+    @Column(name = "fare_split_updated_at") private Instant fareSplitUpdatedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "compatibility", length = 30)
@@ -79,7 +88,19 @@ public class PbRideEntity extends BaseEntity {
     @Column(name = "cancelled_at") private Instant cancelledAt;
     @Column(name = "cancel_reason", length = 500) private String cancelReason;
 
+    @Column(name = "primary_arrived", nullable = false)
+    @Builder.Default
+    private boolean primaryArrived = false;
+
+    @Column(name = "secondary_arrived", nullable = false)
+    @Builder.Default
+    private boolean secondaryArrived = false;
+
     public boolean isParticipant(String userEntityId) {
         return primaryEntityId.equals(userEntityId) || secondaryEntityId.equals(userEntityId);
+    }
+
+    public boolean bothArrived() {
+        return primaryArrived && secondaryArrived;
     }
 }

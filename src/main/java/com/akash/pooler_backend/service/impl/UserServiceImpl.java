@@ -45,8 +45,25 @@ public class UserServiceImpl implements UserService {
         if (req.getLastName() != null)
             pbUserEntity.setLastName(req.getLastName().trim());
         if (req.getProfilePictureUrl() != null)
-            pbUserEntity.setProfilePictureUrl(req.getProfilePictureUrl());
+            pbUserEntity.setProfilePictureUrl(trimToNull(req.getProfilePictureUrl()));
+        if (req.getPaymentQrCodeUrl() != null)
+            pbUserEntity.setPaymentQrCodeUrl(trimToNull(req.getPaymentQrCodeUrl()));
+        if (req.getGender() != null)
+            pbUserEntity.setGender(req.getGender());
+        if (req.getMatchPreference() != null)
+            pbUserEntity.setMatchPreference(req.getMatchPreference());
+        if (req.getEmergencyContactName() != null)
+            pbUserEntity.setEmergencyContactName(trimToNull(req.getEmergencyContactName()));
+        if (req.getEmergencyContactPhone() != null)
+            pbUserEntity.setEmergencyContactPhone(trimToNull(req.getEmergencyContactPhone()));
+        if (req.getEmergencyMessage() != null)
+            pbUserEntity.setEmergencyMessage(trimToNull(req.getEmergencyMessage()));
         return UserResponse.from(pbUserRepository.save(pbUserEntity));
+    }
+
+    private static String trimToNull(String value) {
+        String trimmed = value.trim();
+        return trimmed.isBlank() ? null : trimmed;
     }
 
     @Override

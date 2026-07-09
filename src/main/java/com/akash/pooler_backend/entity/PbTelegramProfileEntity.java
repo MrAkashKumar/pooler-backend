@@ -2,6 +2,9 @@ package com.akash.pooler_backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.Instant;
 
 @Entity
 @Table(name = "pb_telegram_profiles", indexes = {
@@ -19,6 +22,9 @@ public class PbTelegramProfileEntity extends BaseEntity {
     @Column(name = "entity_id", unique = true, nullable = false)
     private String entityId;
 
+    @Column(name = "user_id", unique = true, nullable = false)
+    private String userEntityId;
+
     @Column(name = "telegram_handle", unique = true)
     private String telegramHandle;
 
@@ -26,5 +32,6 @@ public class PbTelegramProfileEntity extends BaseEntity {
     private String telegramPhoneNumber;
 
     @Column(name = "is_verified")
+    @Builder.Default
     private Boolean isVerified = false;
 }

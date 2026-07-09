@@ -8,6 +8,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
@@ -102,6 +103,20 @@ public class GlobalExceptionHandlers {
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(
             MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
         return buildResponse(ErrorCode.INVALID_REQUEST, "Invalid parameter type: " + ex.getName(), request);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnreadableBody(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+        log.warn("Invalid request body on {}: {}", request.getRequestURI(), ex.getMessage());
+        return buildResponse(ErrorCode.INVALID_REQUEST, "Invalid request body", request);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(
+            IllegalArgumentException ex, HttpServletRequest request) {
+        log.warn("Invalid request on {}: {}", request.getRequestURI(), ex.getMessage());
+        return buildResponse(ErrorCode.INVALID_REQUEST, ex.getMessage(), request);
     }
 
     // ─────────────────────────────────────────────────────────────

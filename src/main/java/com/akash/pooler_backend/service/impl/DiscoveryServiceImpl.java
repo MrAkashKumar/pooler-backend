@@ -9,6 +9,8 @@ import com.akash.pooler_backend.entity.PbContactEntity;
 import com.akash.pooler_backend.entity.PbDiscoveryStatusEntity;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.enums.DiscoveryMode;
+import com.akash.pooler_backend.enums.Gender;
+import com.akash.pooler_backend.enums.MatchPreference;
 import com.akash.pooler_backend.exception.DiscoveryLocationRequiredException;
 import com.akash.pooler_backend.exception.DiscoveryNotEnabledException;
 import com.akash.pooler_backend.interceptors.annotation.AuditAction;
@@ -151,10 +153,13 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                             d.getCurrentLatitude(), d.getCurrentLongitude());
 
                     PbUserEntity u = userById.get(d.getUserEntityId());
+                    if (!isMutualPreferenceMatch(user, u)) return null;
                     return NearbyUserResponse.builder()
                             .userEntityId(d.getUserEntityId())
                             .fullName(u != null ? u.getFullName() : null)
                             .profilePictureUrl(u != null ? u.getProfilePictureUrl() : null)
+                            .gender(u != null ? safeGender(u.getGender()) : Gender.UNKNOWN)
+                            .matchPreference(u != null ? safePreference(u.getMatchPreference()) : MatchPreference.BOTH)
                             .currentLatitude(d.getCurrentLatitude())
                             .currentLongitude(d.getCurrentLongitude())
                             .destinationLatitude(d.getDestinationLatitude())
@@ -172,6 +177,27 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     private static double round(double v, int d) {
         double f = Math.pow(10, d);
         return Math.round(v * f) / f;
+    }
+
+    private static boolean isMutualPreferenceMatch(PbUserEntity requester, PbUserEntity candidate) {
+        if (candidate == null) return false;
+        return allows(safePreference(requester.getMatchPreference()), safeGender(candidate.getGender()))
+                && allows(safePreference(candidate.getMatchPreference()), safeGender(requester.getGender()));
+    }
+
+    private static boolean allows(MatchPreference preference, Gender gender) {
+        if (preference == MatchPreference.BOTH) return true;
+        if (gender == Gender.UNKNOWN) return false;
+        return (preference == MatchPreference.MALE && gender == Gender.MALE)
+                || (preference == MatchPreference.FEMALE && gender == Gender.FEMALE);
+    }
+
+    private static Gender safeGender(Gender gender) {
+        return gender != null ? gender : Gender.UNKNOWN;
+    }
+
+    private static MatchPreference safePreference(MatchPreference preference) {
+        return preference != null ? preference : MatchPreference.BOTH;
     }
 
     private static String newId() {

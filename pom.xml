@@ -30,6 +30,7 @@
 		<java.version>21</java.version>
 		<springdoc.version>3.0.3</springdoc.version>
 		<jjwt.version>0.12.5</jjwt.version>
+		<aws.sdk.version>2.34.0</aws.sdk.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -111,6 +112,11 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+			<version>${aws.sdk.version}</version>
 		</dependency>
 		<!-- ═══════════════════ API DOCS ═══════════════════ -->
 		<dependency>
