@@ -4,6 +4,8 @@ import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.enums.Role;
 import com.akash.pooler_backend.enums.UserStatus;
 import com.akash.pooler_backend.repository.PbUserRepository;
+import com.akash.pooler_backend.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -35,6 +37,8 @@ public class DataSeeder implements CommandLineRunner {
 
     private final PbUserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
+    private final AuthService authService;
+    private final HttpServletRequest request;
 
     @Override
     public void run(String... args) {
@@ -51,7 +55,6 @@ public class DataSeeder implements CommandLineRunner {
         seed("John",   "Mod",    "moderator@pooler.com",    "Mod@1234!",   Role.ROLE_MODERATOR, "929292929");
         seed("Alice",  "User",   "alice@pooler.com",        "User@1234!",  Role.ROLE_USER, "9999999999");
         seed("Bob",    "User",   "bob@pooler.com",          "User@1234!",  Role.ROLE_USER, "0001111111");
-        seed("Akash",  "Kumar",  "akash@pooler.com",        "akash@123!",  Role.ROLE_USER, "22220001");
 
         log.info("╔══════════════════════════════════════════════════════════╗");
         log.info("║  DataSeeder — Seeded Credentials (DEV / STAGING only)    ║");
@@ -69,7 +72,6 @@ public class DataSeeder implements CommandLineRunner {
                 .firstName(first)
                 .lastName(last)
                 .email(email)
-                .username("user-" + entityId)
                 .passwordHash(passwordEncoder.encode(password))
                 .role(role)
                 .entityId(entityId)

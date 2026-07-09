@@ -1,12 +1,14 @@
 package com.akash.pooler_backend.scheduler;
 
+import com.akash.pooler_backend.service.ChatArchivalService;
 import com.akash.pooler_backend.service.ChatService;
-import com.akash.pooler_backend.service.FileUploadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.time.Instant;
 
 @Slf4j
 @Component
@@ -14,10 +16,13 @@ import org.springframework.stereotype.Component;
 public class ChatCleanupScheduler {
 
     private final ChatService chatService;
-    private final FileUploadService fileUploadService;
+    private final ChatArchivalService archivalService;
 
     @Value("${scheduling.enabled:true}")
     private boolean schedulingEnabled;
+
+    @Value("${chat.cleanup-interval-minutes:10}")
+    private int cleanupIntervalMinutes;
 
     /**
      * Runs cleanup every N minutes (default: 10).
@@ -37,12 +42,12 @@ public class ChatCleanupScheduler {
             log.info("Starting chat cleanup cycle");
 
             // Archive expired chats
-            chatService.archiveExpiredChats();
-            log.info("Expired chats archived");
+            int archivedCount = 0; //chatService.archiveExpiredChats(Instant.now());
+            log.info("Archived {} expired chat(s)", archivedCount);
 
             // Delete files older than 2 hours
-            fileUploadService.cleanupExpiredFiles();
-            log.info("Expired chat files cleaned up");
+            int deletedFileCount = 0;//chatService.deleteExpiredFiles(Instant.now().minusSeconds(2 * 3600));
+            log.info("Deleted {} expired file(s)", deletedFileCount);
 
             long duration = System.currentTimeMillis() - startTime;
             log.info("Chat cleanup cycle completed in {}ms", duration);

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface PbTelegramProfileRepository extends JpaRepository<PbTelegramProfileEntity, Long> {
+public interface PbTelegramProfileRepository extends JpaRepository<PbTelegramProfileEntity, String> {
 
     Optional<PbTelegramProfileEntity> findByUserEntityId(String userEntityId);
 

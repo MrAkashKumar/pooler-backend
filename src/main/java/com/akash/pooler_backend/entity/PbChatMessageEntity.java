@@ -9,7 +9,6 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -42,22 +41,18 @@ public class PbChatMessageEntity extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "message_type", nullable = false)
-    @Builder.Default
     private MessageType messageType = MessageType.TEXT;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "metadata")
-    @Builder.Default
     private Map<String, Object> metadata = new HashMap<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "read_by_user_ids")
-    @Builder.Default
-    private List<String> readByUserIds = new ArrayList<>();
+    private List<String> readByUserIds;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "reactions")
-    @Builder.Default
     private Map<String, List<String>> reactions = new HashMap<>();
 
     @Column(name = "edited_at")

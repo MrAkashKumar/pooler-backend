@@ -17,11 +17,11 @@ This folder contains a ready-to-import Postman collection and environment for th
 
 ## Base URL
 
-The collection uses `{{baseUrl}}` (default `http://localhost:8888/pooler-backend`).
+The collection uses `{{baseUrl}}` (default `http://localhost:8080`).
 
 | Profile | URL |
 | --- | --- |
-| `dev` (default) | `http://localhost:8888/pooler-backend` |
+| `dev` (default) | `http://localhost:8080` |
 | no-profile | `http://localhost:8888` |
 | staging | `https://staging.pooler.com` |
 | prod | `https://api.pooler.com` |
@@ -30,8 +30,8 @@ The collection uses `{{baseUrl}}` (default `http://localhost:8888/pooler-backend
 
 After the fix in `application.properties` and `SecurityConfig.java`:
 
-- Swagger UI: `http://localhost:8888/pooler-backend/swagger-ui/index.html`
-- OpenAPI JSON: `http://localhost:8888/pooler-backend/v3/api-docs`
+- Swagger UI: `http://localhost:8080/pooler-backend/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
 > The `server.servlet.contextPath=/api/v1` was removed because every controller already declares `@RequestMapping("/api/v1/...")`; the duplicated prefix was breaking Swagger and the public-route matchers.
 

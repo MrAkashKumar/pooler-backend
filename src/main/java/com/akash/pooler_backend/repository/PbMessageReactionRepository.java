@@ -10,14 +10,14 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface PbMessageReactionRepository extends JpaRepository<PbMessageReactionEntity, Long> {
+public interface PbMessageReactionRepository extends JpaRepository<PbMessageReactionEntity, String> {
 
-    List<PbMessageReactionEntity> findByMessageId(String messageId);
+    List<PbMessageReactionEntity> findByMessageEntityId(String messageEntityId);
 
     @Modifying
-    @Query("DELETE FROM PbMessageReactionEntity r WHERE r.messageId = :messageId AND r.userId = :userId AND r.reaction = :emoji")
+    @Query("DELETE FROM PbMessageReactionEntity r WHERE r.messageEntityId = :messageId AND r.userEntityId = :userId AND r.reaction = :emoji")
     void deleteByMessageAndUserAndReaction(@Param("messageId") String messageId, @Param("userId") String userId, @Param("emoji") String emoji);
 
-    @Query("SELECT COUNT(r) FROM PbMessageReactionEntity r WHERE r.messageId = :messageId AND r.reaction = :emoji")
+    @Query("SELECT COUNT(r) FROM PbMessageReactionEntity r WHERE r.messageEntityId = :messageId AND r.reaction = :emoji")
     long countByMessageAndReaction(@Param("messageId") String messageId, @Param("emoji") String emoji);
 }

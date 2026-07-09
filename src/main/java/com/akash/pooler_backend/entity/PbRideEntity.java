@@ -79,19 +79,7 @@ public class PbRideEntity extends BaseEntity {
     @Column(name = "cancelled_at") private Instant cancelledAt;
     @Column(name = "cancel_reason", length = 500) private String cancelReason;
 
-    @Column(name = "primary_arrived", nullable = false)
-    @Builder.Default
-    private boolean primaryArrived = false;
-
-    @Column(name = "secondary_arrived", nullable = false)
-    @Builder.Default
-    private boolean secondaryArrived = false;
-
     public boolean isParticipant(String userEntityId) {
         return primaryEntityId.equals(userEntityId) || secondaryEntityId.equals(userEntityId);
-    }
-
-    public boolean bothArrived() {
-        return primaryArrived && secondaryArrived;
     }
 }

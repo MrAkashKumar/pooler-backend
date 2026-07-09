@@ -70,14 +70,13 @@ public class SecurityConfig {
     private final AppProperties appProps;
 
     // ─── Public routes (no token required) ────────────────────────────
-    // Spring Security matches paths inside the configured servlet context;
-    // controllers carry the /api/v1 prefix.
+    // NOTE: Paths are matched against the full request URI (no context path is
+    // configured anymore — controllers carry the /api/v1 prefix themselves).
     private static final String[] PUBLIC_MATCHERS = {
             // Auth lifecycle
             // as per requirement, need then do versioning
             "/**/auth/register",
             "/**/auth/login",
-            "/**/auth/google",
             "/**/auth/refresh",
             "/**/auth/forgot-password",
             "/**/auth/reset-password",

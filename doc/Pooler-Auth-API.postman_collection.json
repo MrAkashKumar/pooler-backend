@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "f1b3e3a0-1234-4abc-9def-pooler0001",
     "name": "Pooler Auth API",
-    "description": "Complete Postman collection for the Pooler Spring Boot backend.\n\n**Base URL:** `{{baseUrl}}` (default `http://localhost:8888/pooler-backend`)\n\n**Auth flow:**\n1. `POST /api/v1/auth/register` — create account, get tokens\n2. `POST /api/v1/auth/login` — get tokens\n3. Use `{{accessToken}}` (Bearer) for protected endpoints\n4. `POST /api/v1/auth/refresh` — get a new access token before expiry\n5. `POST /api/v1/auth/logout` — revoke session\n\n**Mobile-specific headers (optional but recommended):**\n- `X-Device-Id` — UUID / Android ID\n- `X-Platform` — `ANDROID` | `IOS` | `WEB`\n- `X-App-Version` — semver, e.g. `1.0.0`\n- `X-FCM-Token` — Firebase push token\n- `X-Session-Token` — current session token (required by `@ValidSession` endpoints)\n\nLogin/register responses automatically populate `{{accessToken}}`, `{{refreshToken}}`, `{{sessionToken}}` and `{{userId}}` via the test scripts in this collection.",
+    "description": "Complete Postman collection for the Pooler Spring Boot backend.\n\n**Base URL:** `{{baseUrl}}` (default `http://localhost:8080`)\n\n**Auth flow:**\n1. `POST /api/v1/auth/register` — create account, get tokens\n2. `POST /api/v1/auth/login` — get tokens\n3. Use `{{accessToken}}` (Bearer) for protected endpoints\n4. `POST /api/v1/auth/refresh` — get a new access token before expiry\n5. `POST /api/v1/auth/logout` — revoke session\n\n**Mobile-specific headers (optional but recommended):**\n- `X-Device-Id` — UUID / Android ID\n- `X-Platform` — `ANDROID` | `IOS` | `WEB`\n- `X-App-Version` — semver, e.g. `1.0.0`\n- `X-FCM-Token` — Firebase push token\n- `X-Session-Token` — current session token (required by `@ValidSession` endpoints)\n\nLogin/register responses automatically populate `{{accessToken}}`, `{{refreshToken}}`, `{{sessionToken}}` and `{{userId}}` via the test scripts in this collection.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -12,7 +12,7 @@
     ]
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8888/pooler-backend", "type": "string" },
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
     { "key": "accessToken", "value": "", "type": "string" },
     { "key": "refreshToken", "value": "", "type": "string" },
     { "key": "sessionToken", "value": "", "type": "string" },

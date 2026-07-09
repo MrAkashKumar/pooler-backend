@@ -18,7 +18,6 @@ import com.akash.pooler_backend.interceptors.annotation.AuditAction;
 import com.akash.pooler_backend.repository.PbRideInvitationRepository;
 import com.akash.pooler_backend.repository.PbUserRepository;
 import com.akash.pooler_backend.service.GeoService;
-import com.akash.pooler_backend.service.ChatService;
 import com.akash.pooler_backend.service.RideInvitationService;
 import com.akash.pooler_backend.service.RideService;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +43,6 @@ public class RideInvitationServiceImpl implements RideInvitationService {
     private final PbUserRepository userRepository;
     private final GeoService geoService;
     private final RideService rideService;
-    private final ChatService chatService;
 
     @Override
     @Transactional
@@ -111,7 +109,6 @@ public class RideInvitationServiceImpl implements RideInvitationService {
         inv.setRespondedAt(Instant.now());
 
         inv = invitationRepository.save(inv);
-        chatService.createChatThread(receiver, inv);
         log.info("Invitation {} accepted; pickup hub computed at ({}, {})",
                 invitationEntityId, inv.getPickupLat(), inv.getPickupLng());
         return RideInvitationResponse.from(inv);

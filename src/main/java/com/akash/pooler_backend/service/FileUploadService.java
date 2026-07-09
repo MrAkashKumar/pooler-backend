@@ -1,7 +1,6 @@
 package com.akash.pooler_backend.service;
 
 import com.akash.pooler_backend.dto.response.FileUploadResponse;
-import com.akash.pooler_backend.dto.response.ChatFileDownload;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,6 +25,4 @@ public interface FileUploadService {
      * Validate file size (max 10MB).
      */
     void validateFileSize(MultipartFile file);
-
-    ChatFileDownload loadMessageFile(PbUserEntity requester, String fileId);
 }

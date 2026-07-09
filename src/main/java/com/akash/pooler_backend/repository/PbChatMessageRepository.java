@@ -11,28 +11,25 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
-public interface PbChatMessageRepository extends JpaRepository<PbChatMessageEntity, Long> {
+public interface PbChatMessageRepository extends JpaRepository<PbChatMessageEntity, String> {
 
-    Optional<PbChatMessageEntity> findByEntityId(String entityId);
+    Page<PbChatMessageEntity> findByThreadEntityIdOrderByCreatedAtDesc(String threadEntityId, Pageable pageable);
 
-    Page<PbChatMessageEntity> findByThreadIdOrderByCreatedAtDesc(String threadId, Pageable pageable);
-
-    @Query("SELECT COUNT(m) FROM PbChatMessageEntity m WHERE m.threadId = :threadId")
+    @Query("SELECT COUNT(m) FROM PbChatMessageEntity m WHERE m.threadEntityId = :threadId")
     long countByThreadId(@Param("threadId") String threadId);
 
-    @Query("SELECT m FROM PbChatMessageEntity m WHERE m.threadId = :threadId AND LOWER(m.content) LIKE LOWER(CONCAT('%', :query, '%')) ORDER BY m.createdAt DESC")
+    @Query("SELECT m FROM PbChatMessageEntity m WHERE m.threadEntityId = :threadId AND (m.content LIKE %:query% OR m.metadata ->> 'address' LIKE %:query%) ORDER BY m.createdAt DESC")
     List<PbChatMessageEntity> searchInThread(@Param("threadId") String threadId, @Param("query") String query);
 
-    @Query("SELECT m FROM PbChatMessageEntity m WHERE m.threadId = :threadId AND m.createdAt >= :startTime ORDER BY m.createdAt ASC")
+    @Query("SELECT m FROM PbChatMessageEntity m WHERE m.threadEntityId = :threadId AND m.createdAt >= :startTime ORDER BY m.createdAt ASC")
     List<PbChatMessageEntity> findByThreadAndCreatedAfter(@Param("threadId") String threadId, @Param("startTime") Instant startTime);
 
     @Modifying
-    @Query("DELETE FROM PbChatMessageEntity m WHERE m.threadId = :threadId")
+    @Query("DELETE FROM PbChatMessageEntity m WHERE m.threadEntityId = :threadId")
     void deleteByThreadId(@Param("threadId") String threadId);
 
-    @Query("SELECT COUNT(m) FROM PbChatMessageEntity m WHERE m.threadId = :threadId AND m.sender <> :userId AND m.isRead = false")
+    @Query(value = "SELECT COUNT(*) FROM pb_chat_messages WHERE thread_entity_id = :threadId AND (is_read = false OR :userId NOT IN (SELECT jsonb_array_elements_text(read_by_user_ids)))", nativeQuery = true)
     long countUnreadByThreadAndUser(@Param("threadId") String threadId, @Param("userId") String userId);
 }
