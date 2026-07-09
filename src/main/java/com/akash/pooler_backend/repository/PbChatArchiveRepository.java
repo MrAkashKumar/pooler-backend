@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface PbChatArchiveRepository extends JpaRepository<PbChatArchiveEntity, String> {
+public interface PbChatArchiveRepository extends JpaRepository<PbChatArchiveEntity, Long> {
 
-    Optional<PbChatArchiveEntity> findByThreadEntityId(String threadEntityId);
+    Optional<PbChatArchiveEntity> findByThreadId(String threadId);
 }

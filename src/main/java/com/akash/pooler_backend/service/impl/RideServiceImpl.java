@@ -3,6 +3,7 @@ package com.akash.pooler_backend.service.impl;
 import com.akash.pooler_backend.dto.request.CancelRideRequest;
 import com.akash.pooler_backend.dto.request.UpdateRideStatusRequest;
 import com.akash.pooler_backend.dto.response.RideResponse;
+import com.akash.pooler_backend.dto.response.ArrivalConfirmationResponse;
 import com.akash.pooler_backend.dto.response.RouteCompatibilityResponse;
 import com.akash.pooler_backend.entity.PbRideEntity;
 import com.akash.pooler_backend.entity.PbRideInvitationEntity;
@@ -162,6 +163,24 @@ public class RideServiceImpl implements RideService {
         ride.setCancelledAt(Instant.now());
         if (req != null) ride.setCancelReason(req.getReason());
         return RideResponse.from(rideRepository.save(ride));
+    }
+
+    @Override
+    @Transactional
+    @AuditAction("RIDER_ARRIVAL_CONFIRM")
+    public ArrivalConfirmationResponse confirmArrival(PbUserEntity user, String rideEntityId) {
+        PbRideEntity ride = loadParticipant(user, rideEntityId);
+        if (ride.getStatus().isTerminal()) {
+            throw new RideInvalidStateException("Ride is already " + ride.getStatus());
+        }
+        if (ride.getPrimaryEntityId().equals(user.getEntityId())) ride.setPrimaryArrived(true);
+        else ride.setSecondaryArrived(true);
+        if (ride.bothArrived()) ride.setStatus(RideStatus.AT_PICKUP);
+        ride = rideRepository.save(ride);
+        return ArrivalConfirmationResponse.builder()
+                .ride(RideResponse.from(ride))
+                .bothArrived(ride.bothArrived())
+                .build();
     }
 
     // ─── helpers ──────────────────────────────────────────────────────
