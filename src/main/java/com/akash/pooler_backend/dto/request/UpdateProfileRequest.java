@@ -42,17 +42,9 @@ public class UpdateProfileRequest {
         return lastName == null || !lastName.trim().isBlank();
     }
 
-    @AssertTrue(message = "Please choose Woman or Man")
+    @AssertTrue(message = "Please choose Men, Women, or Other")
     public boolean isGenderSelectedWhenProvided() {
         return gender == null || gender != Gender.UNKNOWN;
-    }
-
-    @AssertTrue(message = "Emergency contact phone is required when contact name or message is set")
-    public boolean isEmergencyPhonePresentWhenNeeded() {
-        boolean hasName = emergencyContactName != null && !emergencyContactName.trim().isBlank();
-        boolean hasMessage = emergencyMessage != null && !emergencyMessage.trim().isBlank();
-        boolean hasPhone = emergencyContactPhone != null && !emergencyContactPhone.trim().isBlank();
-        return !hasName && !hasMessage || hasPhone;
     }
 
     @AssertTrue(message = "Emergency contact phone is too short")

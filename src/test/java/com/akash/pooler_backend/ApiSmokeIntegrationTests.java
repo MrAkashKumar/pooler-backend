@@ -1,6 +1,7 @@
 package com.akash.pooler_backend;
 
 import com.akash.pooler_backend.dto.request.DiscoveryToggleRequest;
+import com.akash.pooler_backend.dto.request.CreateSafetyReportRequest;
 import com.akash.pooler_backend.dto.request.UpdateFareSplitRequest;
 import com.akash.pooler_backend.entity.PbRideEntity;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ import com.akash.pooler_backend.repository.PbRideRepository;
 import com.akash.pooler_backend.repository.PbUserRepository;
 import com.akash.pooler_backend.service.ChatService;
 import com.akash.pooler_backend.service.RideService;
+import com.akash.pooler_backend.service.SafetyReportService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.PageRequest;
 
@@ -52,6 +54,7 @@ class ApiSmokeIntegrationTests {
     @Autowired private PbChatArchiveRepository archiveRepository;
     @Autowired private ChatService chatService;
     @Autowired private RideService rideService;
+    @Autowired private SafetyReportService safetyReportService;
 
     @Test
     void publicHealthUsesApiEnvelope() throws Exception {
@@ -168,5 +171,25 @@ class ApiSmokeIntegrationTests {
         assertEquals(18.0, response.getPrimaryFareShare());
         assertEquals(12.0, response.getSecondaryFareShare());
         assertEquals("Grab", response.getFareSplitProvider());
+    }
+
+    @Test
+    void safetyReportCreateAndReadForReporter() {
+        var akash = userRepository.findByEmail("akash@pooler.com").orElseThrow();
+
+        var created = safetyReportService.create(akash, CreateSafetyReportRequest.builder()
+                .rideEntityId("ride-safety-test")
+                .category("Unsafe meetup place")
+                .details("The pickup point was too isolated at night.")
+                .contactAllowed(true)
+                .latitude(1.3008)
+                .longitude(103.8565)
+                .build());
+
+        var reports = safetyReportService.listForReporter(akash);
+
+        org.junit.jupiter.api.Assertions.assertTrue(reports.stream()
+                .anyMatch(report -> report.getEntityId().equals(created.getEntityId())));
+        assertEquals("OPEN", created.getStatus().name());
     }
 }

@@ -186,8 +186,8 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     }
 
     private static boolean allows(MatchPreference preference, Gender gender) {
-        if (preference == MatchPreference.BOTH) return true;
         if (gender == Gender.UNKNOWN) return false;
+        if (preference == MatchPreference.BOTH) return true;
         return (preference == MatchPreference.MALE && gender == Gender.MALE)
                 || (preference == MatchPreference.FEMALE && gender == Gender.FEMALE);
     }

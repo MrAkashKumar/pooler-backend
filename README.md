@@ -49,7 +49,7 @@ Core modules:
 
 | Field | Values | Default | Purpose |
 | --- | --- | --- | --- |
-| `gender` | `UNKNOWN`, `MALE`, `FEMALE` | `UNKNOWN` | The rider's own profile category for mutual filtering. |
+| `gender` | `UNKNOWN`, `MALE`, `FEMALE`, `OTHER` | `UNKNOWN` | The rider's own profile category for mutual filtering. First-time setup must use an explicit rider choice, not an auto-selected default. |
 | `matchPreference` | `BOTH`, `MALE`, `FEMALE` | `BOTH` | Who the rider wants to see in discovery. |
 | `emergencyContactName` | string, max 120 | `null` | Trusted family/contact label displayed in Safety centre. |
 | `emergencyContactPhone` | string, max 32 | `null` | Phone number used by the mobile app for dialler/SMS handoff. |
@@ -108,3 +108,7 @@ The backend stores the total fare, provider, currency, `primaryFareShare`, and `
 ```
 
 API collections are under `doc/`, and the executable product wireframe is under `doc/productInfo/`. New endpoints are always available from generated OpenAPI even before a Postman collection refresh.
+
+## Google OAuth note
+
+The backend does not expose `/oauthredirect`. That route belongs to the Expo client and is registered in Google Cloud as the OAuth redirect URI. After Google redirects back to the client, the client sends the received ID token to `POST /api/v1/auth/google`, where this backend verifies the token audience against `app.google.client-ids`.
