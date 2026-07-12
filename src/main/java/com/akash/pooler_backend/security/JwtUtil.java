@@ -51,13 +51,12 @@ public class JwtUtil {
     private String buildToken(PbUserEntity user, TokenType type, long expiryMs, Map<String, Object> extra) {
         Instant now = Instant.now();
         JwtBuilder builder = Jwts.builder()
-                .subject(user.getId().toString())
+                .subject(user.getEntityId())
                 .issuer(props.getJwt().getIssuer())
                 .audience().add(props.getJwt().getAudience()).and()
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusMillis(expiryMs)))
                 .id(UUID.randomUUID().toString())
-                .claim("email", user.getEmail())
                 .claim("tokenType", type.name())
                 .signWith(secretKey());
 
@@ -75,18 +74,18 @@ public class JwtUtil {
                     .parseSignedClaims(token)
                     .getPayload();
         } catch (ExpiredJwtException ex) {
-            log.debug("JWT expired: {}", ex.getMessage());
+            log.debug("JWT expired");
             throw new TokenExpiredException("JWT token has expired");
         } catch (JwtException | IllegalArgumentException ex) {
-            log.debug("JWT invalid: {}", ex.getMessage());
-            throw new TokenInvalidException("JWT token is invalid: " + ex.getMessage());
+            log.debug("JWT invalid");
+            throw new TokenInvalidException("JWT token is invalid");
         }
     }
 
     public boolean isTokenValid(String token, PbUserEntity pbUserEntity) {
         try {
             Claims claims = validateAndExtract(token);
-            return claims.getSubject().equals(pbUserEntity.getId().toString()) && !isExpired(claims);
+            return claims.getSubject().equals(pbUserEntity.getEntityId()) && !isExpired(claims);
         } catch (Exception e) {
             return false;
         }
@@ -95,7 +94,6 @@ public class JwtUtil {
     // ── Claims Extraction ────────────────────────────────────────────
 
     public String extractSubject(String token)  { return validateAndExtract(token).getSubject(); }
-    public String extractEmail(String token)     { return validateAndExtract(token).get("email", String.class); }
     public String extractTokenType(String token) { return validateAndExtract(token).get("tokenType", String.class); }
     public String extractJti(String token)       { return validateAndExtract(token).getId(); }
     public Date   extractExpiration(String token){ return validateAndExtract(token).getExpiration(); }

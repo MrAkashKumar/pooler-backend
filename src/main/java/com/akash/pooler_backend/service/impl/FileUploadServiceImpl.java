@@ -34,23 +34,30 @@ public class FileUploadServiceImpl implements FileUploadService {
     private final Path storagePath;
     private final long maxBytes;
     private final Duration expiry;
+    private final int maxTrackedFiles;
     private final Map<String, StoredFile> files = new ConcurrentHashMap<>();
 
     public FileUploadServiceImpl(
             ChatService chatService,
             @Value("${file-upload.storage-path:/tmp/chat-files}") String storagePath,
             @Value("${file-upload.max-size-mb:10}") long maxSizeMb,
-            @Value("${file-upload.expiration-hours:2}") long expirationHours) {
+            @Value("${file-upload.expiration-hours:2}") long expirationHours,
+            @Value("${file-upload.max-tracked-files:1000}") int maxTrackedFiles) {
         this.chatService = chatService;
         this.storagePath = Path.of(storagePath).toAbsolutePath().normalize();
         this.maxBytes = maxSizeMb * 1024 * 1024;
         this.expiry = Duration.ofHours(expirationHours);
+        this.maxTrackedFiles = Math.max(1, maxTrackedFiles);
     }
 
     @Override
     public FileUploadResponse uploadMessageFile(PbUserEntity uploader, String threadId, MultipartFile file) {
         if (!chatService.hasAccessToChat(threadId, uploader) || chatService.isChatExpired(threadId)) {
             throw new ChatAccessDeniedException();
+        }
+        cleanupExpiredFiles();
+        if (files.size() >= maxTrackedFiles) {
+            throw new FileUploadException(ErrorCode.RATE_LIMIT_EXCEEDED, "Temporary file capacity reached. Please try again later.");
         }
         validateFileSize(file);
         String contentType = file.getContentType() == null ? "application/octet-stream" : file.getContentType();
@@ -111,6 +118,9 @@ public class FileUploadServiceImpl implements FileUploadService {
     private StoredFile requireActive(String fileId) {
         StoredFile file = files.get(fileId);
         if (file == null || file.expiresAt().isBefore(Instant.now()) || !Files.exists(file.path())) {
+            if (file != null) {
+                files.remove(fileId);
+            }
             throw new FileUploadException(ErrorCode.FILE_UPLOAD_EXPIRED, ErrorCode.FILE_UPLOAD_EXPIRED.getDefaultMessage());
         }
         return file;

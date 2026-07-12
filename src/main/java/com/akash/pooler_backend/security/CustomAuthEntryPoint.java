@@ -53,11 +53,9 @@ public class CustomAuthEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException authException) throws IOException {
 
-        log.warn("Unauthorized access ← {} {} | ip={} | reason={}",
+        log.warn("Unauthorized access ← {} {}",
                 request.getMethod(),
-                request.getRequestURI(),
-                getClientIp(request),
-                authException.getMessage());
+                request.getRequestURI());
 
         // Determine the most specific error code based on request state
         ErrorCode errorCode = resolveErrorCode(request, authException);
@@ -98,13 +96,5 @@ public class CustomAuthEntryPoint implements AuthenticationEntryPoint {
             return ErrorCode.TOKEN_INVALID;
         }
         return ErrorCode.MISSING_AUTH_HEADER;
-    }
-
-    private String getClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
     }
 }

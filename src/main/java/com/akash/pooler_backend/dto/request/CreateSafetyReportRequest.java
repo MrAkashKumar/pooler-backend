@@ -21,7 +21,7 @@ public class CreateSafetyReportRequest {
     private String category;
 
     @NotBlank(message = "details are required")
-    @Size(max = 1000, message = "details must be at most 1000 characters")
+    @Size(min = 10, max = 1000, message = "details must be between 10 and 1000 characters")
     private String details;
 
     private Boolean contactAllowed;

@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.aspect;
 
+import com.akash.pooler_backend.exception.BaseException;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ServiceLoggingAspect {
 
-    @Pointcut("execution(* com.enterprise.auth.service.impl.*.*(..))")
+    @Pointcut("execution(* com.akash.pooler_backend.service.impl.*.*(..))")
     public void serviceMethods() {}
 
     @Around("serviceMethods()")
@@ -33,8 +34,12 @@ public class ServiceLoggingAspect {
             }
             return result;
         } catch (Throwable t) {
-            log.error("SERVICE [{}] threw {} in {}ms", method, t.getClass().getSimpleName(),
-                    System.currentTimeMillis() - start);
+            long elapsed = System.currentTimeMillis() - start;
+            if (t instanceof BaseException) {
+                log.warn("SERVICE [{}] rejected request with {} in {}ms", method, t.getClass().getSimpleName(), elapsed);
+            } else {
+                log.error("SERVICE [{}] threw {} in {}ms", method, t.getClass().getSimpleName(), elapsed);
+            }
             throw t;
         }
     }

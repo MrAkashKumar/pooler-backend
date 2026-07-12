@@ -3,12 +3,18 @@ package com.akash.pooler_backend;
 import com.akash.pooler_backend.dto.request.DiscoveryToggleRequest;
 import com.akash.pooler_backend.dto.request.CreateSafetyReportRequest;
 import com.akash.pooler_backend.dto.request.UpdateFareSplitRequest;
+import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.entity.PbRideEntity;
+import com.akash.pooler_backend.enums.Gender;
+import com.akash.pooler_backend.enums.Role;
+import com.akash.pooler_backend.enums.UserStatus;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import com.akash.pooler_backend.dto.request.SendMessageRequest;
 import com.akash.pooler_backend.entity.PbRideInvitationEntity;
@@ -17,6 +23,7 @@ import com.akash.pooler_backend.enums.DiscoveryMode;
 import com.akash.pooler_backend.enums.InvitationStatusEnums;
 import com.akash.pooler_backend.repository.PbChatArchiveRepository;
 import com.akash.pooler_backend.repository.PbChatThreadRepository;
+import com.akash.pooler_backend.repository.PbEmailVerificationTokenRepository;
 import com.akash.pooler_backend.repository.PbRideInvitationRepository;
 import com.akash.pooler_backend.repository.PbRideRepository;
 import com.akash.pooler_backend.repository.PbUserRepository;
@@ -41,6 +48,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class ApiSmokeIntegrationTests {
 
+    private static final String TEST_PASSWORD = "Test@1234!";
+    private static final String RIDER_A_EMAIL = "rider-a@hoppo.test";
+    private static final String RIDER_B_EMAIL = "rider-b@hoppo.test";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -52,9 +63,17 @@ class ApiSmokeIntegrationTests {
     @Autowired private PbRideRepository rideRepository;
     @Autowired private PbChatThreadRepository threadRepository;
     @Autowired private PbChatArchiveRepository archiveRepository;
+    @Autowired private PbEmailVerificationTokenRepository emailVerificationTokenRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private ChatService chatService;
     @Autowired private RideService rideService;
     @Autowired private SafetyReportService safetyReportService;
+
+    @BeforeEach
+    void ensureTestUsers() {
+        ensureUser("test-user-a", RIDER_A_EMAIL, "Rider", "A", Gender.MALE);
+        ensureUser("test-user-b", RIDER_B_EMAIL, "Rider", "B", Gender.FEMALE);
+    }
 
     @Test
     void publicHealthUsesApiEnvelope() throws Exception {
@@ -89,7 +108,7 @@ class ApiSmokeIntegrationTests {
     }
 
     @Test
-    void seededMobileLoginReturnsAllThreeTokenTypes() throws Exception {
+    void mobileLoginReturnsAllThreeTokenTypes() throws Exception {
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Device-Id", "integration-test-device")
@@ -97,23 +116,89 @@ class ApiSmokeIntegrationTests {
                         .header("X-App-Version", "1.0.0")
                         .content("""
                                 {
-                                  "email": "akash@pooler.com",
-                                  "password": "akash@123!",
+                                  "email": "%s",
+                                  "password": "%s",
                                   "platform": "ANDROID"
                                 }
-                                """))
+                                """.formatted(RIDER_A_EMAIL, TEST_PASSWORD)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.data.refreshToken").isNotEmpty())
                 .andExpect(jsonPath("$.data.sessionToken").isNotEmpty())
-                .andExpect(jsonPath("$.data.user.email").value("akash@pooler.com"));
+                .andExpect(jsonPath("$.data.user.email").value(RIDER_A_EMAIL));
+    }
+
+    @Test
+    void emailSignupRequiresVerificationBeforeLogin() throws Exception {
+        String email = "signup-" + UUID.randomUUID().toString().substring(0, 8) + "@pooler.com";
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Device-Id", "integration-test-device")
+                        .header("X-Platform", "ANDROID")
+                        .header("X-App-Version", "1.0.0")
+                        .content("""
+                                {
+                                  "firstName": "New",
+                                  "lastName": "Rider",
+                                  "email": "%s",
+                                  "gender": "OTHER",
+                                  "password": "%s",
+                                  "confirmPassword": "%s",
+                                  "platform": "ANDROID"
+                                }
+                                """.formatted(email, TEST_PASSWORD, TEST_PASSWORD)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true));
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Device-Id", "integration-test-device")
+                        .header("X-Platform", "ANDROID")
+                        .header("X-App-Version", "1.0.0")
+                        .content("""
+                                {
+                                  "email": "%s",
+                                  "password": "%s",
+                                  "platform": "ANDROID"
+                                }
+                                """.formatted(email, TEST_PASSWORD)))
+                .andExpect(status().isUnauthorized());
+
+        var user = userRepository.findByEmail(email).orElseThrow();
+        var token = emailVerificationTokenRepository.findAll().stream()
+                .filter(candidate -> candidate.getEntityId().equals(user.getEntityId()))
+                .findFirst()
+                .orElseThrow();
+
+        mockMvc.perform(post("/api/v1/auth/verify-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "token": "%s" }
+                                """.formatted(token.getToken())))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Device-Id", "integration-test-device")
+                        .header("X-Platform", "ANDROID")
+                        .header("X-App-Version", "1.0.0")
+                        .content("""
+                                {
+                                  "email": "%s",
+                                  "password": "%s",
+                                  "platform": "ANDROID"
+                                }
+                                """.formatted(email, TEST_PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty());
     }
 
     @Test
     void acceptedInvitationChatCanSendAndArchiveMessages() {
-        var akash = userRepository.findByEmail("akash@pooler.com").orElseThrow();
-        var alice = userRepository.findByEmail("alice@pooler.com").orElseThrow();
+        var akash = userRepository.findByEmail(RIDER_A_EMAIL).orElseThrow();
+        var alice = userRepository.findByEmail(RIDER_B_EMAIL).orElseThrow();
         String invitationId = "test-inv-" + UUID.randomUUID().toString().substring(0, 8);
         var invitation = invitationRepository.save(PbRideInvitationEntity.builder()
                 .entityId(invitationId)
@@ -146,8 +231,8 @@ class ApiSmokeIntegrationTests {
 
     @Test
     void fareSplitUsesDistanceWeightedShares() {
-        var akash = userRepository.findByEmail("akash@pooler.com").orElseThrow();
-        var alice = userRepository.findByEmail("alice@pooler.com").orElseThrow();
+        var akash = userRepository.findByEmail(RIDER_A_EMAIL).orElseThrow();
+        var alice = userRepository.findByEmail(RIDER_B_EMAIL).orElseThrow();
         String rideId = "ride-test-" + UUID.randomUUID().toString().substring(0, 8);
         rideRepository.save(PbRideEntity.builder()
                 .entityId(rideId)
@@ -175,7 +260,7 @@ class ApiSmokeIntegrationTests {
 
     @Test
     void safetyReportCreateAndReadForReporter() {
-        var akash = userRepository.findByEmail("akash@pooler.com").orElseThrow();
+        var akash = userRepository.findByEmail(RIDER_A_EMAIL).orElseThrow();
 
         var created = safetyReportService.create(akash, CreateSafetyReportRequest.builder()
                 .rideEntityId("ride-safety-test")
@@ -191,5 +276,22 @@ class ApiSmokeIntegrationTests {
         org.junit.jupiter.api.Assertions.assertTrue(reports.stream()
                 .anyMatch(report -> report.getEntityId().equals(created.getEntityId())));
         assertEquals("OPEN", created.getStatus().name());
+    }
+
+    private void ensureUser(String entityId, String email, String firstName, String lastName, Gender gender) {
+        if (userRepository.existsByEmail(email)) {
+            return;
+        }
+        userRepository.save(PbUserEntity.builder()
+                .entityId(entityId)
+                .username(entityId)
+                .email(email)
+                .firstName(firstName)
+                .lastName(lastName)
+                .gender(gender)
+                .role(Role.ROLE_USER)
+                .status(UserStatus.ACTIVE)
+                .passwordHash(passwordEncoder.encode(TEST_PASSWORD))
+                .build());
     }
 }

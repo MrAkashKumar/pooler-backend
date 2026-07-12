@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 public interface AuthService {
 
-    AuthResponse register(RegisterRequest req, HttpServletRequest httpReq);
+    void register(RegisterRequest req, HttpServletRequest httpReq);
     AuthResponse login(LoginRequest req, HttpServletRequest httpReq);
     AuthResponse loginWithGoogle(GoogleAuthRequest req, HttpServletRequest httpReq);
     TokenRefreshResponse refresh(RefreshTokenRequest req);
@@ -15,4 +15,6 @@ public interface AuthService {
     void logoutAll(String accessToken);
     void forgotPassword(ForgotPasswordRequest req, HttpServletRequest httpReq);
     void resetPassword(ResetPasswordRequest req);
+    void verifyEmail(VerifyEmailRequest req);
+    void resendVerification(ResendVerificationRequest req, HttpServletRequest httpReq);
 }

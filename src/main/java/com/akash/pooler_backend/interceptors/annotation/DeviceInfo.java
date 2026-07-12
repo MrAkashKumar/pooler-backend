@@ -3,7 +3,7 @@ package com.akash.pooler_backend.interceptors.annotation;
 import java.lang.annotation.*;
 
 /**
- * Injects a populated {@link com.enterprise.auth.dto.request.DeviceInfoDto}
+ * Injects a populated {@link com.akash.pooler_backend.dto.request.DeviceInfoRequest}
  * into controller method parameters from incoming mobile request headers.
  * Headers read:
  *   X-Device-Id    → deviceId
@@ -14,7 +14,7 @@ import java.lang.annotation.*;
  *   @PostMapping("/login")
  *   public ResponseEntity<?> login(
  *       @RequestBody LoginRequest req,
- *       @DeviceInfo DeviceInfoDto device) { ... }
+ *       @DeviceInfo DeviceInfoRequest device) { ... }
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

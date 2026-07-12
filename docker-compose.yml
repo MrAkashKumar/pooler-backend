@@ -19,17 +19,17 @@ services:
       - "${SERVER_PORT:-8080}:8080"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
-      JWT_SECRET: ${JWT_SECRET:-5A7134743777217A25432A462D4A614E645267556B58703273357638792F423F}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-900000}
       JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-604800000}
       MAIL_USERNAME: ${MAIL_USERNAME:-dev}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-dev}
-      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
-      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080/pooler-backend}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:*,http://127.0.0.1:*}
     volumes:
       - auth-data:/app/data    # H2 file DB persistence
     networks:
-      - pooler-network
+      - auth-network
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
       interval: 30s
@@ -46,7 +46,7 @@ services:
       - "1025:1025"    # SMTP
       - "8025:8025"    # Web UI → http://localhost:8025
     networks:
-      - pooler-network
+      - auth-network
     profiles:
       - dev
 

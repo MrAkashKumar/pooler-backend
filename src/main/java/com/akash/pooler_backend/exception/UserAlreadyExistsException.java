@@ -5,6 +5,6 @@ import com.akash.pooler_backend.enums.ErrorCode;
 public class UserAlreadyExistsException extends BaseException{
 
     public UserAlreadyExistsException(String email) {
-        super(ErrorCode.USER_ALREADY_EXISTS, "User already exists with email: " + email);
+        super(ErrorCode.USER_ALREADY_EXISTS, ErrorCode.USER_ALREADY_EXISTS.getDefaultMessage());
     }
 }

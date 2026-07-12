@@ -16,7 +16,6 @@ import java.util.Date;
 public class TokenInfoResponse {
 
     private String subject;
-    private String email;
     private String role;
     private String tokenType;
     private Date expiresAt;

@@ -76,6 +76,8 @@ public class SecurityConfig {
             // Auth lifecycle
             // as per requirement, need then do versioning
             "/**/auth/register",
+            "/**/auth/verify-email",
+            "/**/auth/resend-verification",
             "/**/auth/login",
             "/**/auth/google",
             "/**/auth/refresh",

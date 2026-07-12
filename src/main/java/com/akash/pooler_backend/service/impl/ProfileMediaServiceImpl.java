@@ -11,11 +11,8 @@ import com.akash.pooler_backend.repository.PbUserRepository;
 import com.akash.pooler_backend.service.ProfileMediaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
@@ -34,9 +31,9 @@ public class ProfileMediaServiceImpl implements ProfileMediaService {
 
     private final PbUserRepository userRepository;
     private final ProfileMediaProperties properties;
+    private final S3Client profileMediaS3Client;
 
     @Override
-    @Transactional
     @AuditAction("PROFILE_MEDIA_UPLOAD")
     public UserResponse uploadProfileMedia(PbUserEntity user, ProfileMediaPurpose purpose, MultipartFile file) {
         validate(file);
@@ -52,16 +49,13 @@ public class ProfileMediaServiceImpl implements ProfileMediaService {
 
         String contentType = file.getContentType() == null ? "application/octet-stream" : file.getContentType();
         String key = buildKey(user.getEntityId(), purpose, contentType);
-        try (S3Client s3 = S3Client.builder()
-                .region(Region.of(properties.getS3Region()))
-                .credentialsProvider(DefaultCredentialsProvider.create())
-                .build()) {
-            s3.putObject(PutObjectRequest.builder()
+        try {
+            profileMediaS3Client.putObject(PutObjectRequest.builder()
                             .bucket(properties.getS3Bucket())
                             .key(key)
                             .contentType(contentType)
                             .build(),
-                    RequestBody.fromBytes(file.getBytes()));
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
         } catch (IOException exception) {
             throw new FileUploadException("Could not read uploaded profile media");
         } catch (RuntimeException exception) {

@@ -86,7 +86,7 @@ public class TokenServiceImpl implements TokenService {
     public void revokeAllUserTokens(PbUserEntity pbUserEntity) {
         refreshTokenRepo.revokeAllByEntityId(pbUserEntity.getEntityId());
         userSessionRepository.revokeAllByEntityId(pbUserEntity.getEntityId());
-        log.info("Revoked all tokens for userId={}", pbUserEntity.getId());
+        log.info("Revoked all tokens for userId={}", pbUserEntity.getEntityId());
 
     }
 

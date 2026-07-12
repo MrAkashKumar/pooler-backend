@@ -29,7 +29,7 @@ public class AuditServiceImpl implements AuditService {
             auditLogRepository.save(PbAuditLogEntity.of(entityId, action, details, ipAddress));
             log.debug("Audit: userId={} action={}", entityId, action);
         } catch (Exception e) {
-            log.error("Audit write failed: {}", e.getMessage());
+            log.error("Audit write failed: type={}", e.getClass().getSimpleName());
         }
     }
 

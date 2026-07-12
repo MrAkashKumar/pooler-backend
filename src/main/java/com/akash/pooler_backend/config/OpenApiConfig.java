@@ -99,15 +99,17 @@ public class OpenApiConfig {
                         ```
                         
                         ### Auth flow
-                        1. `POST /api/v1/auth/register` &nbsp;— create account, get tokens
+                        1. `POST /api/v1/auth/register` &nbsp;— create pending account and send email verification
                         
-                        2. `POST /api/v1/auth/login` &nbsp;— get access + refresh + session tokens
+                        2. `POST /api/v1/auth/verify-email` &nbsp;— activate account from the email link
                         
-                        3. Send `Authorization: Bearer <accessToken>` on every protected call
+                        3. `POST /api/v1/auth/login` &nbsp;— get access + refresh + session tokens
                         
-                        4. `POST /api/v1/auth/refresh` &nbsp;— rotate the access token before it expires
+                        4. Send `Authorization: Bearer <accessToken>` on every protected call
                         
-                        5. `POST /api/v1/auth/logout` &nbsp;— revoke the current device session
+                        5. `POST /api/v1/auth/refresh` &nbsp;— rotate the access token before it expires
+                        
+                        6. `POST /api/v1/auth/logout` &nbsp;— revoke the current device session
                         
                         ### Sensitive endpoints
                         Mutating cab-share endpoints additionally require the `X-Session-Token` header

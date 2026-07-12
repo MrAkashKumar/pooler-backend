@@ -38,7 +38,7 @@ public class GlobalExceptionHandlers {
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ApiResponse<Void>> handleBaseException(
             BaseException ex, HttpServletRequest request) {
-        log.warn("Domain exception [{}] on {}: {}", ex.getErrorCode().getCode(), request.getRequestURI(), ex.getMessage());
+        log.warn("Domain exception [{}] on {}", ex.getErrorCode().getCode(), request.getRequestURI());
         return buildResponse(ex.getErrorCode(), ex.getMessage(), request);
     }
 
@@ -49,7 +49,7 @@ public class GlobalExceptionHandlers {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDenied(
             AccessDeniedException ex, HttpServletRequest request) {
-        log.warn("Access denied on {}: {}", request.getRequestURI(), ex.getMessage());
+        log.warn("Access denied on {}", request.getRequestURI());
         return buildResponse(ErrorCode.ACCESS_DENIED, ex.getMessage(), request);
     }
 
@@ -80,7 +80,7 @@ public class GlobalExceptionHandlers {
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             fieldErrors.put(error.getField(), error.getDefaultMessage());
         }
-        log.warn("Validation failed on {}: {}", request.getRequestURI(), fieldErrors);
+        log.warn("Validation failed on {} fields={}", request.getRequestURI(), fieldErrors.keySet());
 
         ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
                 .success(false)
@@ -108,14 +108,14 @@ public class GlobalExceptionHandlers {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnreadableBody(
             HttpMessageNotReadableException ex, HttpServletRequest request) {
-        log.warn("Invalid request body on {}: {}", request.getRequestURI(), ex.getMessage());
+        log.warn("Invalid request body on {}", request.getRequestURI());
         return buildResponse(ErrorCode.INVALID_REQUEST, "Invalid request body", request);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(
             IllegalArgumentException ex, HttpServletRequest request) {
-        log.warn("Invalid request on {}: {}", request.getRequestURI(), ex.getMessage());
+        log.warn("Invalid request on {}", request.getRequestURI());
         return buildResponse(ErrorCode.INVALID_REQUEST, ex.getMessage(), request);
     }
 
@@ -125,7 +125,7 @@ public class GlobalExceptionHandlers {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex, HttpServletRequest request) {
-        log.error("Unhandled exception on {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        log.error("Unhandled exception on {} type={}", request.getRequestURI(), ex.getClass().getSimpleName());
         return buildResponse(ErrorCode.INTERNAL_ERROR, ErrorCode.INTERNAL_ERROR.getDefaultMessage(), request);
     }
 

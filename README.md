@@ -1,6 +1,6 @@
-# Pooler / HubHop backend
+# Pooler / Hoppo backend
 
-Spring Boot REST backend for HubHop’s identity, discovery, fair Common Point, invitation, short-lived chat, live meetup, arrival, and ride-history flows.
+Spring Boot REST backend for Hoppo’s identity, discovery, fair Common Point, invitation, short-lived chat, live meetup, arrival, and ride-history flows.
 
 ## Run locally
 
@@ -17,7 +17,7 @@ Default base URL: `http://localhost:8888/pooler-backend`
 - OpenAPI: `/v3/api-docs`
 - H2 console: `/h2-console`
 
-The development profile uses an in-memory H2 database and seeded accounts. Do not enable the seeder or `ddl-auto=create-drop` in production.
+The development profile uses an in-memory H2 database. Create local accounts through signup and email verification; do not commit seeded credentials or enable `ddl-auto=create-drop` in production.
 
 ## Architecture
 
@@ -71,14 +71,14 @@ The backend uploads the object to S3 using AWS SDK default credentials and store
 Configuration lives in the Spring profile properties files:
 
 ```properties
-profile-media.s3-bucket=your-hubhop-profile-media-bucket
+profile-media.s3-bucket=your-hoppo-profile-media-bucket
 profile-media.s3-region=ap-southeast-1
-profile-media.key-prefix=hubhop/profile-media/prod
+profile-media.key-prefix=hoppo/profile-media/prod
 profile-media.public-base-url=https://cdn.yourdomain.com
 profile-media.max-size-mb=5
 ```
 
-Development keeps `profile-media.s3-bucket` blank so accidental local uploads fail clearly. Staging and production can resolve the same keys from deployment-provided Spring placeholders. The S3 bucket or CloudFront distribution must allow read access for returned media URLs. HubHop does not automatically expose payment QR during discovery; the mobile client shares it only when the owner taps **Share payment QR** in meetup chat.
+Development keeps `profile-media.s3-bucket` blank so accidental local uploads fail clearly. Staging and production can resolve the same keys from deployment-provided Spring placeholders. The S3 bucket or CloudFront distribution must allow read access for returned media URLs. Hoppo does not automatically expose payment QR during discovery; the mobile client shares it only when the owner taps **Share payment QR** in meetup chat.
 
 ## Fare split contract
 
@@ -99,7 +99,7 @@ Confirmed rides store two trip distances:
 
 Validation requires `totalFare` from `0.01` to `99999.00`, a 3-letter currency code when supplied, and a non-blank provider name.
 
-The backend stores the total fare, provider, currency, `primaryFareShare`, and `secondaryFareShare` on the ride. Shares are proportional to each rider's trip distance. HubHop records the split for history only; it does not collect payment.
+The backend stores the total fare, provider, currency, `primaryFareShare`, and `secondaryFareShare` on the ride. Shares are proportional to each rider's trip distance. Hoppo records the split for history only; it does not collect payment.
 
 ## Test
 

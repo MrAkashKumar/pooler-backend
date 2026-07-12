@@ -12,6 +12,7 @@ import com.akash.pooler_backend.enums.UserStatus;
 import com.akash.pooler_backend.exception.*;
 import com.akash.pooler_backend.interceptors.annotation.AuditAction;
 import com.akash.pooler_backend.repository.PbEntitySequenceRepository;
+import com.akash.pooler_backend.repository.PbEmailVerificationTokenRepository;
 import com.akash.pooler_backend.repository.PbPasswordResetTokenRepository;
 import com.akash.pooler_backend.repository.PbRefreshTokenRepository;
 import com.akash.pooler_backend.repository.PbUserRepository;
@@ -64,6 +65,7 @@ public class AuthServiceImpl implements AuthService {
     private final PbUserRepository userRepo;
     private final PbRefreshTokenRepository refreshTokenRepo;
     private final PbPasswordResetTokenRepository resetTokenRepo;
+    private final PbEmailVerificationTokenRepository emailVerificationTokenRepo;
     private final PbEntitySequenceRepository pbEntitySequenceRepository;
     private final UserService userService;
     private final ObjectMapper objectMapper;
@@ -77,10 +79,11 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     @AuditAction("USER_REGISTER")
-    public AuthResponse register(RegisterRequest req, HttpServletRequest httpReq) {
+    public void register(RegisterRequest req, HttpServletRequest httpReq) {
         if (userRepo.existsByEmail(req.getEmail())) {
             throw new UserAlreadyExistsException(req.getEmail());
         }
+        validateRegistration(req);
 
         //Get entity id
         PbEntityIdSequence pbEntityIdSequence  = pbEntitySequenceRepository.save(new PbEntityIdSequence());
@@ -94,14 +97,41 @@ public class AuthServiceImpl implements AuthService {
                 .role(Role.ROLE_USER)
                 .firstName(req.getFirstName().trim())
                 .lastName(req.getLastName().trim())
-                .status(UserStatus.ACTIVE)
+                .gender(req.getGender())
+                .status(UserStatus.PENDING_VERIFICATION)
                 .build();
 
         pbUserEntity = userRepo.save(pbUserEntity);
-        log.info("New pbUserEntity registered: {}", pbUserEntity.getEmail());
+        issueVerificationMail(pbUserEntity, httpReq);
+        log.info("New user registered pending email verification: userId={}", pbUserEntity.getEntityId());
+    }
 
-        mailService.sendWelcomeMail(pbUserEntity);
-        return buildAuthResponse(pbUserEntity, httpReq);
+    @Override
+    @Transactional
+    @AuditAction("EMAIL_VERIFY")
+    public void verifyEmail(VerifyEmailRequest req) {
+        PbEmailVerificationTokenEntity token = emailVerificationTokenRepo.findByToken(req.getToken())
+                .orElseThrow(EmailVerificationInvalidException::new);
+        if (!token.isValid()) throw new EmailVerificationInvalidException();
+
+        PbUserEntity user = userService.getUserEntity(token.getEntityId());
+        if (user.getStatus() == UserStatus.PENDING_VERIFICATION || user.getStatus() == UserStatus.INACTIVE) {
+            user.setStatus(UserStatus.ACTIVE);
+            userRepo.save(user);
+        }
+        token.setStatus(TokenStatus.USED);
+        emailVerificationTokenRepo.save(token);
+        mailService.sendWelcomeMail(user);
+        log.info("Email verified for userId={}", user.getEntityId());
+    }
+
+    @Override
+    @Transactional
+    @AuditAction("EMAIL_VERIFY_RESEND")
+    public void resendVerification(ResendVerificationRequest req, HttpServletRequest httpReq) {
+        userRepo.findByEmail(req.getEmail().toLowerCase().trim())
+                .filter(user -> user.getStatus() == UserStatus.PENDING_VERIFICATION)
+                .ifPresent(user -> issueVerificationMail(user, httpReq));
     }
 
     // ── Login ─────────────────────────────────────────────────────────
@@ -126,7 +156,7 @@ public class AuthServiceImpl implements AuthService {
         pbUserEntity.resetFailedAttempts();
         userRepo.updateLoginSuccess(pbUserEntity.getEntityId(), Instant.now());
 
-        log.info("User logged in: {} from platform={}", pbUserEntity.getEmail(), req.getPlatform());
+        log.info("User logged in: userId={} platform={}", pbUserEntity.getEntityId(), req.getPlatform());
         return buildAuthResponse(pbUserEntity, httpReq);
     }
 
@@ -139,7 +169,7 @@ public class AuthServiceImpl implements AuthService {
 
         PbUserEntity user = userRepo.findByEmail(email).orElseGet(() -> {
             PbEntityIdSequence sequence = pbEntitySequenceRepository.save(new PbEntityIdSequence());
-            String givenName = claims.getOrDefault("given_name", "HubHop").trim();
+            String givenName = claims.getOrDefault("given_name", "Hoppo").trim();
             String familyName = claims.getOrDefault("family_name", "Rider").trim();
             return userRepo.save(PbUserEntity.builder()
                     .email(email)
@@ -147,7 +177,7 @@ public class AuthServiceImpl implements AuthService {
                     .entityId(Long.toString(sequence.getId()))
                     .username("user-" + sequence.getId())
                     .role(Role.ROLE_USER)
-                    .firstName(givenName.isBlank() ? "HubHop" : givenName)
+                    .firstName(givenName.isBlank() ? "Hoppo" : givenName)
                     .lastName(familyName.isBlank() ? "Rider" : familyName)
                     .profilePictureUrl(claims.get("picture"))
                     .status(UserStatus.ACTIVE)
@@ -201,12 +231,12 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     @AuditAction("USER_LOGOUT")
     public void logout(String accessToken, HttpServletRequest httpReq) {
-        String email = jwtUtil.extractEmail(accessToken);
-        userRepo.findByEmail(email).ifPresent(user -> {
+        String entityId = jwtUtil.extractSubject(accessToken);
+        userRepo.findByEntityId(entityId).ifPresent(user -> {
             // Revoke only tokens from this device
             String deviceId = RequestUtil.getDeviceId(httpReq);
             refreshTokenRepo.revokeAllByEntityId(user.getEntityId());
-            log.info("User logged out: {} from deviceId={}", email, deviceId);
+            log.info("User logged out: userId={} deviceId={}", user.getEntityId(), deviceId);
         });
 
     }
@@ -217,10 +247,10 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     @AuditAction("USER_LOGOUT_ALL")
     public void logoutAll(String accessToken) {
-        String email = jwtUtil.extractEmail(accessToken);
-        userRepo.findByEmail(email).ifPresent(user -> {
+        String entityId = jwtUtil.extractSubject(accessToken);
+        userRepo.findByEntityId(entityId).ifPresent(user -> {
             tokenService.revokeAllUserTokens(user);
-            log.info("All tokens revoked for: {}", email);
+            log.info("All tokens revoked for userId={}", user.getEntityId());
         });
 
     }
@@ -247,7 +277,7 @@ public class AuthServiceImpl implements AuthService {
             resetTokenRepo.save(prt);
 
             mailService.sendPasswordResetMail(user, rawToken);
-            log.info("Password reset mail sent to: {}", user.getEmail());
+            log.info("Password reset mail requested for userId={}", user.getEntityId());
         });
     }
 
@@ -297,6 +327,29 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    private void validateRegistration(RegisterRequest req) {
+        if (!req.getPassword().equals(req.getConfirmPassword())) {
+            throw new IllegalArgumentException("Password and confirm password must match");
+        }
+        if (req.getGender() == null || req.getGender().name().equals("UNKNOWN")) {
+            throw new IllegalArgumentException("Choose Men, Women, or Other to create an account");
+        }
+    }
+
+    private void issueVerificationMail(PbUserEntity user, HttpServletRequest httpReq) {
+        emailVerificationTokenRepo.revokeAllByEntityId(user.getEntityId());
+        String rawToken = UUID.randomUUID().toString().replace("-", "");
+        PbEmailVerificationTokenEntity token = PbEmailVerificationTokenEntity.builder()
+                .token(rawToken)
+                .entityId(user.getEntityId())
+                .status(TokenStatus.ACTIVE)
+                .expiresAt(Instant.now().plusSeconds(props.getEmailVerification().getTokenExpiryMinutes() * 60L))
+                .requestedFromIp(RequestUtil.getClientIp(httpReq))
+                .build();
+        emailVerificationTokenRepo.save(token);
+        mailService.sendEmailVerificationMail(user, rawToken);
+    }
+
     private Map<String, String> verifyGoogleIdToken(String idToken) {
         if (googleClientIds == null || googleClientIds.isBlank()) {
             throw new AuthenticationException("Google sign-in is not configured on this server");
@@ -326,7 +379,7 @@ public class AuthServiceImpl implements AuthService {
         } catch (AuthenticationException exception) {
             throw exception;
         } catch (Exception exception) {
-            log.warn("Google token verification failed: {}", exception.getMessage());
+            log.warn("Google token verification failed: type={}", exception.getClass().getSimpleName());
             throw new AuthenticationException("Unable to verify Google sign-in");
         }
     }
@@ -346,7 +399,7 @@ public class AuthServiceImpl implements AuthService {
             pbUserEntity.setStatus(UserStatus.LOCKED);
             userRepo.save(pbUserEntity);
             mailService.sendAccountLockedMail(pbUserEntity);
-            log.warn("Account locked after {} failed attempts: {}", max, pbUserEntity.getEmail());
+            log.warn("Account locked after {} failed attempts: userId={}", max, pbUserEntity.getEntityId());
             throw new AccountLockedException("Account locked after " + max + " failed attempts");
         }
         userRepo.save(pbUserEntity);

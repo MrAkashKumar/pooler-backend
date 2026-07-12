@@ -91,7 +91,6 @@ public class SessionController {
 
         TokenInfoResponse info = TokenInfoResponse.builder()
                 .subject(jwtUtil.extractSubject(token))
-                .email(jwtUtil.extractEmail(token))
                 .tokenType(jwtUtil.extractTokenType(token))
                 .expiresAt(expiresAt)
                 .expired(expiresInSeconds < 0)

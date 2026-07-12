@@ -1,9 +1,7 @@
 package com.akash.pooler_backend.dto.request;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import com.akash.pooler_backend.enums.Gender;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 /**
@@ -33,6 +31,12 @@ public class RegisterRequest {
     @Pattern(regexp="^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&]).+$",
             message="Password must contain uppercase, lowercase, digit and special character")
     private String password;
+
+    @NotBlank(message = "Confirm password is required")
+    private String confirmPassword;
+
+    @NotNull(message = "Gender is required")
+    private Gender gender;
     /**
      * Mobile device metadata
       */

@@ -41,7 +41,7 @@ public class AuditAspect {
             PbAuditLogEntity log = PbAuditLogEntity.of(entity, auditAction.value(), details, ip);
             auditLogRepository.save(log);
         } catch (Exception e) {
-            log.warn("Audit logging failed: {}", e.getMessage());
+            log.warn("Audit logging failed: type={}", e.getClass().getSimpleName());
         }
     }
 

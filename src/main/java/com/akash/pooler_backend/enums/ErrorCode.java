@@ -21,6 +21,7 @@ public enum ErrorCode {
     ACCOUNT_SUSPENDED("AUTH-010", "Account is suspended", HttpStatus.FORBIDDEN),
     ACCOUNT_INACTIVE("AUTH-011", "Account is not active", HttpStatus.FORBIDDEN),
     MISSING_AUTH_HEADER("AUTH-012","Authorization header is missing",HttpStatus.UNAUTHORIZED),
+    EMAIL_VERIFICATION_INVALID("AUTH-013", "Email verification token is invalid or expired", HttpStatus.BAD_REQUEST),
 
     // User
     USER_NOT_FOUND("USR-001", "User not found", HttpStatus.NOT_FOUND),

@@ -43,12 +43,32 @@ public class AuthController {
 
     @PostMapping("/register")
     @RateLimit(maxRequests = 5, windowSeconds = 300)
-    @Operation(summary = "Register new user", description = "Creates account, returns tokens immediately.")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(
+    @Operation(summary = "Register new user", description = "Creates a pending account and sends an email verification link.")
+    public ResponseEntity<ApiResponse<Void>> register(
             @Valid @RequestBody RegisterRequest req,
             HttpServletRequest httpReq) {
-        AuthResponse response = authService.register(req, httpReq);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
+        authService.register(req, httpReq);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.message(
+                "Signup created. Check your email to activate your account."));
+    }
+
+    @PostMapping("/verify-email")
+    @RateLimit(maxRequests = 8, windowSeconds = 300)
+    @Operation(summary = "Verify email", description = "Activates a pending email/password account.")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyEmailRequest req) {
+        authService.verifyEmail(req);
+        return ResponseEntity.ok(ApiResponse.message("Email verified. Please sign in."));
+    }
+
+    @PostMapping("/resend-verification")
+    @RateLimit(maxRequests = 3, windowSeconds = 600)
+    @Operation(summary = "Resend email verification", description = "Resends activation email when a pending account exists.")
+    public ResponseEntity<ApiResponse<Void>> resendVerification(
+            @Valid @RequestBody ResendVerificationRequest req,
+            HttpServletRequest httpReq) {
+        authService.resendVerification(req, httpReq);
+        return ResponseEntity.ok(ApiResponse.message(
+                "If this email is pending verification, a new activation link has been sent."));
     }
 
     // ── Login ─────────────────────────────────────────────────────────

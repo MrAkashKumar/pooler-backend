@@ -1,4 +1,4 @@
-<configuration debug="true" scan="true" scanPeriod="30 seconds">
+<configuration debug="false" scan="true" scanPeriod="30 seconds">
 
     <!-- Writable by default for local development and tests; override in production. -->
     <property name="LOG_PATH" value="${LOG_PATH:-./logs}"/>
@@ -18,6 +18,9 @@
     </appender>
 
     <appender name="async-FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
         <appender-ref ref="FILE" />
     </appender>
 
@@ -27,7 +30,7 @@
         </encoder>
     </appender>
 
-    <logger name="com.pooler" level="ALL" />
+    <logger name="com.akash.pooler_backend" level="${APP_LOG_LEVEL:-INFO}" />
 
     <root level="INFO">
         <appender-ref ref="STDOUT" />

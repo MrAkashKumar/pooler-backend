@@ -9,6 +9,7 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -30,15 +31,28 @@ public class MailServiceImpl implements MailService {
     @Override
     @Async("mailExecutor")
     public void sendPasswordResetMail(PbUserEntity pbUserEntity, String resetToken) {
-        String resetLink = props.getBaseUrl() + "/reset-password?token=" + resetToken;
+        String resetLink = props.getFrontendBaseUrl() + "/reset-password?token=" + resetToken;
         Context ctx = buildContext(pbUserEntity, Map.of(
                 "resetLink",resetLink,
                 "expiryMinutes", props.getPasswordReset().getTokenExpiryMinutes(),
                 "username", pbUserEntity.getFirstName()
         ));
         sendHtmlMail(pbUserEntity.getEmail(), "Reset Your Password", "mail/password-reset", ctx);
-        log.info("Password reset mail dispatched to {}", pbUserEntity.getEmail());
+        log.info("Password reset mail dispatched for userId={}", pbUserEntity.getEntityId());
 
+    }
+
+    @Override
+    @Async("mailExecutor")
+    public void sendEmailVerificationMail(PbUserEntity pbUserEntity, String verificationToken) {
+        String verifyLink = props.getFrontendBaseUrl() + "/verify-email?token=" + verificationToken;
+        Context ctx = buildContext(pbUserEntity, Map.of(
+                "verifyLink", verifyLink,
+                "expiryMinutes", props.getEmailVerification().getTokenExpiryMinutes(),
+                "userName", pbUserEntity.getFirstName()
+        ));
+        sendHtmlMail(pbUserEntity.getEmail(), "Activate your " + props.getName() + " account", "mail/email-verification", ctx);
+        log.info("Email verification mail dispatched for userId={}", pbUserEntity.getEntityId());
     }
 
     @Override
@@ -46,10 +60,10 @@ public class MailServiceImpl implements MailService {
     public void sendWelcomeMail(PbUserEntity pbUserEntity) {
         Context ctx = buildContext(pbUserEntity, Map.of(
                 "userName",  pbUserEntity.getFirstName(),
-                "loginLink", props.getBaseUrl() + "/login"
+                "loginLink", props.getFrontendBaseUrl() + "/sign-in"
         ));
         sendHtmlMail(pbUserEntity.getEmail(), "Welcome to " + props.getName(), "mail/welcome", ctx);
-        log.info("Welcome mail dispatched to {}", pbUserEntity.getEmail());
+        log.info("Welcome mail dispatched for userId={}", pbUserEntity.getEntityId());
 
     }
 
@@ -62,7 +76,7 @@ public class MailServiceImpl implements MailService {
                 "supportEmail", props.getMail().getFrom()
         ));
         sendHtmlMail(pbUserEntity.getEmail(), "Account Security Alert", "mail/account-locked", ctx);
-        log.info("Account locked mail dispatched to {}", pbUserEntity.getEmail());
+        log.info("Account locked mail dispatched for userId={}", pbUserEntity.getEntityId());
 
     }
 
@@ -78,9 +92,9 @@ public class MailServiceImpl implements MailService {
             helper.setSubject(subject);
             helper.setText(html, true);
             mailSender.send(message);
-        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
-            log.error("Failed to send mail to {}: {}", to, e.getMessage());
-            throw new MailDispatchException("Failed to send mail to: " + to, e);
+        } catch (MessagingException | MailException | java.io.UnsupportedEncodingException e) {
+            log.error("Failed to send mail: type={}", e.getClass().getSimpleName());
+            throw new MailDispatchException("Failed to send mail", e);
         }
     }
 

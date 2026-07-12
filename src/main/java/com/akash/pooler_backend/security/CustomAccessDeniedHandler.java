@@ -57,12 +57,10 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         // Extract authenticated user's role if available (helpful for debugging)
         String userRole = resolveUserRole(request);
 
-        log.warn("Access denied ← {} {} | ip={} | role={} | reason={}",
+        log.warn("Access denied ← {} {} | role={}",
                 request.getMethod(),
                 request.getRequestURI(),
-                getClientIp(request),
-                userRole,
-                accessDeniedException.getMessage());
+                userRole);
 
         ErrorCode errorCode = ErrorCode.ACCESS_DENIED;
 
@@ -95,13 +93,5 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
             }
         } catch (Exception ignored) {}
         return null;
-    }
-
-    private String getClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
     }
 }

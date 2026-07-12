@@ -51,13 +51,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
-        log.debug("Loading pbUserEntity by email/Username: {}", usernameOrEmail);
+        log.debug("Loading user details for authentication request");
 
         /* Email validation support only, but later we can give support for username also */
         PbUserEntity pbUserEntity = userRepository
                 .findByEmail(usernameOrEmail.toLowerCase().trim())
                 .orElseThrow(() -> {
-                    log.warn("UserDetailsService: pbUserEntity not found for email={}", usernameOrEmail);
+                    log.warn("UserDetailsService: user not found for authentication request");
                     // Use generic message — never confirm whether email exists
                     return new UsernameNotFoundException("Invalid credentials");
                 });
@@ -83,7 +83,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new DisabledException("Account is not active");
         }
 
-        log.debug("User loaded: id={} email={} role={}", pbUserEntity.getEntityId(), pbUserEntity.getEmail(), pbUserEntity.getRole());
+        log.debug("User loaded: id={} role={}", pbUserEntity.getEntityId(), pbUserEntity.getRole());
         return pbUserEntity;
     }
 }

@@ -3,8 +3,8 @@ package com.akash.pooler_backend.security.filter;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.exception.TokenExpiredException;
 import com.akash.pooler_backend.exception.TokenInvalidException;
+import com.akash.pooler_backend.repository.PbUserRepository;
 import com.akash.pooler_backend.security.JwtUtil;
-import com.akash.pooler_backend.security.UserDetailsServiceImpl;
 import com.akash.pooler_backend.utils.RequestUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -45,7 +44,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final UserDetailsService userDetailsService;
+    private final PbUserRepository userRepository;
 
 
     @Override
@@ -61,12 +60,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // ─── ② + ③ Parse + load user ────────────────────────────────────
         try {
-            final String email = jwtUtil.extractEmail(token);
+            final String entityId = jwtUtil.extractSubject(token);
 
-            if (StringUtils.isNotBlank(email)
+            if (StringUtils.isNotBlank(entityId)
                     && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                PbUserEntity user = (PbUserEntity) userDetailsService.loadUserByUsername(email);
+                PbUserEntity user = userRepository.findByEntityId(entityId)
+                        .orElseThrow(() -> new TokenInvalidException("JWT token is invalid"));
+                if (!user.isEnabled() || !user.isAccountNonLocked()) {
+                    throw new TokenInvalidException("JWT token is invalid");
+                }
 
                 // ─── ④ Validate token against this specific user ─────────
                 if (jwtUtil.isTokenValid(token, user)) {
@@ -84,24 +87,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                    log.debug("JWT auth OK — user={} role={} ip={}",
-                            email, user.getRole(), RequestUtil.getClientIp(request));
+                    log.debug("JWT auth OK — userId={} role={} ip={}",
+                            user.getEntityId(), user.getRole(), RequestUtil.getClientIp(request));
                 } else {
-                    log.debug("JWT validation failed for user={}", email);
+                    log.debug("JWT validation failed for resolved user");
                 }
             }
 
         } catch (TokenExpiredException ex) {
-            log.debug("JWT expired: {}", ex.getMessage());
+            log.debug("JWT expired");
             SecurityContextHolder.clearContext();
             // Don't write response here — let Spring Security's AuthEntryPoint handle it
 
         } catch (TokenInvalidException ex) {
-            log.debug("JWT invalid: {}", ex.getMessage());
+            log.debug("JWT invalid");
             SecurityContextHolder.clearContext();
 
         } catch (Exception ex) {
-            log.error("Unexpected JWT filter error: {}", ex.getMessage());
+            log.error("Unexpected JWT filter error: {}", ex.getClass().getSimpleName());
             SecurityContextHolder.clearContext();
         }
 

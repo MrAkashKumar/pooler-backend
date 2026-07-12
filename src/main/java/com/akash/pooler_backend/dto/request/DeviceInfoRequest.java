@@ -3,11 +3,10 @@ package com.akash.pooler_backend.dto.request;
 import com.akash.pooler_backend.enums.PlatformType;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
 
 /**
  * Immutable value object carrying mobile device metadata extracted
- * from HTTP request headers by {@link com.enterprise.auth.aspect.DeviceInfoArgumentResolver}.
+ * from HTTP request headers by {@link com.akash.pooler_backend.aspect.DeviceInfoArgumentResolver}.
  *
  * Populated from:
  *   X-Device-Id    — unique device identifier (UUID or Android ID)
@@ -17,7 +16,6 @@ import lombok.ToString;
  */
 @Getter
 @Builder
-@ToString
 public class DeviceInfoRequest {
 
     private final String deviceId;

@@ -129,7 +129,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"StrongP@ss123\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"platform\": \"{{platform}}\",\n  \"appVersion\": \"{{appVersion}}\",\n  \"fcmToken\": \"{{fcmToken}}\"\n}"
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"{{authEmail}}\",\n  \"password\": \"{{authPassword}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"platform\": \"{{platform}}\",\n  \"appVersion\": \"{{appVersion}}\",\n  \"fcmToken\": \"{{fcmToken}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register",
@@ -150,7 +150,7 @@
               "code": 201,
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Resource created successfully\",\n  \"data\": {\n    \"accessToken\": \"eyJhbGciOiJIUzI1NiJ9...\",\n    \"refreshToken\": \"eyJhbGciOiJIUzI1NiJ9...\",\n    \"sessionToken\": \"eyJhbGciOiJIUzI1NiJ9...\",\n    \"tokenType\": \"Bearer\",\n    \"accessTokenExpiresIn\": 900,\n    \"refreshTokenExpiresIn\": 604800,\n    \"user\": {\n      \"entityId\": \"USR0000001\",\n      \"email\": \"john.doe@example.com\",\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"fullName\": \"John Doe\",\n      \"role\": \"USER\",\n      \"status\": \"ACTIVE\",\n      \"createdAt\": \"2026-05-05T10:00:00Z\"\n    }\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Resource created successfully\",\n  \"data\": {\n    \"accessToken\": \"<jwt-token>\",\n    \"refreshToken\": \"<jwt-token>\",\n    \"sessionToken\": \"<jwt-token>\",\n    \"tokenType\": \"Bearer\",\n    \"accessTokenExpiresIn\": 900,\n    \"refreshTokenExpiresIn\": 604800,\n    \"user\": {\n      \"entityId\": \"USR0000001\",\n      \"email\": \"{{authEmail}}\",\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"fullName\": \"John Doe\",\n      \"role\": \"USER\",\n      \"status\": \"ACTIVE\",\n      \"createdAt\": \"2026-05-05T10:00:00Z\"\n    }\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
             },
             {
               "name": "400 Validation Error",
@@ -176,7 +176,7 @@
               "code": 409,
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": false,\n  \"message\": \"User already exists with email: john.doe@example.com\",\n  \"errorCode\": \"USER_ALREADY_EXISTS\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
+              "body": "{\n  \"success\": false,\n  \"message\": \"User already exists with email: {{authEmail}}\",\n  \"errorCode\": \"USER_ALREADY_EXISTS\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
             }
           ]
         },
@@ -213,7 +213,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"StrongP@ss123\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"platform\": \"{{platform}}\",\n  \"appVersion\": \"{{appVersion}}\"\n}"
+              "raw": "{\n  \"email\": \"{{authEmail}}\",\n  \"password\": \"{{authPassword}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"platform\": \"{{platform}}\",\n  \"appVersion\": \"{{appVersion}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
@@ -234,7 +234,7 @@
               "code": 200,
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"accessToken\": \"eyJhbGciOiJIUzI1NiJ9...\",\n    \"refreshToken\": \"eyJhbGciOiJIUzI1NiJ9...\",\n    \"sessionToken\": \"eyJhbGciOiJIUzI1NiJ9...\",\n    \"tokenType\": \"Bearer\",\n    \"accessTokenExpiresIn\": 900,\n    \"refreshTokenExpiresIn\": 604800,\n    \"user\": {\n      \"entityId\": \"USR0000001\",\n      \"email\": \"john.doe@example.com\",\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"fullName\": \"John Doe\",\n      \"role\": \"USER\",\n      \"status\": \"ACTIVE\"\n    }\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"accessToken\": \"<jwt-token>\",\n    \"refreshToken\": \"<jwt-token>\",\n    \"sessionToken\": \"<jwt-token>\",\n    \"tokenType\": \"Bearer\",\n    \"accessTokenExpiresIn\": 900,\n    \"refreshTokenExpiresIn\": 604800,\n    \"user\": {\n      \"entityId\": \"USR0000001\",\n      \"email\": \"{{authEmail}}\",\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"fullName\": \"John Doe\",\n      \"role\": \"USER\",\n      \"status\": \"ACTIVE\"\n    }\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
             },
             {
               "name": "401 Invalid Credentials",
@@ -311,7 +311,7 @@
               "code": 200,
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"accessToken\": \"eyJhbGciOiJIUzI1NiJ9...\",\n    \"refreshToken\": \"eyJhbGciOiJIUzI1NiJ9...\",\n    \"tokenType\": \"Bearer\",\n    \"accessTokenExpiresIn\": 900\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"accessToken\": \"<jwt-token>\",\n    \"refreshToken\": \"<jwt-token>\",\n    \"tokenType\": \"Bearer\",\n    \"accessTokenExpiresIn\": 900\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
             },
             {
               "name": "401 Refresh Token Expired",
@@ -394,7 +394,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+              "raw": "{\n  \"email\": \"{{authEmail}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/forgot-password",
@@ -426,7 +426,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"token\": \"<reset-token-from-email>\",\n  \"newPassword\": \"NewStr0ng@Pass\",\n  \"confirmPassword\": \"NewStr0ng@Pass\"\n}"
+              "raw": "{\n  \"token\": \"<reset-token-from-email>\",\n  \"newPassword\": \"<new-password>\",\n  \"confirmPassword\": \"<new-password>\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/reset-password",
@@ -484,7 +484,7 @@
               "code": 200,
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"entityId\": \"USR0000001\",\n    \"email\": \"john.doe@example.com\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"fullName\": \"John Doe\",\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"createdAt\": \"2026-05-05T10:00:00Z\",\n    \"lastLoginAt\": \"2026-05-05T10:00:00Z\",\n    \"profilePictureUrl\": null\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"entityId\": \"USR0000001\",\n    \"email\": \"{{authEmail}}\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"fullName\": \"John Doe\",\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"createdAt\": \"2026-05-05T10:00:00Z\",\n    \"lastLoginAt\": \"2026-05-05T10:00:00Z\",\n    \"profilePictureUrl\": null\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
             }
           ]
         },
@@ -516,7 +516,7 @@
               "code": 200,
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Profile updated\",\n  \"data\": {\n    \"entityId\": \"USR0000001\",\n    \"email\": \"john.doe@example.com\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"fullName\": \"John Doe\",\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"profilePictureUrl\": \"https://cdn.example.com/avatars/john.png\"\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Profile updated\",\n  \"data\": {\n    \"entityId\": \"USR0000001\",\n    \"email\": \"{{authEmail}}\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"fullName\": \"John Doe\",\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"profilePictureUrl\": \"https://cdn.example.com/avatars/john.png\"\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
             }
           ]
         },
@@ -531,7 +531,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"currentPassword\": \"StrongP@ss123\",\n  \"newPassword\": \"NewStr0ng@Pass\",\n  \"confirmPassword\": \"NewStr0ng@Pass\"\n}"
+              "raw": "{\n  \"currentPassword\": \"{{authPassword}}\",\n  \"newPassword\": \"<new-password>\",\n  \"confirmPassword\": \"<new-password>\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/me/change-password",
@@ -667,7 +667,7 @@
               "code": 200,
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"subject\": \"USR0000001\",\n    \"email\": \"john.doe@example.com\",\n    \"tokenType\": \"ACCESS\",\n    \"expiresAt\": \"2026-05-05T10:15:00.000+00:00\",\n    \"expired\": false,\n    \"expiresInSeconds\": 875\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"subject\": \"USR0000001\",\n    \"email\": \"{{authEmail}}\",\n    \"tokenType\": \"ACCESS\",\n    \"expiresAt\": \"2026-05-05T10:15:00.000+00:00\",\n    \"expired\": false,\n    \"expiresInSeconds\": 875\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
             }
           ]
         }
@@ -766,7 +766,7 @@
               "code": 200,
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"content\": [\n      {\n        \"entityId\": \"USR0000001\",\n        \"email\": \"john.doe@example.com\",\n        \"firstName\": \"John\",\n        \"lastName\": \"Doe\",\n        \"fullName\": \"John Doe\",\n        \"role\": \"USER\",\n        \"status\": \"ACTIVE\",\n        \"createdAt\": \"2026-05-05T10:00:00Z\"\n      }\n    ],\n    \"totalElements\": 1,\n    \"totalPages\": 1,\n    \"number\": 0,\n    \"size\": 20\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"content\": [\n      {\n        \"entityId\": \"USR0000001\",\n        \"email\": \"{{authEmail}}\",\n        \"firstName\": \"John\",\n        \"lastName\": \"Doe\",\n        \"fullName\": \"John Doe\",\n        \"role\": \"USER\",\n        \"status\": \"ACTIVE\",\n        \"createdAt\": \"2026-05-05T10:00:00Z\"\n      }\n    ],\n    \"totalElements\": 1,\n    \"totalPages\": 1,\n    \"number\": 0,\n    \"size\": 20\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
             },
             {
               "name": "403 Forbidden",
@@ -804,7 +804,7 @@
               "code": 200,
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"entityId\": \"USR0000001\",\n    \"email\": \"john.doe@example.com\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"fullName\": \"John Doe\",\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"createdAt\": \"2026-05-05T10:00:00Z\"\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"entityId\": \"USR0000001\",\n    \"email\": \"{{authEmail}}\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"fullName\": \"John Doe\",\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"createdAt\": \"2026-05-05T10:00:00Z\"\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
             },
             {
               "name": "404 Not Found",
@@ -843,7 +843,7 @@
               "code": 200,
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"User suspended: john.doe@example.com\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"User suspended: {{authEmail}}\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
             }
           ]
         },
@@ -873,7 +873,7 @@
               "code": 200,
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"User activated: john.doe@example.com\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"User activated: {{authEmail}}\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
             }
           ]
         }

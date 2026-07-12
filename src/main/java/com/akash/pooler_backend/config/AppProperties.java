@@ -28,6 +28,9 @@ public class AppProperties {
     @NotBlank
     private String baseUrl;
 
+    @NotBlank
+    private String frontendBaseUrl;
+
     @NotNull
     private Jwt jwt = new Jwt();
 
@@ -39,6 +42,12 @@ public class AppProperties {
 
     @NotNull
     private PasswordReset passwordReset = new PasswordReset();
+
+    @NotNull
+    private EmailVerification emailVerification = new EmailVerification();
+
+    @NotNull
+    private Async async = new Async();
 
     // ─── Nested config classes ────────────────────────────────────
 
@@ -87,5 +96,42 @@ public class AppProperties {
     public static class PasswordReset {
         private int tokenExpiryMinutes = 30;
         private int maxAttempts = 3;
+    }
+
+    @Getter
+    @Setter
+    public static class EmailVerification {
+        private int tokenExpiryMinutes = 60;
+    }
+
+    @Getter
+    @Setter
+    public static class Async {
+        @NotNull
+        private ExecutorPool defaults = new ExecutorPool(4, 8, 100, 60);
+        @NotNull
+        private ExecutorPool mail = new ExecutorPool(2, 6, 100, 60);
+        @NotNull
+        private ExecutorPool audit = new ExecutorPool(2, 4, 500, 30);
+        private int shutdownAwaitSeconds = 30;
+
+        @Getter
+        @Setter
+        public static class ExecutorPool {
+            private int corePoolSize;
+            private int maxPoolSize;
+            private int queueCapacity;
+            private int keepAliveSeconds;
+
+            public ExecutorPool() {
+            }
+
+            public ExecutorPool(int corePoolSize, int maxPoolSize, int queueCapacity, int keepAliveSeconds) {
+                this.corePoolSize = corePoolSize;
+                this.maxPoolSize = maxPoolSize;
+                this.queueCapacity = queueCapacity;
+                this.keepAliveSeconds = keepAliveSeconds;
+            }
+        }
     }
 }
