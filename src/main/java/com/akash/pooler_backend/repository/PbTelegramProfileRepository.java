@@ -12,4 +12,6 @@ public interface PbTelegramProfileRepository extends JpaRepository<PbTelegramPro
     Optional<PbTelegramProfileEntity> findByUserEntityId(String userEntityId);
 
     Optional<PbTelegramProfileEntity> findByTelegramHandle(String telegramHandle);
+
+    void deleteByUserEntityId(String userEntityId);
 }

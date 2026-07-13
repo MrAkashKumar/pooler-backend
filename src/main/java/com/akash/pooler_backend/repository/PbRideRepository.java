@@ -3,6 +3,7 @@ package com.akash.pooler_backend.repository;
 import com.akash.pooler_backend.entity.PbRideEntity;
 import com.akash.pooler_backend.enums.RideStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -32,4 +33,17 @@ public interface PbRideRepository extends JpaRepository<PbRideEntity, Long> {
     List<PbRideEntity> findActiveForUser(
             @Param("userEntityId") String userEntityId,
             @Param("terminalStatuses") List<RideStatus> terminalStatuses);
+
+    @Query("""
+            SELECT r.entityId FROM PbRideEntity r
+             WHERE r.primaryEntityId = :userEntityId OR r.secondaryEntityId = :userEntityId
+            """)
+    List<String> findEntityIdsForUser(@Param("userEntityId") String userEntityId);
+
+    @Modifying
+    @Query("""
+            DELETE FROM PbRideEntity r
+             WHERE r.primaryEntityId = :userEntityId OR r.secondaryEntityId = :userEntityId
+            """)
+    int deleteAllForUser(@Param("userEntityId") String userEntityId);
 }

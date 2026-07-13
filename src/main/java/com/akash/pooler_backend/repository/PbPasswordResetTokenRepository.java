@@ -14,4 +14,8 @@ public interface PbPasswordResetTokenRepository extends JpaRepository<PbPassword
     @Modifying
     @Query("UPDATE PbPasswordResetTokenEntity t SET t.status='REVOKED' WHERE t.entityId=:entityId AND t.status='ACTIVE'")
     void revokeAllByEntityId(String entityId);
+
+    @Modifying
+    @Query("DELETE FROM PbPasswordResetTokenEntity t WHERE t.entityId=:entityId")
+    void deleteAllByEntityId(String entityId);
 }

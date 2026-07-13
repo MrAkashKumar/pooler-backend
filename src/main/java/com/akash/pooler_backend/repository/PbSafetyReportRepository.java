@@ -11,4 +11,6 @@ import java.util.List;
 public interface PbSafetyReportRepository extends JpaRepository<PbSafetyReportEntity, Long> {
 
     List<PbSafetyReportEntity> findAllByReporterEntityIdOrderByCreatedAtDesc(String reporterEntityId);
+
+    long deleteByReporterEntityId(String reporterEntityId);
 }

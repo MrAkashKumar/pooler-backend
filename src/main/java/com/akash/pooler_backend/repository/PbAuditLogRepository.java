@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface PbAuditLogRepository extends JpaRepository<PbAuditLogEntity, Long> {
 
     Page<PbAuditLogEntity> findAllByEntityIdOrderByCreatedAtDesc(String entityId, Pageable pageable);
+
+    long deleteByEntityId(String entityId);
 }

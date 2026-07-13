@@ -23,4 +23,6 @@ public interface PbSavedLocationRepository extends JpaRepository<PbSavedLocation
     boolean existsByUserEntityIdAndAlias(String userEntityId, LocationAlias alias);
 
     long deleteByEntityIdAndUserEntityId(String entityId, String userEntityId);
+
+    long deleteByUserEntityId(String userEntityId);
 }

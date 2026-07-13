@@ -4,9 +4,15 @@ import com.akash.pooler_backend.dto.request.DiscoveryToggleRequest;
 import com.akash.pooler_backend.dto.request.CreateSafetyReportRequest;
 import com.akash.pooler_backend.dto.request.UpdateFareSplitRequest;
 import com.akash.pooler_backend.entity.PbUserEntity;
+import com.akash.pooler_backend.entity.PbContactEntity;
+import com.akash.pooler_backend.entity.PbDiscoveryStatusEntity;
 import com.akash.pooler_backend.entity.PbRideEntity;
+import com.akash.pooler_backend.entity.PbSafetyReportEntity;
+import com.akash.pooler_backend.entity.PbSavedLocationEntity;
 import com.akash.pooler_backend.enums.Gender;
+import com.akash.pooler_backend.enums.LocationAlias;
 import com.akash.pooler_backend.enums.Role;
+import com.akash.pooler_backend.enums.SafetyReportStatus;
 import com.akash.pooler_backend.enums.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,13 +29,18 @@ import com.akash.pooler_backend.enums.DiscoveryMode;
 import com.akash.pooler_backend.enums.InvitationStatusEnums;
 import com.akash.pooler_backend.repository.PbChatArchiveRepository;
 import com.akash.pooler_backend.repository.PbChatThreadRepository;
+import com.akash.pooler_backend.repository.PbContactRepository;
+import com.akash.pooler_backend.repository.PbDiscoveryStatusRepository;
 import com.akash.pooler_backend.repository.PbEmailVerificationTokenRepository;
 import com.akash.pooler_backend.repository.PbRideInvitationRepository;
 import com.akash.pooler_backend.repository.PbRideRepository;
+import com.akash.pooler_backend.repository.PbSafetyReportRepository;
+import com.akash.pooler_backend.repository.PbSavedLocationRepository;
 import com.akash.pooler_backend.repository.PbUserRepository;
 import com.akash.pooler_backend.service.ChatService;
 import com.akash.pooler_backend.service.RideService;
 import com.akash.pooler_backend.service.SafetyReportService;
+import com.akash.pooler_backend.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.PageRequest;
 
@@ -37,6 +48,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -64,10 +76,15 @@ class ApiSmokeIntegrationTests {
     @Autowired private PbChatThreadRepository threadRepository;
     @Autowired private PbChatArchiveRepository archiveRepository;
     @Autowired private PbEmailVerificationTokenRepository emailVerificationTokenRepository;
+    @Autowired private PbDiscoveryStatusRepository discoveryStatusRepository;
+    @Autowired private PbSavedLocationRepository savedLocationRepository;
+    @Autowired private PbSafetyReportRepository safetyReportRepository;
+    @Autowired private PbContactRepository contactRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private ChatService chatService;
     @Autowired private RideService rideService;
     @Autowired private SafetyReportService safetyReportService;
+    @Autowired private UserService userService;
 
     @BeforeEach
     void ensureTestUsers() {
@@ -276,6 +293,59 @@ class ApiSmokeIntegrationTests {
         org.junit.jupiter.api.Assertions.assertTrue(reports.stream()
                 .anyMatch(report -> report.getEntityId().equals(created.getEntityId())));
         assertEquals("OPEN", created.getStatus().name());
+    }
+
+    @Test
+    void accountDeletionRemovesUserOwnedData() {
+        String userId = "delete-user-" + UUID.randomUUID().toString().substring(0, 8);
+        var user = userRepository.save(PbUserEntity.builder()
+                .entityId(userId)
+                .username(userId)
+                .email(userId + "@hoppo.test")
+                .firstName("Delete")
+                .lastName("Me")
+                .gender(Gender.OTHER)
+                .role(Role.ROLE_USER)
+                .status(UserStatus.ACTIVE)
+                .passwordHash(passwordEncoder.encode(TEST_PASSWORD))
+                .build());
+
+        discoveryStatusRepository.save(PbDiscoveryStatusEntity.builder()
+                .entityId("dsc-" + UUID.randomUUID().toString().substring(0, 8))
+                .userEntityId(userId)
+                .mode(DiscoveryMode.ON)
+                .currentLatitude(1.3008)
+                .currentLongitude(103.8565)
+                .build());
+        savedLocationRepository.save(PbSavedLocationEntity.builder()
+                .entityId("loc-" + UUID.randomUUID().toString().substring(0, 8))
+                .userEntityId(userId)
+                .alias(LocationAlias.HOME)
+                .address("Home")
+                .latitude(1.3008)
+                .longitude(103.8565)
+                .build());
+        safetyReportRepository.save(PbSafetyReportEntity.builder()
+                .entityId("safe-" + UUID.randomUUID().toString().substring(0, 8))
+                .reporterEntityId(userId)
+                .category("Other safety concern")
+                .details("Delete verification")
+                .contactAllowed(false)
+                .status(SafetyReportStatus.OPEN)
+                .build());
+        contactRepository.save(PbContactEntity.builder()
+                .entityId("con-" + UUID.randomUUID().toString().substring(0, 8))
+                .ownerEntityId(userId)
+                .contactUserEntityId("test-user-a")
+                .build());
+
+        userService.deleteAccount(user);
+
+        assertFalse(userRepository.findByEntityId(userId).isPresent());
+        assertFalse(discoveryStatusRepository.findByUserEntityId(userId).isPresent());
+        assertEquals(0, savedLocationRepository.findAllByUserEntityIdOrderByCreatedAtDesc(userId).size());
+        assertEquals(0, safetyReportRepository.findAllByReporterEntityIdOrderByCreatedAtDesc(userId).size());
+        assertEquals(0, contactRepository.findAllByOwnerEntityIdOrderByFavoriteDescCreatedAtDesc(userId).size());
     }
 
     private void ensureUser(String entityId, String email, String firstName, String lastName, Gender gender) {

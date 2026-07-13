@@ -14,4 +14,8 @@ public interface PbLiveLocationRepository extends JpaRepository<PbLiveLocationEn
     Optional<PbLiveLocationEntity> findByRideEntityIdAndUserEntityId(String rideEntityId, String userEntityId);
 
     List<PbLiveLocationEntity> findAllByRideEntityId(String rideEntityId);
+
+    long deleteByUserEntityId(String userEntityId);
+
+    long deleteByRideEntityIdIn(List<String> rideEntityIds);
 }

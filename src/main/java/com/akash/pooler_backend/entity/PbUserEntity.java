@@ -64,7 +64,7 @@ public class PbUserEntity extends BaseEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
-    private MatchPreference matchPreference = MatchPreference.BOTH;
+    private MatchPreference matchPreference = MatchPreference.ANY;
 
     @Column(length = 120)
     private String emergencyContactName;

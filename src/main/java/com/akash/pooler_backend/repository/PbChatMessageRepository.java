@@ -35,4 +35,11 @@ public interface PbChatMessageRepository extends JpaRepository<PbChatMessageEnti
 
     @Query("SELECT COUNT(m) FROM PbChatMessageEntity m WHERE m.threadId = :threadId AND m.sender <> :userId AND m.isRead = false")
     long countUnreadByThreadAndUser(@Param("threadId") String threadId, @Param("userId") String userId);
+
+    @Query("SELECT m.entityId FROM PbChatMessageEntity m WHERE m.threadId IN :threadIds OR m.sender = :userId")
+    List<String> findEntityIdsForAccountDeletion(@Param("threadIds") List<String> threadIds, @Param("userId") String userId);
+
+    @Modifying
+    @Query("DELETE FROM PbChatMessageEntity m WHERE m.threadId IN :threadIds OR m.sender = :userId")
+    int deleteForAccountDeletion(@Param("threadIds") List<String> threadIds, @Param("userId") String userId);
 }

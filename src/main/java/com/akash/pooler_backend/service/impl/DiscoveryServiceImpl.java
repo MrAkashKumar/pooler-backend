@@ -159,7 +159,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                             .fullName(u != null ? u.getFullName() : null)
                             .profilePictureUrl(u != null ? u.getProfilePictureUrl() : null)
                             .gender(u != null ? safeGender(u.getGender()) : Gender.UNKNOWN)
-                            .matchPreference(u != null ? safePreference(u.getMatchPreference()) : MatchPreference.BOTH)
+                            .matchPreference(u != null ? safePreference(u.getMatchPreference()) : MatchPreference.ANY)
                             .currentLatitude(d.getCurrentLatitude())
                             .currentLongitude(d.getCurrentLongitude())
                             .destinationLatitude(d.getDestinationLatitude())
@@ -187,7 +187,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
 
     private static boolean allows(MatchPreference preference, Gender gender) {
         if (gender == Gender.UNKNOWN) return false;
-        if (preference == MatchPreference.BOTH) return true;
+        if (preference == MatchPreference.ANY) return true;
         return (preference == MatchPreference.MALE && gender == Gender.MALE)
                 || (preference == MatchPreference.FEMALE && gender == Gender.FEMALE);
     }
@@ -197,7 +197,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     }
 
     private static MatchPreference safePreference(MatchPreference preference) {
-        return preference != null ? preference : MatchPreference.BOTH;
+        return MatchPreference.normalized(preference);
     }
 
     private static String newId() {

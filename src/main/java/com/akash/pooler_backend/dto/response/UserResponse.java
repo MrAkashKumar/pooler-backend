@@ -42,7 +42,7 @@ public class UserResponse {
                 .profilePictureUrl(pbUserEntity.getProfilePictureUrl())
                 .paymentQrCodeUrl(pbUserEntity.getPaymentQrCodeUrl())
                 .gender(pbUserEntity.getGender())
-                .matchPreference(pbUserEntity.getMatchPreference())
+                .matchPreference(MatchPreference.normalized(pbUserEntity.getMatchPreference()))
                 .emergencyContactName(pbUserEntity.getEmergencyContactName())
                 .emergencyContactPhone(pbUserEntity.getEmergencyContactPhone())
                 .emergencyMessage(pbUserEntity.getEmergencyMessage())

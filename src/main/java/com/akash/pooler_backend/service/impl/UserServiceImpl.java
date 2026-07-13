@@ -6,7 +6,7 @@ import com.akash.pooler_backend.dto.response.UserResponse;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.exception.AuthenticationException;
 import com.akash.pooler_backend.interceptors.annotation.AuditAction;
-import com.akash.pooler_backend.repository.PbUserRepository;
+import com.akash.pooler_backend.repository.*;
 import com.akash.pooler_backend.service.TokenService;
 import com.akash.pooler_backend.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -26,6 +27,24 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final PbUserRepository pbUserRepository;
+    private final PbRefreshTokenRepository refreshTokenRepository;
+    private final PbUserSessionRepository userSessionRepository;
+    private final PbEmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final PbPasswordResetTokenRepository passwordResetTokenRepository;
+    private final PbDiscoveryStatusRepository discoveryStatusRepository;
+    private final PbSavedLocationRepository savedLocationRepository;
+    private final PbTelegramProfileRepository telegramProfileRepository;
+    private final PbContactRepository contactRepository;
+    private final PbSafetyReportRepository safetyReportRepository;
+    private final PbRideInvitationRepository rideInvitationRepository;
+    private final PbRideRepository rideRepository;
+    private final PbLiveLocationRepository liveLocationRepository;
+    private final PbChatThreadRepository chatThreadRepository;
+    private final PbChatMessageRepository chatMessageRepository;
+    private final PbMessageReactionRepository messageReactionRepository;
+    private final PbChatSearchIndexRepository chatSearchIndexRepository;
+    private final PbChatArchiveRepository chatArchiveRepository;
+    private final PbAuditLogRepository auditLogRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
 
@@ -51,7 +70,7 @@ public class UserServiceImpl implements UserService {
         if (req.getGender() != null)
             pbUserEntity.setGender(req.getGender());
         if (req.getMatchPreference() != null)
-            pbUserEntity.setMatchPreference(req.getMatchPreference());
+            pbUserEntity.setMatchPreference(com.akash.pooler_backend.enums.MatchPreference.normalized(req.getMatchPreference()));
         if (req.getEmergencyContactName() != null)
             pbUserEntity.setEmergencyContactName(trimToNull(req.getEmergencyContactName()));
         if (req.getEmergencyContactPhone() != null)
@@ -86,12 +105,43 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    @AuditAction("ACCOUNT_DELETE")
     public void deleteAccount(PbUserEntity pbUserEntity) {
-        tokenService.revokeAllUserTokens(pbUserEntity);
-        pbUserRepository.delete(pbUserEntity);
-        log.info("Account deleted for userId={}", pbUserEntity.getEntityId());
+        String userId = pbUserEntity.getEntityId();
+        List<String> threadIds = nonEmpty(chatThreadRepository.findEntityIdsByParticipant(userId));
+        List<String> rideIds = nonEmpty(rideRepository.findEntityIdsForUser(userId));
+        List<String> messageIds = nonEmpty(chatMessageRepository.findEntityIdsForAccountDeletion(threadIds, userId));
 
+        messageReactionRepository.deleteByUserId(userId);
+        messageReactionRepository.deleteByMessageIds(messageIds);
+        chatMessageRepository.deleteForAccountDeletion(threadIds, userId);
+        chatSearchIndexRepository.deleteByThreadIdIn(threadIds);
+        chatArchiveRepository.deleteByThreadIdIn(threadIds);
+        chatThreadRepository.deleteByParticipant(userId);
+
+        liveLocationRepository.deleteByUserEntityId(userId);
+        liveLocationRepository.deleteByRideEntityIdIn(rideIds);
+        rideRepository.deleteAllForUser(userId);
+        rideInvitationRepository.deleteAllForUser(userId);
+
+        safetyReportRepository.deleteByReporterEntityId(userId);
+        contactRepository.deleteByOwnerEntityIdOrContactUserEntityId(userId, userId);
+        savedLocationRepository.deleteByUserEntityId(userId);
+        telegramProfileRepository.deleteByUserEntityId(userId);
+        discoveryStatusRepository.deleteByUserEntityId(userId);
+
+        refreshTokenRepository.deleteAllByEntityId(userId);
+        userSessionRepository.deleteAllByEntityId(userId);
+        emailVerificationTokenRepository.deleteAllByEntityId(userId);
+        passwordResetTokenRepository.deleteAllByEntityId(userId);
+        auditLogRepository.deleteByEntityId(userId);
+
+        pbUserRepository.delete(pbUserEntity);
+        log.info("Account permanently deleted");
+
+    }
+
+    private static List<String> nonEmpty(List<String> values) {
+        return values == null || values.isEmpty() ? List.of("__none__") : values;
     }
 
     @Override

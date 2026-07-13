@@ -40,4 +40,6 @@ public interface PbDiscoveryStatusRepository extends JpaRepository<PbDiscoverySt
             @Param("maxLng") double maxLng,
             @Param("freshnessAfter") Instant freshnessAfter
     );
+
+    void deleteByUserEntityId(String userEntityId);
 }

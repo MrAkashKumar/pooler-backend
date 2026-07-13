@@ -20,4 +20,12 @@ public interface PbMessageReactionRepository extends JpaRepository<PbMessageReac
 
     @Query("SELECT COUNT(r) FROM PbMessageReactionEntity r WHERE r.messageId = :messageId AND r.reaction = :emoji")
     long countByMessageAndReaction(@Param("messageId") String messageId, @Param("emoji") String emoji);
+
+    @Modifying
+    @Query("DELETE FROM PbMessageReactionEntity r WHERE r.userId = :userId")
+    int deleteByUserId(@Param("userId") String userId);
+
+    @Modifying
+    @Query("DELETE FROM PbMessageReactionEntity r WHERE r.messageId IN :messageIds")
+    int deleteByMessageIds(@Param("messageIds") List<String> messageIds);
 }

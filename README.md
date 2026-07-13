@@ -27,7 +27,7 @@ Core modules:
 
 - Auth, refresh/session tokens, Google ID-token exchange.
 - Profile, rider gender, match preference, contacts, saved locations, Telegram identity.
-- Discovery pings, nearby rider search with mutual `MALE`/`FEMALE`/`BOTH` preference filtering, distance/midpoint/route compatibility.
+- Discovery pings, nearby rider search with mutual `MALE`/`FEMALE`/`ANY` preference filtering, distance/midpoint/route compatibility.
 - Invitation and ride state machines.
 - Two-hour invitation chat, messages, read receipts, reactions, search, cleanup.
 - Participant-only live location and independent physical-arrival confirmation.
@@ -50,7 +50,7 @@ Core modules:
 | Field | Values | Default | Purpose |
 | --- | --- | --- | --- |
 | `gender` | `UNKNOWN`, `MALE`, `FEMALE`, `OTHER` | `UNKNOWN` | The rider's own profile category for mutual filtering. First-time setup must use an explicit rider choice, not an auto-selected default. |
-| `matchPreference` | `BOTH`, `MALE`, `FEMALE` | `BOTH` | Who the rider wants to see in discovery. |
+| `matchPreference` | `ANY`, `MALE`, `FEMALE` | `ANY` | Who the rider wants to see in discovery. |
 | `emergencyContactName` | string, max 120 | `null` | Trusted family/contact label displayed in Safety centre. |
 | `emergencyContactPhone` | string, max 32 | `null` | Phone number used by the mobile app for dialler/SMS handoff. |
 | `emergencyMessage` | string, max 300 | `null` | Default message text used in the mobile SMS composer. |

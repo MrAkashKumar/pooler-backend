@@ -21,4 +21,8 @@ public interface PbRefreshTokenRepository extends JpaRepository<PbRefreshTokenEn
     @Modifying
     @Query("DELETE FROM PbRefreshTokenEntity t WHERE t.status='EXPIRED' OR t.status='REVOKED'")
     void cleanupExpiredTokens();
+
+    @Modifying
+    @Query("DELETE FROM PbRefreshTokenEntity t WHERE t.entityId=:entityId")
+    void deleteAllByEntityId(String entityId);
 }

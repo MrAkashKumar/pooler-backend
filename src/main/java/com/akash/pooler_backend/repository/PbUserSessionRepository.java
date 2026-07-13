@@ -22,4 +22,8 @@ public interface PbUserSessionRepository extends JpaRepository<PbUserSessionEnti
     @Modifying
     @Query("DELETE FROM PbUserSessionEntity t WHERE t.status='EXPIRED' OR t.status='REVOKED'")
     void cleanupExpiredTokens();
+
+    @Modifying
+    @Query("DELETE FROM PbUserSessionEntity t WHERE t.entityId=:entityId")
+    void deleteAllByEntityId(String entityId);
 }

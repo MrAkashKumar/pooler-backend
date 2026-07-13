@@ -14,4 +14,8 @@ public interface PbEmailVerificationTokenRepository extends JpaRepository<PbEmai
     @Modifying
     @Query("UPDATE PbEmailVerificationTokenEntity t SET t.status='REVOKED' WHERE t.entityId=:entityId AND t.status='ACTIVE'")
     void revokeAllByEntityId(String entityId);
+
+    @Modifying
+    @Query("DELETE FROM PbEmailVerificationTokenEntity t WHERE t.entityId=:entityId")
+    void deleteAllByEntityId(String entityId);
 }

@@ -25,6 +25,19 @@ public interface PbRideInvitationRepository extends JpaRepository<PbRideInvitati
 
     List<PbRideInvitationEntity> findAllByReceiverEntityIdOrderByCreatedAtDesc(String receiverEntityId);
 
+    @Query("""
+            SELECT i.entityId FROM PbRideInvitationEntity i
+             WHERE i.senderEntityId = :userEntityId OR i.receiverEntityId = :userEntityId
+            """)
+    List<String> findEntityIdsForUser(@Param("userEntityId") String userEntityId);
+
+    @Modifying
+    @Query("""
+            DELETE FROM PbRideInvitationEntity i
+             WHERE i.senderEntityId = :userEntityId OR i.receiverEntityId = :userEntityId
+            """)
+    int deleteAllForUser(@Param("userEntityId") String userEntityId);
+
     @Modifying
     @Query("""
             UPDATE PbRideInvitationEntity i

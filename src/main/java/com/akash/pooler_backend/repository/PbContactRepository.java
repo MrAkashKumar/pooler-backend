@@ -18,4 +18,6 @@ public interface PbContactRepository extends JpaRepository<PbContactEntity, Long
     List<PbContactEntity> findAllByOwnerEntityIdOrderByFavoriteDescCreatedAtDesc(String ownerEntityId);
 
     boolean existsByOwnerEntityIdAndContactUserEntityId(String ownerEntityId, String contactUserEntityId);
+
+    long deleteByOwnerEntityIdOrContactUserEntityId(String ownerEntityId, String contactUserEntityId);
 }
