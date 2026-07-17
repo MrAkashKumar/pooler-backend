@@ -2,12 +2,14 @@ package com.akash.pooler_backend.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -65,6 +67,26 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setKeepAliveSeconds(keepAliveSeconds);
         executor.setAllowCoreThreadTimeOut(true);
         executor.setThreadNamePrefix(threadNamePrefix);
+        executor.setTaskDecorator(task -> {
+            Map<String, String> parentContext = MDC.getCopyOfContextMap();
+            return () -> {
+                Map<String, String> workerContext = MDC.getCopyOfContextMap();
+                try {
+                    if (parentContext == null) {
+                        MDC.clear();
+                    } else {
+                        MDC.setContextMap(parentContext);
+                    }
+                    task.run();
+                } finally {
+                    if (workerContext == null) {
+                        MDC.clear();
+                    } else {
+                        MDC.setContextMap(workerContext);
+                    }
+                }
+            };
+        });
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(Math.max(1, appProperties.getAsync().getShutdownAwaitSeconds()));
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());

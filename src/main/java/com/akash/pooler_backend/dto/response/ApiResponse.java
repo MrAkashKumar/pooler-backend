@@ -22,6 +22,8 @@ public class ApiResponse<T> {
 
     private String message;
     private String errorCode;
+    private String traceId;
+    private String errorReferenceId;
     private T data;
     private String path;
 

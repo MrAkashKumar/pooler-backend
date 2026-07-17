@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.security.filter;
 
+import com.akash.pooler_backend.utils.TraceContextUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,7 +12,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.UUID;
 
 /**
  * Structured request/response logging.
@@ -23,19 +23,13 @@ import java.util.UUID;
 @Order(1)
 public class RequestLoggingFilter extends OncePerRequestFilter {
 
-    private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
-
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain chain) throws ServletException, IOException {
 
-        String correlationId = request.getHeader(CORRELATION_ID_HEADER);
-        if (correlationId == null || correlationId.isBlank()) {
-            correlationId = UUID.randomUUID().toString();
-        }
-
-        response.setHeader(CORRELATION_ID_HEADER, correlationId);
+        String correlationId = TraceContextUtil.resolveOrCreateCorrelationId(request);
+        response.setHeader(TraceContextUtil.CORRELATION_ID_HEADER, correlationId);
 
         long start = System.currentTimeMillis();
         String platform = request.getHeader("X-Platform");
@@ -52,6 +46,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
             log.info("← [{} {}] status={} duration={}ms [correlationId={}]",
                     request.getMethod(), request.getRequestURI(),
                     response.getStatus(), duration, correlationId);
+            TraceContextUtil.clear();
         }
     }
 

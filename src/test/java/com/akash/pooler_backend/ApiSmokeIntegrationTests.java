@@ -147,6 +147,32 @@ class ApiSmokeIntegrationTests {
     }
 
     @Test
+    void errorResponsesIncludeTraceAndReferenceIds() throws Exception {
+        String traceId = "mobile-trace-0001";
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Correlation-ID", traceId)
+                        .header("X-Device-Id", "integration-test-device")
+                        .header("X-Platform", "ANDROID")
+                        .header("X-App-Version", "1.0.0")
+                        .content("""
+                                {
+                                  "email": "%s",
+                                  "password": "Wrong@1234",
+                                  "platform": "ANDROID"
+                                }
+                                """.formatted(RIDER_A_EMAIL)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string("X-Correlation-ID", traceId))
+                .andExpect(header().exists("X-Error-Reference-ID"))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errorCode").value("AUTH-001"))
+                .andExpect(jsonPath("$.traceId").value(traceId))
+                .andExpect(jsonPath("$.errorReferenceId").isNotEmpty());
+    }
+
+    @Test
     void emailSignupRequiresVerificationBeforeLogin() throws Exception {
         String email = "signup-" + UUID.randomUUID().toString().substring(0, 8) + "@pooler.com";
 

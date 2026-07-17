@@ -43,6 +43,30 @@ Core modules:
 | `X-App-Version` | Semantic app version |
 | `X-Correlation-ID` | Optional request trace ID |
 
+## Production trace IDs
+
+Every backend request uses a trace id for log search:
+
+- If the mobile app sends `X-Correlation-ID`, the backend reuses it.
+- If the header is missing, the backend generates a UUID.
+- The same id is returned in the `X-Correlation-ID` response header.
+- Log lines include it as `trace=<id>`.
+
+Every error response also receives a unique support reference:
+
+```json
+{
+  "success": false,
+  "errorCode": "AUTH-001",
+  "traceId": "mobile-trace-0001",
+  "errorReferenceId": "ERR-20260717-123456789012",
+  "message": "Invalid email or password",
+  "path": "/api/v1/auth/login"
+}
+```
+
+Use `errorReferenceId` when a user reports a failed action. Search server logs for `errorReferenceId=<value>`, `errorRef=<value>`, or the response header `X-Error-Reference-ID`. Use `traceId` to see the full request lifecycle around that issue, including async mail/audit logs started by the request. These ids are random/technical only and must not contain personal information.
+
 ## Rider preference contract
 
 `GET/PUT /api/v1/users/me` exposes safety profile fields:
@@ -79,6 +103,21 @@ profile-media.max-size-mb=5
 ```
 
 Development keeps `profile-media.s3-bucket` blank so accidental local uploads fail clearly. Staging and production can resolve the same keys from deployment-provided Spring placeholders. The S3 bucket or CloudFront distribution must allow read access for returned media URLs. Hoppo does not automatically expose payment QR during discovery; the mobile client shares it only when the owner taps **Share payment QR** in meetup chat.
+
+## Log retention
+
+Backend file logs are written to `app.logging.path` and compressed hourly archives are stored under `${app.logging.path}/archive`.
+
+The default policy keeps archive logs for 720 hours, which is exactly 30 days. Logback deletes older archives automatically on rollover or application start:
+
+```properties
+app.logging.path=/var/log/hoppo/pooler-backend
+app.logging.archive.max-file-size=100MB
+app.logging.archive.max-history-hours=720
+app.logging.archive.total-size-cap=5GB
+```
+
+Keep these values in `application-dev.properties`, `application-staging.properties`, and `application-prod.properties` so environment changes do not require code edits.
 
 ## Fare split contract
 

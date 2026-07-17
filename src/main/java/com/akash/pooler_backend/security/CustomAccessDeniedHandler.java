@@ -2,6 +2,7 @@ package com.akash.pooler_backend.security;
 
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.enums.ErrorCode;
+import com.akash.pooler_backend.utils.TraceContextUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -57,16 +58,19 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         // Extract authenticated user's role if available (helpful for debugging)
         String userRole = resolveUserRole(request);
 
-        log.warn("Access denied ← {} {} | role={}",
-                request.getMethod(),
-                request.getRequestURI(),
-                userRole);
-
         ErrorCode errorCode = ErrorCode.ACCESS_DENIED;
+        String traceId = TraceContextUtil.currentCorrelationId(request);
+        String errorReferenceId = TraceContextUtil.attachErrorReference(request, response);
+
+        log.warn("Security error response errorCode={} status={} path={} traceId={} errorReferenceId={} role={}",
+                errorCode.getCode(), HttpStatus.FORBIDDEN.value(), request.getRequestURI(),
+                traceId, errorReferenceId, userRole);
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("success",    false);
         body.put("errorCode",  errorCode.getCode());
+        body.put("traceId", traceId);
+        body.put("errorReferenceId", errorReferenceId);
         body.put("message",    errorCode.getDefaultMessage());
         body.put("path",       request.getRequestURI());
         body.put("timestamp",  Instant.now().toString());
@@ -76,6 +80,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         }
 
         response.setStatus(HttpStatus.FORBIDDEN.value());
+        response.setHeader(TraceContextUtil.CORRELATION_ID_HEADER, traceId);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
 

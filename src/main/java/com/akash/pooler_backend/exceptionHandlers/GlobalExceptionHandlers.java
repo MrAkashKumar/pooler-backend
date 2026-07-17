@@ -3,7 +3,9 @@ package com.akash.pooler_backend.exceptionHandlers;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.enums.ErrorCode;
 import com.akash.pooler_backend.exception.BaseException;
+import com.akash.pooler_backend.utils.TraceContextUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -37,9 +39,8 @@ public class GlobalExceptionHandlers {
 
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ApiResponse<Void>> handleBaseException(
-            BaseException ex, HttpServletRequest request) {
-        log.warn("Domain exception [{}] on {}", ex.getErrorCode().getCode(), request.getRequestURI());
-        return buildResponse(ex.getErrorCode(), ex.getMessage(), request);
+            BaseException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ex.getErrorCode(), ex.getMessage(), request, response);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -48,25 +49,24 @@ public class GlobalExceptionHandlers {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDenied(
-            AccessDeniedException ex, HttpServletRequest request) {
-        log.warn("Access denied on {}", request.getRequestURI());
-        return buildResponse(ErrorCode.ACCESS_DENIED, ex.getMessage(), request);
+            AccessDeniedException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.ACCESS_DENIED, ex.getMessage(), request, response);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadCredentials(
-            BadCredentialsException ex, HttpServletRequest request) {
-        return buildResponse(ErrorCode.INVALID_CREDENTIALS, ex.getMessage(), request);
+            BadCredentialsException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.INVALID_CREDENTIALS, ex.getMessage(), request, response);
     }
 
     @ExceptionHandler(LockedException.class)
-    public ResponseEntity<ApiResponse<Void>> handleLocked(LockedException ex, HttpServletRequest request) {
-        return buildResponse(ErrorCode.ACCOUNT_LOCKED, ex.getMessage(), request);
+    public ResponseEntity<ApiResponse<Void>> handleLocked(LockedException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.ACCOUNT_LOCKED, ex.getMessage(), request, response);
     }
 
     @ExceptionHandler(DisabledException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDisabled(DisabledException ex, HttpServletRequest request) {
-        return buildResponse(ErrorCode.ACCOUNT_INACTIVE, ex.getMessage(), request);
+    public ResponseEntity<ApiResponse<Void>> handleDisabled(DisabledException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.ACCOUNT_INACTIVE, ex.getMessage(), request, response);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -75,48 +75,52 @@ public class GlobalExceptionHandlers {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidation(
-            MethodArgumentNotValidException ex, HttpServletRequest request) {
+            MethodArgumentNotValidException ex, HttpServletRequest request, HttpServletResponse response) {
         Map<String, String> fieldErrors = new HashMap<>();
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             fieldErrors.put(error.getField(), error.getDefaultMessage());
         }
-        log.warn("Validation failed on {} fields={}", request.getRequestURI(), fieldErrors.keySet());
+        String traceId = TraceContextUtil.currentCorrelationId(request);
+        String errorReferenceId = TraceContextUtil.attachErrorReference(request, response);
+        log.warn("API error response errorCode={} status={} path={} traceId={} errorReferenceId={} type={} fields={}",
+                ErrorCode.VALIDATION_ERROR.getCode(), HttpStatus.BAD_REQUEST.value(), request.getRequestURI(),
+                traceId, errorReferenceId, ex.getClass().getSimpleName(), fieldErrors.keySet());
 
-        ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
+        ApiResponse<Map<String, String>> body = ApiResponse.<Map<String, String>>builder()
                 .success(false)
                 .errorCode(ErrorCode.VALIDATION_ERROR.getCode())
+                .traceId(traceId)
+                .errorReferenceId(errorReferenceId)
                 .message(ErrorCode.VALIDATION_ERROR.getDefaultMessage())
                 .data(fieldErrors)
                 .path(request.getRequestURI())
                 .build();
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(
-            ConstraintViolationException ex, HttpServletRequest request) {
-        return buildResponse(ErrorCode.VALIDATION_ERROR, ex.getMessage(), request);
+            ConstraintViolationException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.VALIDATION_ERROR, ex.getMessage(), request, response);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(
-            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
-        return buildResponse(ErrorCode.INVALID_REQUEST, "Invalid parameter type: " + ex.getName(), request);
+            MethodArgumentTypeMismatchException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.INVALID_REQUEST, "Invalid parameter type: " + ex.getName(), request, response);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnreadableBody(
-            HttpMessageNotReadableException ex, HttpServletRequest request) {
-        log.warn("Invalid request body on {}", request.getRequestURI());
-        return buildResponse(ErrorCode.INVALID_REQUEST, "Invalid request body", request);
+            HttpMessageNotReadableException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.INVALID_REQUEST, "Invalid request body", request, response);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(
-            IllegalArgumentException ex, HttpServletRequest request) {
-        log.warn("Invalid request on {}", request.getRequestURI());
-        return buildResponse(ErrorCode.INVALID_REQUEST, ex.getMessage(), request);
+            IllegalArgumentException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.INVALID_REQUEST, ex.getMessage(), request, response);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -124,19 +128,35 @@ public class GlobalExceptionHandlers {
     // ─────────────────────────────────────────────────────────────
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex, HttpServletRequest request) {
-        log.error("Unhandled exception on {} type={}", request.getRequestURI(), ex.getClass().getSimpleName());
-        return buildResponse(ErrorCode.INTERNAL_ERROR, ErrorCode.INTERNAL_ERROR.getDefaultMessage(), request);
+    public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.INTERNAL_ERROR, ErrorCode.INTERNAL_ERROR.getDefaultMessage(), request, response, ex);
     }
 
     // ─────────────────────────────────────────────────────────────
     // Helper
     // ─────────────────────────────────────────────────────────────
 
-    private ResponseEntity<ApiResponse<Void>> buildResponse(ErrorCode errorCode, String message, HttpServletRequest request) {
+    private ResponseEntity<ApiResponse<Void>> buildResponse(ErrorCode errorCode, String message, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(errorCode, message, request, response, null);
+    }
+
+    private ResponseEntity<ApiResponse<Void>> buildResponse(ErrorCode errorCode, String message, HttpServletRequest request, HttpServletResponse response, Exception exception) {
+        String traceId = TraceContextUtil.currentCorrelationId(request);
+        String errorReferenceId = TraceContextUtil.attachErrorReference(request, response);
+        if (exception == null) {
+            log.warn("API error response errorCode={} status={} path={} traceId={} errorReferenceId={}",
+                    errorCode.getCode(), errorCode.getHttpStatus().value(), request.getRequestURI(), traceId, errorReferenceId);
+        } else {
+            log.error("API error response errorCode={} status={} path={} traceId={} errorReferenceId={} type={}",
+                    errorCode.getCode(), errorCode.getHttpStatus().value(), request.getRequestURI(),
+                    traceId, errorReferenceId, exception.getClass().getSimpleName());
+        }
+
         ApiResponse<Void> body = ApiResponse.<Void>builder()
                 .success(false)
                 .errorCode(errorCode.getCode())
+                .traceId(traceId)
+                .errorReferenceId(errorReferenceId)
                 .message(message != null ? message : errorCode.getDefaultMessage())
                 .path(request.getRequestURI())
                 .build();
