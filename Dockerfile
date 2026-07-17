@@ -38,16 +38,16 @@ COPY --from=layers /app/application/            ./
 RUN chown -R appuser:appgroup /app
 USER appuser
 
-# JVM tuning for containers + Virtual Threads
+# JVM tuning for containers. SPRING_PROFILES_ACTIVE is supplied by Docker/EC2.
+ENV SPRING_PROFILES_ACTIVE=prod
 ENV JAVA_OPTS="-XX:+UseContainerSupport \
                -XX:MaxRAMPercentage=75.0 \
                -XX:+UseZGC \
-               -Djava.security.egd=file:/dev/./urandom \
-               -Dspring.profiles.active=prod"
+               -Djava.security.egd=file:/dev/./urandom"
 
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget -qO- http://localhost:8080/actuator/health || exit 1
+  CMD wget -qO- http://localhost:8080/pooler-backend/api/v1/public/health || exit 1
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} org.springframework.boot.loader.launch.JarLauncher"]

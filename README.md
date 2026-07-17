@@ -138,6 +138,19 @@ Development keeps `profile-media.s3-bucket` blank so accidental local uploads fa
 
 AWS mail and S3 production setup is documented in [AWS-MAIL-S3-INTEGRATION.md](../docs/AWS-MAIL-S3-INTEGRATION.md).
 
+## AWS EC2 staging deployment
+
+EC2 staging setup is documented in [AWS-EC2-STAGING-DEPLOYMENT.md](../docs/AWS-EC2-STAGING-DEPLOYMENT.md).
+
+Available backend scripts:
+
+| Script | Purpose |
+| --- | --- |
+| `scripts/aws-ec2-docker-staging-setup.sh` | Install Docker on EC2, pull code from GitHub, create `scripts/aws-staging.env`, and optionally run `docker-compose.staging.yml`. |
+| `scripts/aws-ec2-pull-and-run-war.sh` | Pull code from GitHub, build the backend, and run the executable WAR/JAR as a systemd service. |
+
+The current Maven build creates an executable JAR. The non-Docker EC2 script still supports WAR packaging and will prefer `target/*.war` if the backend is later changed to WAR.
+
 ## Log retention
 
 Backend file logs are written to `app.logging.path` and compressed hourly archives are stored under `${app.logging.path}/archive`.
