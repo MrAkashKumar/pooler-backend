@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.config.AppProperties;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,14 +20,14 @@ import java.util.Map;
  * and whether a forced-upgrade is needed based on minAppVersion.
  */
 @RestController
-@RequestMapping("/api/v1/public")
+@RequestMapping(ApiMapping.PUBLIC_API)
 @RequiredArgsConstructor
 @Tag(name = "Public", description = "No-auth endpoints for health, version checks")
 public class HealthController {
 
     private final AppProperties props;
 
-    @GetMapping("/health")
+    @GetMapping(ApiMapping.HEALTH)
     @Operation(summary = "Health check for mobile app startup ping")
     public ResponseEntity<ApiResponse<Map<String, Object>>> health() {
         Map<String, Object> info = Map.of(
@@ -39,7 +40,7 @@ public class HealthController {
         return ResponseEntity.ok(ApiResponse.ok(info));
     }
 
-    @GetMapping("/version")
+    @GetMapping(ApiMapping.VERSION)
     @Operation(summary = "Returns backend version + minimum required app version")
     public ResponseEntity<ApiResponse<Map<String, String>>> version() {
         Map<String, String> version = Map.of(

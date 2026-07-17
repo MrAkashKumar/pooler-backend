@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.request.LiveLocationUpdateRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.LiveLocationResponse;
@@ -26,7 +27,7 @@ import java.util.List;
  * @author Akash Kumar
  */
 @RestController
-@RequestMapping("/api/v1/rides/{rideEntityId}/live-location")
+@RequestMapping(ApiMapping.RIDE_LIVE_LOCATION_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Live Location", description = "Real-time GPS pings during a ride")

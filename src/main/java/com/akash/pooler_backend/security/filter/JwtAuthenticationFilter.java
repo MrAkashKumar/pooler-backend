@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.security.filter;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.exception.TokenExpiredException;
 import com.akash.pooler_backend.exception.TokenInvalidException;
@@ -124,9 +125,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return path.startsWith("/actuator")
-                || path.startsWith("/h2-console")
-                || path.equals("/public/health")
-                || path.equals("/public/version");
+        return path.startsWith(ApiMapping.H2_CONSOLE_API)
+                || path.equals(ApiMapping.PUBLIC_HEALTH_SERVLET_PATH)
+                || path.equals(ApiMapping.PUBLIC_VERSION_SERVLET_PATH);
     }
 }

@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.request.AddContactRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.ContactResponse;
@@ -22,7 +23,7 @@ import java.util.List;
  * @author Akash Kumar
  */
 @RestController
-@RequestMapping("/api/v1/contacts")
+@RequestMapping(ApiMapping.CONTACTS_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Contacts", description = "Manage your saved travel buddies")
@@ -44,7 +45,7 @@ public class ContactController {
         return ResponseEntity.ok(ApiResponse.ok(contactService.list(owner)));
     }
 
-    @PutMapping("/{contactEntityId}/favorite")
+    @PutMapping(ApiMapping.CONTACT_FAVORITE)
     @Operation(summary = "Toggle the favourite flag on a contact")
     public ResponseEntity<ApiResponse<ContactResponse>> setFavorite(
             @CurrentUser PbUserEntity owner,
@@ -54,7 +55,7 @@ public class ContactController {
                 contactService.setFavorite(owner, contactEntityId, favorite)));
     }
 
-    @DeleteMapping("/{contactEntityId}")
+    @DeleteMapping(ApiMapping.CONTACT_ID)
     @Operation(summary = "Remove a contact from your book")
     public ResponseEntity<ApiResponse<Void>> remove(
             @CurrentUser PbUserEntity owner,

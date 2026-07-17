@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.request.*;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.AuthResponse;
@@ -32,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 3. Refresh access token before expiry using /auth/refresh
  */
 @RestController
-@RequestMapping(value = "/api/v1/auth")
+@RequestMapping(value = ApiMapping.AUTH_API)
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "Register, login, token management, password reset")
 public class AuthController {
@@ -41,7 +42,7 @@ public class AuthController {
 
     // ── Register ─────────────────────────────────────────────────────
 
-    @PostMapping("/register")
+    @PostMapping(ApiMapping.REGISTER)
     @RateLimit(maxRequests = 5, windowSeconds = 300)
     @Operation(summary = "Register new user", description = "Creates a pending account and sends an email verification link.")
     public ResponseEntity<ApiResponse<Void>> register(
@@ -52,7 +53,7 @@ public class AuthController {
                 "Signup created. Check your email to activate your account."));
     }
 
-    @PostMapping("/verify-email")
+    @PostMapping(ApiMapping.VERIFY_EMAIL)
     @RateLimit(maxRequests = 8, windowSeconds = 300)
     @Operation(summary = "Verify email", description = "Activates a pending email/password account.")
     public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyEmailRequest req) {
@@ -60,7 +61,7 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.message("Email verified. Please sign in."));
     }
 
-    @PostMapping("/resend-verification")
+    @PostMapping(ApiMapping.RESEND_VERIFICATION)
     @RateLimit(maxRequests = 3, windowSeconds = 600)
     @Operation(summary = "Resend email verification", description = "Resends activation email when a pending account exists.")
     public ResponseEntity<ApiResponse<Void>> resendVerification(
@@ -73,7 +74,7 @@ public class AuthController {
 
     // ── Login ─────────────────────────────────────────────────────────
 
-    @PostMapping("/login")
+    @PostMapping(ApiMapping.LOGIN)
     @RateLimit(maxRequests = 10, windowSeconds = 60)
     @Operation(summary = "Login", description = "Returns access token (15m), refresh token (7d), session token (30m).")
     public ResponseEntity<ApiResponse<AuthResponse>> login(
@@ -82,7 +83,7 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok(authService.login(req, httpReq)));
     }
 
-    @PostMapping("/google")
+    @PostMapping(ApiMapping.GOOGLE)
     @RateLimit(maxRequests = 10, windowSeconds = 60)
     @Operation(summary = "Google sign-in", description = "Verifies a Google ID token and returns Pooler mobile tokens.")
     public ResponseEntity<ApiResponse<AuthResponse>> google(
@@ -93,7 +94,7 @@ public class AuthController {
 
     // ── Refresh Token ─────────────────────────────────────────────────
 
-    @PostMapping("/refresh")
+    @PostMapping(ApiMapping.REFRESH)
     @Operation(summary = "Refresh access token", description = "Exchange a valid refresh token for a new access + refresh token pair.")
     public ResponseEntity<ApiResponse<TokenRefreshResponse>> refresh(
             @Valid @RequestBody RefreshTokenRequest req) {
@@ -102,7 +103,7 @@ public class AuthController {
 
     // ── Logout ────────────────────────────────────────────────────────
 
-    @PostMapping("/logout")
+    @PostMapping(ApiMapping.LOGOUT)
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Logout from current device")
     public ResponseEntity<ApiResponse<Void>> logout(
@@ -112,7 +113,7 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.message("Logged out successfully"));
     }
 
-    @PostMapping("/logout-all")
+    @PostMapping(ApiMapping.LOGOUT_ALL)
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Logout from ALL devices", description = "Revokes all tokens for the authenticated user.")
     public ResponseEntity<ApiResponse<Void>> logoutAll(HttpServletRequest httpReq) {
@@ -123,7 +124,7 @@ public class AuthController {
 
     // ── Password Reset ────────────────────────────────────────────────
 
-    @PostMapping("/forgot-password")
+    @PostMapping(ApiMapping.FORGOT_PASSWORD)
     @RateLimit(maxRequests = 3, windowSeconds = 600)
     @Operation(summary = "Request password reset email")
     public ResponseEntity<ApiResponse<Void>> forgotPassword(
@@ -135,7 +136,7 @@ public class AuthController {
                 "If this email is registered, a reset link has been sent."));
     }
 
-    @PostMapping("/reset-password")
+    @PostMapping(ApiMapping.RESET_PASSWORD)
     @RateLimit(maxRequests = 5, windowSeconds = 300)
     @Operation(summary = "Complete password reset with token from email")
     public ResponseEntity<ApiResponse<Void>> resetPassword(

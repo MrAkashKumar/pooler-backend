@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.config;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
@@ -148,7 +149,7 @@ public class OpenApiConfig {
                 return GroupedOpenApi.builder()
                         .group("00-all")
                         .displayName("All Endpoints")
-                        .pathsToMatch("/api/v1/**")
+                        .pathsToMatch(ApiMapping.API_V1 + ApiMapping.ALL)
                         .build();
         }
 
@@ -159,12 +160,12 @@ public class OpenApiConfig {
                         .group("01-auth-and-users")
                         .displayName("Auth & Users")
                         .pathsToMatch(
-                                "/api/v1/auth/**",
-                                "/api/v1/users/**",
-                                "/api/v1/sessions/**",
-                                "/api/v1/admin/**",
-                                "/api/v1/audit/**",
-                                "/api/v1/public/**"
+                                ApiMapping.AUTH_API + ApiMapping.ALL,
+                                ApiMapping.USERS_API + ApiMapping.ALL,
+                                ApiMapping.SESSIONS_API + ApiMapping.ALL,
+                                ApiMapping.ADMIN_API + ApiMapping.ALL,
+                                ApiMapping.AUDIT_API + ApiMapping.ALL,
+                                ApiMapping.PUBLIC_API + ApiMapping.ALL
                         )
                         .build();
         }
@@ -176,12 +177,12 @@ public class OpenApiConfig {
                         .group("02-cab-share")
                         .displayName("Cab-Share Domain")
                         .pathsToMatch(
-                                "/api/v1/locations/**",
-                                "/api/v1/contacts/**",
-                                "/api/v1/discovery/**",
-                                "/api/v1/geo/**",
-                                "/api/v1/invitations/**",
-                                "/api/v1/rides/**"
+                                ApiMapping.LOCATIONS_API + ApiMapping.ALL,
+                                ApiMapping.CONTACTS_API + ApiMapping.ALL,
+                                ApiMapping.DISCOVERY_API + ApiMapping.ALL,
+                                ApiMapping.GEO_API + ApiMapping.ALL,
+                                ApiMapping.INVITATIONS_API + ApiMapping.ALL,
+                                ApiMapping.RIDES_API + ApiMapping.ALL
                         )
                         .build();
         }

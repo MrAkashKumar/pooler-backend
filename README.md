@@ -43,6 +43,38 @@ Core modules:
 | `X-App-Version` | Semantic app version |
 | `X-Correlation-ID` | Optional request trace ID |
 
+## Admin monitoring with Actuator
+
+Spring Boot Actuator is enabled for backend monitoring only. These endpoints are not integrated with the mobile frontend and must be called from Postman, a server-side monitoring tool, or an admin operations console.
+
+Security contract:
+
+- Base URL: `http://localhost:8888/pooler-backend`
+- Required header: `Authorization: Bearer <adminAccessToken>`
+- Required role: `ROLE_ADMIN`
+- Anonymous requests return `401`.
+- Logged-in non-admin users return `403`.
+
+Exposed endpoints:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/actuator/health` | Service health and component status |
+| GET | `/actuator/info` | Application info |
+| GET | `/actuator/metrics` | Metric names available in this runtime |
+| GET | `/actuator/metrics/{metricName}` | One metric, for example `http.server.requests` |
+
+`/actuator/health` may return HTTP `503` when a monitored dependency is down, for example SMTP or the database. That is expected monitoring behavior, not an auth failure. Auth failures still return `401` or `403` with the normal JSON security envelope.
+
+Postman example:
+
+```http
+GET http://localhost:8888/pooler-backend/actuator/health
+Authorization: Bearer <adminAccessToken>
+```
+
+Keep `management.endpoints.web.exposure.include=health,info,metrics` in properties unless operations explicitly needs more. Do not expose `env`, `beans`, `heapdump`, `threaddump`, or similar sensitive actuator endpoints publicly.
+
 ## Production trace IDs
 
 Every backend request uses a trace id for log search:

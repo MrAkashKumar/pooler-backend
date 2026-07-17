@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.config;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.security.CustomAccessDeniedHandler;
 import com.akash.pooler_backend.security.CustomAuthEntryPoint;
 import com.akash.pooler_backend.security.filter.RequestLoggingFilter;
@@ -75,27 +76,24 @@ public class SecurityConfig {
     private static final String[] PUBLIC_MATCHERS = {
             // Auth lifecycle
             // as per requirement, need then do versioning
-            "/**/auth/register",
-            "/**/auth/verify-email",
-            "/**/auth/resend-verification",
-            "/**/auth/login",
-            "/**/auth/google",
-            "/**/auth/refresh",
-            "/**/auth/forgot-password",
-            "/**/auth/reset-password",
+            ApiMapping.AUTH_REGISTER_MATCHER,
+            ApiMapping.AUTH_VERIFY_EMAIL_MATCHER,
+            ApiMapping.AUTH_RESEND_VERIFICATION_MATCHER,
+            ApiMapping.AUTH_LOGIN_MATCHER,
+            ApiMapping.AUTH_GOOGLE_MATCHER,
+            ApiMapping.AUTH_REFRESH_MATCHER,
+            ApiMapping.AUTH_FORGOT_PASSWORD_MATCHER,
+            ApiMapping.AUTH_RESET_PASSWORD_MATCHER,
             // Public info (health, version)
-            "/api/v1/public/**",
+            ApiMapping.PUBLIC_API + ApiMapping.ALL,
             // API documentation
-            "/v3/api-docs",
-            "/v3/api-docs/**",
-            "/v3/api-docs.yaml",
-            "/swagger-ui/**",
-            "/swagger-ui.html",
-            "/swagger-resources/**",
-            "/webjars/**",
-            // Monitoring
-            "/actuator/health",
-            "/actuator/info"
+            ApiMapping.V3_API_DOCS,
+            ApiMapping.V3_API_DOCS_ALL,
+            ApiMapping.V3_API_DOCS_YAML,
+            ApiMapping.SWAGGER_UI,
+            ApiMapping.SWAGGER_UI_HTML,
+            ApiMapping.SWAGGER_RESOURCES,
+            ApiMapping.WEBJARS
     };
 
     // ─── Main security filter chain ────────────────────────────────────
@@ -122,15 +120,17 @@ public class SecurityConfig {
                 //  Authorization rules
                 .authorizeHttpRequests(auth -> auth
                         //  PathRequest.toH2Console() — works correctly for H2 servlet
-                        // in Spring Security 6; MvcRequestMatcher("/h2-console/**") does NOT.
+                        // in Spring Security 6; MvcRequestMatcher(ApiMapping.H2_CONSOLE_ALL) does NOT.
                         .requestMatchers(PathRequest.toH2Console()).permitAll()
                         // Public — no token needed
                         .requestMatchers(PUBLIC_MATCHERS).permitAll()
                         // CORS preflight
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, ApiMapping.ALL).permitAll()
+                        // Monitoring endpoints are exposed for Postman/ops only.
+                        .requestMatchers(ApiMapping.ACTUATOR_API + ApiMapping.ALL).hasRole("ADMIN")
                         // Role-restricted admin routes
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/moderator/**").hasAnyRole("ADMIN", "MODERATOR")
+                        .requestMatchers(ApiMapping.ADMIN_SECURITY_API + ApiMapping.ALL).hasRole("ADMIN")
+                        .requestMatchers(ApiMapping.MODERATOR_SECURITY_API + ApiMapping.ALL).hasAnyRole("ADMIN", "MODERATOR")
                         // Everything else requires a valid JWT
                         .anyRequest().authenticated())
 
@@ -238,7 +238,7 @@ public class SecurityConfig {
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration(ApiMapping.ALL, config);
         return source;
     }
 

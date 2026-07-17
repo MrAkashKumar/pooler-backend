@@ -83,6 +83,26 @@ After the fix in `application.properties` and `SecurityConfig.java`:
 | PUT | `/api/v1/admin/users/{id}/suspend` |
 | PUT | `/api/v1/admin/users/{id}/activate` |
 
+### Admin Monitoring (Postman only, Bearer + ROLE_ADMIN)
+
+These endpoints are backed by Spring Boot Actuator. They are for backend monitoring only and should not be integrated into the mobile frontend.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/actuator/health` | Returns service health. Anonymous users get `401`; non-admin users get `403`. |
+| GET | `/actuator/info` | Returns application info exposed by actuator. |
+| GET | `/actuator/metrics` | Lists available metric names. |
+| GET | `/actuator/metrics/http.server.requests` | Shows HTTP request metrics when the metric is available. |
+
+`/actuator/health` can return `503` when a dependency reports `DOWN`; check the JSON body for the failing component. Authentication failures are separate and return `401` or `403`.
+
+Postman setup:
+
+1. Login with an admin account and copy the `accessToken`.
+2. Create a request to `{{baseUrl}}/actuator/health`.
+3. Add `Authorization: Bearer {{adminAccessToken}}`.
+4. Keep these requests in an admin-only Postman folder; do not share them with normal mobile users.
+
 ## Mobile-specific headers
 
 These are picked up by `DeviceInfoArgumentResolver` / `RequestMetadataInterceptor`:

@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.SessionListResponse;
 import com.akash.pooler_backend.dto.response.TokenInfoResponse;
@@ -32,7 +33,7 @@ import java.util.List;
  * Uses @ValidSession on sensitive operations (revoking other sessions).
  */
 @RestController
-@RequestMapping("/api/v1/sessions")
+@RequestMapping(ApiMapping.SESSIONS_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Sessions", description = "Device session management for mobile apps")
@@ -62,7 +63,7 @@ public class SessionController {
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
-    @DeleteMapping("/{sessionId}")
+    @DeleteMapping(ApiMapping.SESSION_ID)
     @ValidSession(reason = "Revoking another device session requires an active session")
     @Operation(summary = "Revoke a specific session (log out a device)")
     public ResponseEntity<ApiResponse<Void>> revokeSession(
@@ -82,7 +83,7 @@ public class SessionController {
         return ResponseEntity.ok(ApiResponse.message("Session revoked successfully"));
     }
 
-    @GetMapping("/token-info")
+    @GetMapping(ApiMapping.TOKEN_INFO)
     @Operation(summary = "Decode access token metadata (expiry, role, type)")
     public ResponseEntity<ApiResponse<TokenInfoResponse>> tokenInfo(HttpServletRequest req) {
         String token = RequestUtil.extractBearerToken(req);

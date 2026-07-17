@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.request.ShareTelegramRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.TelegramProfileResponse;
@@ -14,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/telegram")
+@RequestMapping(ApiMapping.TELEGRAM_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Telegram Handoff", description = "Optional Telegram identity and chat handoff")
@@ -22,24 +23,24 @@ public class TelegramController {
 
     private final TelegramService telegramService;
 
-    @PutMapping("/me")
+    @PutMapping(ApiMapping.ME)
     public ResponseEntity<ApiResponse<TelegramProfileResponse>> save(
             @CurrentUser PbUserEntity user, @Valid @RequestBody ShareTelegramRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(telegramService.saveOrUpdateTelegramProfile(user, request)));
     }
 
-    @GetMapping("/me")
+    @GetMapping(ApiMapping.ME)
     public ResponseEntity<ApiResponse<TelegramProfileResponse>> get(@CurrentUser PbUserEntity user) {
         return ResponseEntity.ok(ApiResponse.ok(telegramService.getTelegramProfile(user.getEntityId())));
     }
 
-    @DeleteMapping("/me")
+    @DeleteMapping(ApiMapping.ME)
     public ResponseEntity<ApiResponse<Void>> delete(@CurrentUser PbUserEntity user) {
         telegramService.removeTelegramProfile(user.getEntityId());
         return ResponseEntity.ok(ApiResponse.message("Telegram profile removed"));
     }
 
-    @PostMapping("/chats/{threadId}/share")
+    @PostMapping(ApiMapping.TELEGRAM_CHAT_SHARE)
     public ResponseEntity<ApiResponse<Void>> share(
             @CurrentUser PbUserEntity user, @PathVariable String threadId) {
         telegramService.shareTelegramInChat(threadId, user);

@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.request.CreateSafetyReportRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.SafetyReportResponse;
@@ -22,7 +23,7 @@ import java.util.List;
  * @author Akash Kumar
  */
 @RestController
-@RequestMapping("/api/v1/safety-reports")
+@RequestMapping(ApiMapping.SAFETY_REPORTS_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Safety Reports", description = "Create and read rider safety reports")

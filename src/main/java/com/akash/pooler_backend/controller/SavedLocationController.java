@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.request.SaveLocationRequest;
 import com.akash.pooler_backend.dto.request.UpdateLocationRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
@@ -23,7 +24,7 @@ import java.util.List;
  * @author Akash Kumar
  */
 @RestController
-@RequestMapping("/api/v1/locations")
+@RequestMapping(ApiMapping.LOCATIONS_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Saved Locations", description = "Bookmarked places (home / work / custom)")
@@ -45,7 +46,7 @@ public class SavedLocationController {
         return ResponseEntity.ok(ApiResponse.ok(savedLocationService.listForUser(user)));
     }
 
-    @GetMapping("/{locationEntityId}")
+    @GetMapping(ApiMapping.LOCATION_ID)
     @Operation(summary = "Fetch a specific saved location")
     public ResponseEntity<ApiResponse<SavedLocationResponse>> get(
             @CurrentUser PbUserEntity user,
@@ -53,7 +54,7 @@ public class SavedLocationController {
         return ResponseEntity.ok(ApiResponse.ok(savedLocationService.get(user, locationEntityId)));
     }
 
-    @PutMapping("/{locationEntityId}")
+    @PutMapping(ApiMapping.LOCATION_ID)
     @Operation(summary = "Update a saved location (partial)")
     public ResponseEntity<ApiResponse<SavedLocationResponse>> update(
             @CurrentUser PbUserEntity user,
@@ -63,7 +64,7 @@ public class SavedLocationController {
                 savedLocationService.update(user, locationEntityId, req)));
     }
 
-    @DeleteMapping("/{locationEntityId}")
+    @DeleteMapping(ApiMapping.LOCATION_ID)
     @Operation(summary = "Delete a saved location")
     public ResponseEntity<ApiResponse<Void>> delete(
             @CurrentUser PbUserEntity user,

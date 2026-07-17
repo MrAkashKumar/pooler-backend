@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.UserResponse;
 import com.akash.pooler_backend.entity.PbUserEntity;
@@ -20,7 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(value = "/api/v1/admin")
+@RequestMapping(value = ApiMapping.ADMIN_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasRole('ADMIN')")
@@ -29,7 +30,7 @@ public class AdminController {
 
     private final PbUserRepository userRepo;
 
-    @GetMapping("/users")
+    @GetMapping(ApiMapping.USERS)
     @Operation(summary = "List all users (paginated)")
     public ResponseEntity<ApiResponse<Page<UserResponse>>> listUsers(
             @RequestParam(defaultValue = "0")  int page,
@@ -40,14 +41,14 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
-    @GetMapping("/users/{id}")
+    @GetMapping(ApiMapping.USER_ID)
     @Operation(summary = "Get user by ID")
     public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable Long id) {
         PbUserEntity user = userRepo.findById(id).orElseThrow(() -> new UserNotFoundException(id.toString()));
         return ResponseEntity.ok(ApiResponse.ok(UserResponse.from(user)));
     }
 
-    @PutMapping("/users/{id}/suspend")
+    @PutMapping(ApiMapping.USER_SUSPEND)
     @Operation(summary = "Suspend a user account")
     public ResponseEntity<ApiResponse<Void>> suspendUser(@PathVariable Long id,
                                                          @CurrentUser PbUserEntity admin) {
@@ -57,7 +58,7 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.message("User suspended: " + pbUserEntity.getEmail()));
     }
 
-    @PutMapping("/users/{id}/activate")
+    @PutMapping(ApiMapping.USER_ACTIVATE)
     @Operation(summary = "Re-activate a suspended user")
     public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable Long id) {
         PbUserEntity pbUserEntity = userRepo.findById(id).orElseThrow(() -> new UserNotFoundException(id.toString()));

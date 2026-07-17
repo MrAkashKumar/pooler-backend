@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.entity.PbAuditLogEntity;
 import com.akash.pooler_backend.entity.PbUserEntity;
@@ -17,7 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/audit")
+@RequestMapping(ApiMapping.AUDIT_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Audit Logs", description = "Security audit trail")
@@ -25,7 +26,7 @@ public class AuditController {
 
     private final AuditService auditService;
 
-    @GetMapping("/me")
+    @GetMapping(ApiMapping.ME)
     @Operation(summary = "Get current pbUserEntity's audit log")
     public ResponseEntity<ApiResponse<Page<PbAuditLogEntity>>> myLogs(
             @CurrentUser PbUserEntity pbUserEntity,
@@ -35,7 +36,7 @@ public class AuditController {
         return ResponseEntity.ok(ApiResponse.ok(auditService.getAuditLogs(pbUserEntity.getEntityId(), pageable)));
     }
 
-    @GetMapping("/users/{entityId}")
+    @GetMapping(ApiMapping.AUDIT_USER)
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "[Admin] Get audit log for any user")
     public ResponseEntity<ApiResponse<Page<PbAuditLogEntity>>> userLogs(

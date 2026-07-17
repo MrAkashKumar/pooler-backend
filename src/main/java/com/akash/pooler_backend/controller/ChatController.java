@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.request.AddReactionRequest;
 import com.akash.pooler_backend.dto.request.EditMessageRequest;
 import com.akash.pooler_backend.dto.request.MarkAsReadRequest;
@@ -27,7 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/chats")
+@RequestMapping(ApiMapping.CHATS_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Ephemeral Chat", description = "Invitation chat with a two-hour retention window")
@@ -41,7 +42,7 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.ok(chatService.getActiveChats(user)));
     }
 
-    @GetMapping("/by-invitation/{invitationId}")
+    @GetMapping(ApiMapping.BY_INVITATION)
     public ResponseEntity<ApiResponse<ChatThreadResponse>> byInvitation(
             @CurrentUser PbUserEntity user, @PathVariable String invitationId) {
         return chatService.getChatThreadByInvitation(invitationId, user)
@@ -49,13 +50,13 @@ public class ChatController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/{threadId}")
+    @GetMapping(ApiMapping.THREAD_ID)
     public ResponseEntity<ApiResponse<ChatThreadResponse>> get(
             @CurrentUser PbUserEntity user, @PathVariable String threadId) {
         return ResponseEntity.ok(ApiResponse.ok(chatService.getChatThread(threadId, user)));
     }
 
-    @GetMapping("/{threadId}/messages")
+    @GetMapping(ApiMapping.THREAD_MESSAGES)
     public ResponseEntity<ApiResponse<Page<ChatMessageResponse>>> messages(
             @CurrentUser PbUserEntity user,
             @PathVariable String threadId,
@@ -63,7 +64,7 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.ok(chatService.getMessages(threadId, pageable.getPageNumber(), user, pageable)));
     }
 
-    @PostMapping("/{threadId}/messages")
+    @PostMapping(ApiMapping.THREAD_MESSAGES)
     @ValidSession(reason = "Sending a chat message requires an active session")
     public ResponseEntity<ApiResponse<ChatMessageResponse>> send(
             @CurrentUser PbUserEntity user,
@@ -72,7 +73,7 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.created(chatService.sendMessage(user, threadId, request)));
     }
 
-    @PutMapping("/{threadId}/messages/{messageId}")
+    @PutMapping(ApiMapping.THREAD_MESSAGE)
     public ResponseEntity<ApiResponse<ChatMessageResponse>> edit(
             @CurrentUser PbUserEntity user,
             @PathVariable String threadId,
@@ -81,7 +82,7 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.ok(chatService.editMessage(user, messageId, request)));
     }
 
-    @PostMapping("/{threadId}/read")
+    @PostMapping(ApiMapping.THREAD_READ)
     public ResponseEntity<ApiResponse<Void>> read(
             @CurrentUser PbUserEntity user,
             @PathVariable String threadId,
@@ -90,7 +91,7 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.message("Messages marked as read"));
     }
 
-    @PostMapping("/{threadId}/messages/{messageId}/reactions")
+    @PostMapping(ApiMapping.THREAD_MESSAGE_REACTIONS)
     public ResponseEntity<ApiResponse<ChatMessageResponse>> react(
             @CurrentUser PbUserEntity user,
             @PathVariable String threadId,
@@ -99,7 +100,7 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.ok(chatService.addReaction(user, messageId, request.getEmoji())));
     }
 
-    @DeleteMapping("/{threadId}/messages/{messageId}/reactions")
+    @DeleteMapping(ApiMapping.THREAD_MESSAGE_REACTIONS)
     public ResponseEntity<ApiResponse<ChatMessageResponse>> removeReaction(
             @CurrentUser PbUserEntity user,
             @PathVariable String threadId,
@@ -108,7 +109,7 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.ok(chatService.removeReaction(user, messageId, request.getEmoji())));
     }
 
-    @GetMapping("/{threadId}/messages/{messageId}/receipts")
+    @GetMapping(ApiMapping.THREAD_MESSAGE_RECEIPTS)
     public ResponseEntity<ApiResponse<ReadReceiptResponse>> receipts(
             @CurrentUser PbUserEntity user,
             @PathVariable String threadId,
@@ -116,7 +117,7 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.ok(chatService.getReadReceipts(messageId, user)));
     }
 
-    @GetMapping("/{threadId}/search")
+    @GetMapping(ApiMapping.THREAD_SEARCH)
     public ResponseEntity<ApiResponse<List<ChatMessageResponse>>> search(
             @CurrentUser PbUserEntity user,
             @PathVariable String threadId,
@@ -124,7 +125,7 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.ok(chatService.searchMessages(threadId, query, user)));
     }
 
-    @DeleteMapping("/{threadId}")
+    @DeleteMapping(ApiMapping.THREAD_ID)
     public ResponseEntity<ApiResponse<Void>> close(
             @CurrentUser PbUserEntity user, @PathVariable String threadId) {
         chatService.closeChat(threadId, user);

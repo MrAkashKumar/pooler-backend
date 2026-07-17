@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.config;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.aspect.CurrentUserArgumentResolver;
 import com.akash.pooler_backend.aspect.DeviceInfoArgumentResolver;
 import com.akash.pooler_backend.interceptors.AuthInterceptor;
@@ -42,7 +43,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
         String[] methods = methodsProperty.split(",");
 
-        registry.addMapping("/**")
+        registry.addMapping(ApiMapping.ALL)
                 .allowedOriginPatterns(origins)
                 .allowedMethods(methods)
                 .allowedHeaders("*")
@@ -53,11 +54,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(requestMetadataInterceptor).addPathPatterns("/**");
+        registry.addInterceptor(requestMetadataInterceptor).addPathPatterns(ApiMapping.ALL);
         registry.addInterceptor(authInterceptor)
-                .addPathPatterns("/api/**")
-                .excludePathPatterns("/api/v1/auth/**","/api/v1/public/**",
-                        "/v3/api-docs/**","/swagger-ui/**","/h2-console/**");
+                .addPathPatterns(ApiMapping.API_ROOT_MATCHER)
+                .excludePathPatterns(ApiMapping.AUTH_API + ApiMapping.ALL, ApiMapping.PUBLIC_API + ApiMapping.ALL,
+                        ApiMapping.V3_API_DOCS_ALL, ApiMapping.SWAGGER_UI, ApiMapping.H2_CONSOLE_ALL);
     }
 
     @Override

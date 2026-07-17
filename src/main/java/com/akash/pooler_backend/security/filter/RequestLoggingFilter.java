@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.security.filter;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.utils.TraceContextUtil;
 import com.akash.pooler_backend.utils.RequestUtil;
 import jakarta.servlet.FilterChain;
@@ -53,7 +54,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return path.startsWith("/actuator") || path.startsWith("/h2-console");
+        String path = request.getServletPath();
+        return path.startsWith(ApiMapping.ACTUATOR_API) || path.startsWith(ApiMapping.H2_CONSOLE_API);
     }
 }

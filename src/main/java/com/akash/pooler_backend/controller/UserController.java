@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.request.ChangePasswordRequest;
 import com.akash.pooler_backend.dto.request.UpdateProfileRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
@@ -24,7 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
  * @author Akash Kumar
  */
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping(ApiMapping.USERS_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "User Profile", description = "Profile management for authenticated users")
@@ -33,13 +34,13 @@ public class UserController {
     private final UserService userService;
     private final ProfileMediaService profileMediaService;
 
-    @GetMapping("/me")
+    @GetMapping(ApiMapping.ME)
     @Operation(summary = "Get current user profile")
     public ResponseEntity<ApiResponse<UserResponse>> getProfile(@CurrentUser PbUserEntity pbUserEntity) {
         return ResponseEntity.ok(ApiResponse.ok(userService.getProfile(pbUserEntity)));
     }
 
-    @PutMapping("/me")
+    @PutMapping(ApiMapping.ME)
     @Operation(summary = "Update profile")
     public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
             @CurrentUser PbUserEntity pbUserEntity,
@@ -47,7 +48,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok("Profile updated", userService.updateProfile(pbUserEntity, req)));
     }
 
-    @PostMapping(value = "/me/media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = ApiMapping.MEDIA, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ValidSession(reason = "Updating profile media requires an active session")
     @Operation(summary = "Upload optional profile photo or payment QR image to S3")
     public ResponseEntity<ApiResponse<UserResponse>> uploadProfileMedia(
@@ -58,7 +59,7 @@ public class UserController {
                 profileMediaService.uploadProfileMedia(pbUserEntity, purpose, file)));
     }
 
-    @PutMapping("/me/change-password")
+    @PutMapping(ApiMapping.CHANGE_PASSWORD)
     @Operation(summary = "Change password (requires current password)")
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @CurrentUser PbUserEntity pbUserEntity,
@@ -67,7 +68,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.message("Password changed. Please login again."));
     }
 
-    @DeleteMapping("/me")
+    @DeleteMapping(ApiMapping.ME)
     @Operation(summary = "Delete account permanently")
     public ResponseEntity<ApiResponse<Void>> deleteAccount(@CurrentUser PbUserEntity pbUserEntity) {
         userService.deleteAccount(pbUserEntity);

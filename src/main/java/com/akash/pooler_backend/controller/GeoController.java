@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.request.MidpointRequest;
 import com.akash.pooler_backend.dto.request.RouteCompatibilityRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
@@ -25,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
  * @author Akash Kumar
  */
 @RestController
-@RequestMapping("/api/v1/geo")
+@RequestMapping(ApiMapping.GEO_API)
 @RequiredArgsConstructor
 @Validated
 @SecurityRequirement(name = "bearerAuth")
@@ -34,7 +35,7 @@ public class GeoController {
 
     private final GeoService geoService;
 
-    @GetMapping("/distance")
+    @GetMapping(ApiMapping.DISTANCE)
     @Operation(summary = "Great-circle distance and bearing between two coordinates")
     public ResponseEntity<ApiResponse<DistanceResponse>> distance(
             @RequestParam @DecimalMin("-90.0")  @DecimalMax("90.0")  double lat1,
@@ -44,7 +45,7 @@ public class GeoController {
         return ResponseEntity.ok(ApiResponse.ok(geoService.distance(lat1, lng1, lat2, lng2)));
     }
 
-    @PostMapping("/midpoint")
+    @PostMapping(ApiMapping.MIDPOINT)
     @Operation(summary = "Compute the common pickup hub between two users")
     public ResponseEntity<ApiResponse<CommonPickupPointResponse>> midpoint(
             @Valid @RequestBody MidpointRequest req) {
@@ -53,7 +54,7 @@ public class GeoController {
                 req.getUserBLatitude(), req.getUserBLongitude())));
     }
 
-    @PostMapping("/route-compatibility")
+    @PostMapping(ApiMapping.ROUTE_COMPATIBILITY)
     @Operation(summary = "Run the Overlap Rule for two trips")
     public ResponseEntity<ApiResponse<RouteCompatibilityResponse>> compatibility(
             @Valid @RequestBody RouteCompatibilityRequest req) {

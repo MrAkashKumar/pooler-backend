@@ -41,6 +41,7 @@ import com.akash.pooler_backend.service.ChatService;
 import com.akash.pooler_backend.service.RideService;
 import com.akash.pooler_backend.service.SafetyReportService;
 import com.akash.pooler_backend.service.UserService;
+import com.akash.pooler_backend.security.JwtUtil;
 import com.akash.pooler_backend.utils.RequestUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.PageRequest;
@@ -87,6 +88,7 @@ class ApiSmokeIntegrationTests {
     @Autowired private RideService rideService;
     @Autowired private SafetyReportService safetyReportService;
     @Autowired private UserService userService;
+    @Autowired private JwtUtil jwtUtil;
 
     @BeforeEach
     void ensureTestUsers() {
@@ -100,6 +102,22 @@ class ApiSmokeIntegrationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("UP"));
+    }
+
+    @Test
+    void actuatorMonitoringIsAdminOnly() throws Exception {
+        mockMvc.perform(get("/actuator/info"))
+                .andExpect(status().isUnauthorized());
+
+        var rider = userRepository.findByEmail(RIDER_A_EMAIL).orElseThrow();
+        mockMvc.perform(get("/actuator/info")
+                        .header("Authorization", "Bearer " + jwtUtil.generateAccessToken(rider)))
+                .andExpect(status().isForbidden());
+
+        var admin = ensureUser("test-admin", "admin@hoppo.test", "Admin", "Ops", Gender.OTHER, Role.ROLE_ADMIN);
+        mockMvc.perform(get("/actuator/info")
+                        .header("Authorization", "Bearer " + jwtUtil.generateAccessToken(admin)))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -391,20 +409,22 @@ class ApiSmokeIntegrationTests {
         assertEquals(0, contactRepository.findAllByOwnerEntityIdOrderByFavoriteDescCreatedAtDesc(userId).size());
     }
 
-    private void ensureUser(String entityId, String email, String firstName, String lastName, Gender gender) {
-        if (userRepository.existsByEmail(email)) {
-            return;
-        }
-        userRepository.save(PbUserEntity.builder()
+    private PbUserEntity ensureUser(String entityId, String email, String firstName, String lastName, Gender gender) {
+        return ensureUser(entityId, email, firstName, lastName, gender, Role.ROLE_USER);
+    }
+
+    private PbUserEntity ensureUser(String entityId, String email, String firstName, String lastName, Gender gender,
+                                    Role role) {
+        return userRepository.findByEmail(email).orElseGet(() -> userRepository.save(PbUserEntity.builder()
                 .entityId(entityId)
                 .username(entityId)
                 .email(email)
                 .firstName(firstName)
                 .lastName(lastName)
                 .gender(gender)
-                .role(Role.ROLE_USER)
+                .role(role)
                 .status(UserStatus.ACTIVE)
                 .passwordHash(passwordEncoder.encode(TEST_PASSWORD))
-                .build());
+                .build()));
     }
 }

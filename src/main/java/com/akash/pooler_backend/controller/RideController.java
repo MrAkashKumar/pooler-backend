@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.request.CancelRideRequest;
 import com.akash.pooler_backend.dto.request.UpdateFareSplitRequest;
 import com.akash.pooler_backend.dto.request.UpdateRideStatusRequest;
@@ -26,7 +27,7 @@ import java.util.List;
  * @author Akash Kumar
  */
 @RestController
-@RequestMapping("/api/v1/rides")
+@RequestMapping(ApiMapping.RIDES_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Rides", description = "Shared-ride lifecycle and history")
@@ -34,7 +35,7 @@ public class RideController {
 
     private final RideService rideService;
 
-    @GetMapping("/{rideEntityId}")
+    @GetMapping(ApiMapping.RIDE_ID)
     @Operation(summary = "Fetch a single ride (must be a participant)")
     public ResponseEntity<ApiResponse<RideResponse>> get(
             @CurrentUser PbUserEntity user,
@@ -42,19 +43,19 @@ public class RideController {
         return ResponseEntity.ok(ApiResponse.ok(rideService.get(user, rideEntityId)));
     }
 
-    @GetMapping("/active")
+    @GetMapping(ApiMapping.ACTIVE)
     @Operation(summary = "List rides currently in progress")
     public ResponseEntity<ApiResponse<List<RideResponse>>> active(@CurrentUser PbUserEntity user) {
         return ResponseEntity.ok(ApiResponse.ok(rideService.active(user)));
     }
 
-    @GetMapping("/history")
+    @GetMapping(ApiMapping.HISTORY)
     @Operation(summary = "List completed and cancelled rides")
     public ResponseEntity<ApiResponse<List<RideResponse>>> history(@CurrentUser PbUserEntity user) {
         return ResponseEntity.ok(ApiResponse.ok(rideService.history(user)));
     }
 
-    @PutMapping("/{rideEntityId}/status")
+    @PutMapping(ApiMapping.RIDE_STATUS)
     @ValidSession(reason = "Changing ride status requires an active session")
     @Operation(summary = "Advance a ride to the next lifecycle state")
     public ResponseEntity<ApiResponse<RideResponse>> updateStatus(
@@ -65,7 +66,7 @@ public class RideController {
                 rideService.updateStatus(user, rideEntityId, req)));
     }
 
-    @PostMapping("/{rideEntityId}/cancel")
+    @PostMapping(ApiMapping.RIDE_CANCEL)
     @ValidSession(reason = "Cancelling a ride requires an active session")
     @Operation(summary = "Cancel a non-terminal ride")
     public ResponseEntity<ApiResponse<RideResponse>> cancel(
@@ -76,7 +77,7 @@ public class RideController {
                 rideService.cancel(user, rideEntityId, req)));
     }
 
-    @PostMapping("/{rideEntityId}/fare-split")
+    @PostMapping(ApiMapping.FARE_SPLIT)
     @ValidSession(reason = "Fare split update requires an active session")
     @Operation(summary = "Store final provider fare and calculate distance-based rider shares")
     public ResponseEntity<ApiResponse<RideResponse>> fareSplit(
@@ -87,7 +88,7 @@ public class RideController {
                 rideService.updateFareSplit(user, rideEntityId, req)));
     }
 
-    @PostMapping("/{rideEntityId}/arrive")
+    @PostMapping(ApiMapping.ARRIVE)
     @ValidSession(reason = "Arrival confirmation requires an active session")
     @Operation(summary = "Confirm physical arrival; cab handoff unlocks after both riders confirm")
     public ResponseEntity<ApiResponse<ArrivalConfirmationResponse>> arrive(

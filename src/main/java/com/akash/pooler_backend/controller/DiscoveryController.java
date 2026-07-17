@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.request.DiscoveryToggleRequest;
 import com.akash.pooler_backend.dto.request.LocationPingRequest;
 import com.akash.pooler_backend.dto.request.NearbySearchRequest;
@@ -26,7 +27,7 @@ import java.util.List;
  * @author Akash Kumar
  */
 @RestController
-@RequestMapping("/api/v1/discovery")
+@RequestMapping(ApiMapping.DISCOVERY_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Discovery", description = "Ride-sharing toggle and nearby user search")
@@ -34,7 +35,7 @@ public class DiscoveryController {
 
     private final DiscoveryService discoveryService;
 
-    @PutMapping("/toggle")
+    @PutMapping(ApiMapping.TOGGLE)
     @ValidSession(reason = "Broadcasting your live location requires an active session")
     @Operation(summary = "Turn discovery mode ON or OFF")
     public ResponseEntity<ApiResponse<DiscoveryStatusResponse>> toggle(
@@ -43,7 +44,7 @@ public class DiscoveryController {
         return ResponseEntity.ok(ApiResponse.ok(discoveryService.toggle(user, req)));
     }
 
-    @PostMapping("/ping")
+    @PostMapping(ApiMapping.PING)
     @Operation(summary = "Update your current location while in discovery mode")
     public ResponseEntity<ApiResponse<DiscoveryStatusResponse>> ping(
             @CurrentUser PbUserEntity user,
@@ -51,13 +52,13 @@ public class DiscoveryController {
         return ResponseEntity.ok(ApiResponse.ok(discoveryService.ping(user, req)));
     }
 
-    @GetMapping("/status")
+    @GetMapping(ApiMapping.STATUS)
     @Operation(summary = "Read your current discovery status")
     public ResponseEntity<ApiResponse<DiscoveryStatusResponse>> status(@CurrentUser PbUserEntity user) {
         return ResponseEntity.ok(ApiResponse.ok(discoveryService.getStatus(user)));
     }
 
-    @PostMapping("/nearby")
+    @PostMapping(ApiMapping.NEARBY)
     @Operation(summary = "Find nearby users currently broadcasting in discovery mode")
     public ResponseEntity<ApiResponse<List<NearbyUserResponse>>> nearby(
             @CurrentUser PbUserEntity user,

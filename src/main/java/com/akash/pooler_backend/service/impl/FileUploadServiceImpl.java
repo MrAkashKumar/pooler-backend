@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.service.impl;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.response.ChatFileDownload;
 import com.akash.pooler_backend.dto.response.FileUploadResponse;
 import com.akash.pooler_backend.entity.PbUserEntity;
@@ -81,7 +82,7 @@ public class FileUploadServiceImpl implements FileUploadService {
                 .originalFileName(originalName)
                 .contentType(contentType)
                 .sizeBytes(file.getSize())
-                .temporaryUrl("/api/v1/chat-files/" + fileId)
+                .temporaryUrl(ApiMapping.CHAT_FILES_API + "/" + fileId)
                 .expiresAt(expiresAt)
                 .build();
     }
@@ -89,7 +90,7 @@ public class FileUploadServiceImpl implements FileUploadService {
     @Override
     public String generateFileExpiryUrl(String fileId) {
         StoredFile file = requireActive(fileId);
-        return "/api/v1/chat-files/" + fileId + "?expires=" + file.expiresAt().getEpochSecond();
+        return ApiMapping.CHAT_FILES_API + "/" + fileId + "?expires=" + file.expiresAt().getEpochSecond();
     }
 
     @Override

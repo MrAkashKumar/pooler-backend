@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.request.AcceptInvitationRequest;
 import com.akash.pooler_backend.dto.request.SendRideInvitationRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
@@ -26,7 +27,7 @@ import java.util.List;
  * @author Akash Kumar
  */
 @RestController
-@RequestMapping("/api/v1/invitations")
+@RequestMapping(ApiMapping.INVITATIONS_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Ride Invitations", description = "Two-party invitation lifecycle for shared rides")
@@ -43,7 +44,7 @@ public class RideInvitationController {
         return ResponseEntity.ok(ApiResponse.created(invitationService.send(sender, req)));
     }
 
-    @PostMapping("/{invitationEntityId}/accept")
+    @PostMapping(ApiMapping.INVITATION_ACCEPT)
     @ValidSession(reason = "Accepting an invitation requires an active session")
     @Operation(summary = "Accept an invitation and compute the common pickup hub")
     public ResponseEntity<ApiResponse<RideInvitationResponse>> accept(
@@ -54,7 +55,7 @@ public class RideInvitationController {
                 invitationService.accept(receiver, invitationEntityId, req)));
     }
 
-    @PostMapping("/{invitationEntityId}/decline")
+    @PostMapping(ApiMapping.INVITATION_DECLINE)
     @Operation(summary = "Decline an invitation")
     public ResponseEntity<ApiResponse<RideInvitationResponse>> decline(
             @CurrentUser PbUserEntity receiver,
@@ -63,7 +64,7 @@ public class RideInvitationController {
                 invitationService.decline(receiver, invitationEntityId)));
     }
 
-    @PostMapping("/{invitationEntityId}/confirm-pickup")
+    @PostMapping(ApiMapping.INVITATION_CONFIRM_PICKUP)
     @ValidSession(reason = "Confirming pickup creates a ride and requires an active session")
     @Operation(summary = "Confirm the suggested pickup hub; ride is created when both parties confirm")
     public ResponseEntity<ApiResponse<ConfirmResult>> confirmPickup(
@@ -76,7 +77,7 @@ public class RideInvitationController {
         return ResponseEntity.ok(ApiResponse.ok(message, result));
     }
 
-    @PostMapping("/{invitationEntityId}/cancel")
+    @PostMapping(ApiMapping.INVITATION_CANCEL)
     @Operation(summary = "Cancel an invitation (either party)")
     public ResponseEntity<ApiResponse<RideInvitationResponse>> cancel(
             @CurrentUser PbUserEntity user,
@@ -85,7 +86,7 @@ public class RideInvitationController {
                 invitationService.cancel(user, invitationEntityId)));
     }
 
-    @GetMapping("/{invitationEntityId}")
+    @GetMapping(ApiMapping.INVITATION_ID)
     @Operation(summary = "Fetch a single invitation")
     public ResponseEntity<ApiResponse<RideInvitationResponse>> get(
             @CurrentUser PbUserEntity user,
@@ -93,13 +94,13 @@ public class RideInvitationController {
         return ResponseEntity.ok(ApiResponse.ok(invitationService.get(user, invitationEntityId)));
     }
 
-    @GetMapping("/inbox")
+    @GetMapping(ApiMapping.INBOX)
     @Operation(summary = "List invitations received")
     public ResponseEntity<ApiResponse<List<RideInvitationResponse>>> inbox(@CurrentUser PbUserEntity user) {
         return ResponseEntity.ok(ApiResponse.ok(invitationService.inbox(user)));
     }
 
-    @GetMapping("/outbox")
+    @GetMapping(ApiMapping.OUTBOX)
     @Operation(summary = "List invitations sent")
     public ResponseEntity<ApiResponse<List<RideInvitationResponse>>> outbox(@CurrentUser PbUserEntity user) {
         return ResponseEntity.ok(ApiResponse.ok(invitationService.outbox(user)));

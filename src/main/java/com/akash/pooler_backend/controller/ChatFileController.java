@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.controller;
 
+import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.ChatFileDownload;
 import com.akash.pooler_backend.dto.response.FileUploadResponse;
@@ -24,7 +25,7 @@ public class ChatFileController {
 
     private final FileUploadService fileUploadService;
 
-    @PostMapping(value = "/api/v1/chats/{threadId}/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = ApiMapping.CHATS_API + ApiMapping.THREAD_FILES, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<FileUploadResponse>> upload(
             @CurrentUser PbUserEntity user,
             @PathVariable String threadId,
@@ -32,7 +33,7 @@ public class ChatFileController {
         return ResponseEntity.ok(ApiResponse.created(fileUploadService.uploadMessageFile(user, threadId, file)));
     }
 
-    @GetMapping("/api/v1/chat-files/{fileId}")
+    @GetMapping(ApiMapping.CHAT_FILES_API + ApiMapping.FILE_ID)
     public ResponseEntity<?> download(
             @CurrentUser PbUserEntity user,
             @PathVariable String fileId) {
