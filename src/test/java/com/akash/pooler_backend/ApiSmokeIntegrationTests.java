@@ -41,8 +41,10 @@ import com.akash.pooler_backend.service.ChatService;
 import com.akash.pooler_backend.service.RideService;
 import com.akash.pooler_backend.service.SafetyReportService;
 import com.akash.pooler_backend.service.UserService;
+import com.akash.pooler_backend.utils.RequestUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -170,6 +172,21 @@ class ApiSmokeIntegrationTests {
                 .andExpect(jsonPath("$.errorCode").value("AUTH-001"))
                 .andExpect(jsonPath("$.traceId").value(traceId))
                 .andExpect(jsonPath("$.errorReferenceId").isNotEmpty());
+    }
+
+    @Test
+    void platformIsResolvedFromHeaderOrUserAgentFallback() {
+        MockHttpServletRequest androidHeader = new MockHttpServletRequest();
+        androidHeader.addHeader("X-Platform", "android");
+        assertEquals("ANDROID", RequestUtil.getPlatform(androidHeader));
+
+        MockHttpServletRequest iosUserAgent = new MockHttpServletRequest();
+        iosUserAgent.addHeader("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)");
+        assertEquals("IOS", RequestUtil.getPlatform(iosUserAgent));
+
+        MockHttpServletRequest webFallback = new MockHttpServletRequest();
+        webFallback.addHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X)");
+        assertEquals("WEB", RequestUtil.getPlatform(webFallback));
     }
 
     @Test

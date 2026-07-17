@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.security.filter;
 
 import com.akash.pooler_backend.utils.TraceContextUtil;
+import com.akash.pooler_backend.utils.RequestUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,7 +33,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         response.setHeader(TraceContextUtil.CORRELATION_ID_HEADER, correlationId);
 
         long start = System.currentTimeMillis();
-        String platform = request.getHeader("X-Platform");
+        String platform = RequestUtil.getPlatform(request);
         String appVersion = request.getHeader("X-App-Version");
 
         log.info("→ [{} {}] [correlationId={}] [platform={}] [appVersion={}]",

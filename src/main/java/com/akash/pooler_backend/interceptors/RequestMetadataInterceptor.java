@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.interceptors;
 
+import com.akash.pooler_backend.utils.RequestUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
@@ -20,7 +21,7 @@ public class RequestMetadataInterceptor implements HandlerInterceptor {
                              @NonNull HttpServletResponse res,
                              @NonNull Object handler) {
         req.setAttribute("deviceId",   req.getHeader("X-Device-Id"));
-        req.setAttribute("platform",   req.getHeader("X-Platform"));    // ANDROID | IOS | WEB
+        req.setAttribute("platform",   RequestUtil.getPlatform(req));    // ANDROID | IOS | WEB
         req.setAttribute("appVersion", req.getHeader("X-App-Version"));
         req.setAttribute("fcmToken",   req.getHeader("X-FCM-Token"));
         return true;

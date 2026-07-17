@@ -2,6 +2,7 @@ package com.akash.pooler_backend.aspect;
 
 import com.akash.pooler_backend.dto.request.DeviceInfoRequest;
 import com.akash.pooler_backend.interceptors.annotation.DeviceInfo;
+import com.akash.pooler_backend.utils.RequestUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
@@ -32,7 +33,7 @@ public class DeviceInfoArgumentResolver implements HandlerMethodArgumentResolver
         HttpServletRequest req = (HttpServletRequest) webReq.getNativeRequest();
         return DeviceInfoRequest.builder()
                 .deviceId(req.getHeader("X-Device-Id"))
-                .platform(req.getHeader("X-Platform"))
+                .platform(RequestUtil.getPlatform(req))
                 .appVersion(req.getHeader("X-App-Version"))
                 .fcmToken(req.getHeader("X-FCM-Token"))
                 .build();

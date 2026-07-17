@@ -33,8 +33,6 @@
     { "key": "refreshToken", "value": "", "type": "string" },
     { "key": "sessionToken", "value": "", "type": "string" },
     { "key": "userId",       "value": "", "type": "string" },
-    { "key": "authEmail",    "value": "", "type": "string" },
-    { "key": "authPassword", "value": "", "type": "string" },
     { "key": "deviceId",     "value": "postman-device-001", "type": "string" },
     { "key": "platform",     "value": "ANDROID", "type": "string" },
     { "key": "appVersion",   "value": "1.0.0",   "type": "string" },
@@ -117,7 +115,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"{{authEmail}}\",\n  \"gender\": \"OTHER\",\n  \"password\": \"{{authPassword}}\",\n  \"confirmPassword\": \"{{authPassword}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"platform\": \"{{platform}}\",\n  \"appVersion\": \"{{appVersion}}\",\n  \"fcmToken\": \"{{fcmToken}}\"\n}"
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"{{authEmail}}\",\n  \"password\": \"{{authPassword}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"platform\": \"{{platform}}\",\n  \"appVersion\": \"{{appVersion}}\",\n  \"fcmToken\": \"{{fcmToken}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register",
