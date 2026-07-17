@@ -136,6 +136,8 @@ profile-media.max-size-mb=5
 
 Development keeps `profile-media.s3-bucket` blank so accidental local uploads fail clearly. Staging and production can resolve the same keys from deployment-provided Spring placeholders. The S3 bucket or CloudFront distribution must allow read access for returned media URLs. Hoppo does not automatically expose payment QR during discovery; the mobile client shares it only when the owner taps **Share payment QR** in meetup chat.
 
+AWS mail and S3 production setup is documented in [AWS-MAIL-S3-INTEGRATION.md](../docs/AWS-MAIL-S3-INTEGRATION.md).
+
 ## Log retention
 
 Backend file logs are written to `app.logging.path` and compressed hourly archives are stored under `${app.logging.path}/archive`.
