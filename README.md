@@ -124,6 +124,8 @@ The backend uploads the object to S3 using AWS SDK default credentials and store
 - `profilePictureUrl`: optional account/profile photo
 - `paymentQrCodeUrl`: optional payment QR for manual sharing after a match
 
+Media URLs are intentionally not accepted by `PUT /api/v1/users/me`. A user can update these fields only through the multipart upload endpoint, so profile photo and payment QR URLs always come from the configured S3 or CDN media path.
+
 Configuration lives in the Spring profile properties files:
 
 ```properties

@@ -32,6 +32,7 @@ public final class ApiMapping {
     public static final String CHAT_FILES_API = "/api/v1/chat-files";
     public static final String CONTACTS_API = "/api/v1/contacts";
     public static final String DISCOVERY_API = "/api/v1/discovery";
+    public static final String FEEDBACK_API = "/api/v1/feedback";
     public static final String GEO_API = "/api/v1/geo";
     public static final String INVITATIONS_API = "/api/v1/invitations";
     public static final String LOCATIONS_API = "/api/v1/locations";
@@ -112,6 +113,7 @@ public final class ApiMapping {
     public static final String ARRIVE = "/{rideEntityId}/arrive";
 
     public static final String TELEGRAM_CHAT_SHARE = "/chats/{threadId}/share";
+    public static final String FEEDBACK_ID = "/{feedbackEntityId}";
 
     public static final String V3_API_DOCS = "/v3/api-docs";
     public static final String V3_API_DOCS_ALL = "/v3/api-docs/**";

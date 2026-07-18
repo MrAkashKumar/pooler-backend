@@ -6,6 +6,7 @@ import com.akash.pooler_backend.dto.request.UpdateFareSplitRequest;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.entity.PbContactEntity;
 import com.akash.pooler_backend.entity.PbDiscoveryStatusEntity;
+import com.akash.pooler_backend.entity.PbFeedbackEntity;
 import com.akash.pooler_backend.entity.PbRideEntity;
 import com.akash.pooler_backend.entity.PbSafetyReportEntity;
 import com.akash.pooler_backend.entity.PbSavedLocationEntity;
@@ -32,6 +33,7 @@ import com.akash.pooler_backend.repository.PbChatThreadRepository;
 import com.akash.pooler_backend.repository.PbContactRepository;
 import com.akash.pooler_backend.repository.PbDiscoveryStatusRepository;
 import com.akash.pooler_backend.repository.PbEmailVerificationTokenRepository;
+import com.akash.pooler_backend.repository.PbFeedbackRepository;
 import com.akash.pooler_backend.repository.PbRideInvitationRepository;
 import com.akash.pooler_backend.repository.PbRideRepository;
 import com.akash.pooler_backend.repository.PbSafetyReportRepository;
@@ -53,6 +55,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -79,6 +82,7 @@ class ApiSmokeIntegrationTests {
     @Autowired private PbChatThreadRepository threadRepository;
     @Autowired private PbChatArchiveRepository archiveRepository;
     @Autowired private PbEmailVerificationTokenRepository emailVerificationTokenRepository;
+    @Autowired private PbFeedbackRepository feedbackRepository;
     @Autowired private PbDiscoveryStatusRepository discoveryStatusRepository;
     @Autowired private PbSavedLocationRepository savedLocationRepository;
     @Autowired private PbSafetyReportRepository safetyReportRepository;
@@ -357,6 +361,52 @@ class ApiSmokeIntegrationTests {
     }
 
     @Test
+    void feedbackCreateIsPrivateAndAdminCanReviewAndDelete() throws Exception {
+        var rider = userRepository.findByEmail(RIDER_A_EMAIL).orElseThrow();
+        var admin = ensureUser("feedback-admin", "feedback-admin@hoppo.test", "Admin", "Feedback", Gender.OTHER, Role.ROLE_ADMIN);
+        String riderToken = jwtUtil.generateAccessToken(rider);
+        String adminToken = jwtUtil.generateAccessToken(admin);
+
+        String response = mockMvc.perform(post("/api/v1/feedback")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + riderToken)
+                        .header("X-Platform", "IOS")
+                        .header("X-App-Version", "1.0.1")
+                        .content("""
+                                {
+                                  "emotion": "SUPERB",
+                                  "subject": "Matching",
+                                  "rating": 5,
+                                  "message": "Easy flow and friendly design."
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.emotion").value("SUPERB"))
+                .andExpect(jsonPath("$.data.platform").value("IOS"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String feedbackEntityId = objectMapper.readTree(response).path("data").path("entityId").asText();
+
+        mockMvc.perform(get("/api/v1/feedback")
+                        .header("Authorization", "Bearer " + riderToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/v1/feedback")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[?(@.entityId == '%s')]".formatted(feedbackEntityId)).exists());
+
+        mockMvc.perform(delete("/api/v1/feedback/" + feedbackEntityId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk());
+
+        assertFalse(feedbackRepository.findByEntityId(feedbackEntityId).isPresent());
+    }
+
+    @Test
     void accountDeletionRemovesUserOwnedData() {
         String userId = "delete-user-" + UUID.randomUUID().toString().substring(0, 8);
         var user = userRepository.save(PbUserEntity.builder()
@@ -394,6 +444,16 @@ class ApiSmokeIntegrationTests {
                 .contactAllowed(false)
                 .status(SafetyReportStatus.OPEN)
                 .build());
+        feedbackRepository.save(PbFeedbackEntity.builder()
+                .entityId("fb-" + UUID.randomUUID().toString().substring(0, 8))
+                .submitterEntityId(userId)
+                .emotion("SUGGESTION")
+                .subject("Profile")
+                .rating(4)
+                .message("Delete verification")
+                .platform("ANDROID")
+                .appVersion("1.0.1")
+                .build());
         contactRepository.save(PbContactEntity.builder()
                 .entityId("con-" + UUID.randomUUID().toString().substring(0, 8))
                 .ownerEntityId(userId)
@@ -406,6 +466,9 @@ class ApiSmokeIntegrationTests {
         assertFalse(discoveryStatusRepository.findByUserEntityId(userId).isPresent());
         assertEquals(0, savedLocationRepository.findAllByUserEntityIdOrderByCreatedAtDesc(userId).size());
         assertEquals(0, safetyReportRepository.findAllByReporterEntityIdOrderByCreatedAtDesc(userId).size());
+        assertEquals(0, feedbackRepository.findAllByOrderByCreatedAtDesc().stream()
+                .filter(feedback -> userId.equals(feedback.getSubmitterEntityId()))
+                .count());
         assertEquals(0, contactRepository.findAllByOwnerEntityIdOrderByFavoriteDescCreatedAtDesc(userId).size());
     }
 

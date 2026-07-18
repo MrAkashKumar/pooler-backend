@@ -4,6 +4,8 @@ const baseUrl = (process.env.BASE_URL || 'http://localhost:8888/pooler-backend')
 const totalRequests = Number(process.env.REQUESTS || 200);
 const concurrency = Number(process.env.CONCURRENCY || 25);
 const timeoutMs = Number(process.env.TIMEOUT_MS || 5000);
+const invalidLoginEmail = process.env.SMOKE_INVALID_LOGIN_EMAIL || 'invalid-login@example.invalid';
+const invalidLoginPassword = process.env.SMOKE_INVALID_LOGIN_PASSWORD || 'InvalidLoginOnly@123';
 
 function percentile(sorted, p) {
   if (sorted.length === 0) return 0;
@@ -56,8 +58,8 @@ async function runOne(index) {
       method: 'POST',
       headers: headers(index),
       body: JSON.stringify({
-        email: 'synthetic-smoke-user@example.invalid',
-        password: 'Wrong@1234',
+        email: invalidLoginEmail,
+        password: invalidLoginPassword,
         platform: 'WEB',
       }),
     });

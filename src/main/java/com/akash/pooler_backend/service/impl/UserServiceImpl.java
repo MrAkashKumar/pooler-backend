@@ -45,6 +45,7 @@ public class UserServiceImpl implements UserService {
     private final PbChatSearchIndexRepository chatSearchIndexRepository;
     private final PbChatArchiveRepository chatArchiveRepository;
     private final PbAuditLogRepository auditLogRepository;
+    private final PbFeedbackRepository feedbackRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
 
@@ -63,10 +64,6 @@ public class UserServiceImpl implements UserService {
             pbUserEntity.setFirstName(req.getFirstName().trim());
         if (req.getLastName() != null)
             pbUserEntity.setLastName(req.getLastName().trim());
-        if (req.getProfilePictureUrl() != null)
-            pbUserEntity.setProfilePictureUrl(trimToNull(req.getProfilePictureUrl()));
-        if (req.getPaymentQrCodeUrl() != null)
-            pbUserEntity.setPaymentQrCodeUrl(trimToNull(req.getPaymentQrCodeUrl()));
         if (req.getGender() != null)
             pbUserEntity.setGender(req.getGender());
         if (req.getMatchPreference() != null)
@@ -124,6 +121,7 @@ public class UserServiceImpl implements UserService {
         rideInvitationRepository.deleteAllForUser(userId);
 
         safetyReportRepository.deleteByReporterEntityId(userId);
+        feedbackRepository.deleteBySubmitterEntityId(userId);
         contactRepository.deleteByOwnerEntityIdOrContactUserEntityId(userId, userId);
         savedLocationRepository.deleteByUserEntityId(userId);
         telegramProfileRepository.deleteByUserEntityId(userId);

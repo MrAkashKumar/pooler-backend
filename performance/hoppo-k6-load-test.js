@@ -6,6 +6,13 @@ import exec from 'k6/execution';
 const baseUrl = (__ENV.BASE_URL || 'http://localhost:8888/pooler-backend').replace(/\/$/, '');
 const profile = (__ENV.LOAD_PROFILE || 'smoke').toLowerCase();
 const requestTimeout = __ENV.REQUEST_TIMEOUT || '10s';
+const invalidLoginEmail = __ENV.INVALID_LOGIN_EMAIL || 'invalid-login@example.invalid';
+const invalidLoginPassword = __ENV.INVALID_LOGIN_PASSWORD || 'InvalidLoginOnly@123';
+const loadLocationLabel = __ENV.LOAD_LOCATION_LABEL || 'Load test point';
+const loadLocationAddress = __ENV.LOAD_LOCATION_ADDRESS || 'Load test location';
+const loadSafetyCategory = __ENV.LOAD_SAFETY_CATEGORY || 'LOAD_TEST_RECORD';
+const loadSafetyDetails = __ENV.LOAD_SAFETY_DETAILS || 'Load test safety-report create-path validation.';
+const loadDestinationAddress = __ENV.LOAD_DESTINATION_ADDRESS || 'Load test destination';
 
 const profiles = {
   smoke: {
@@ -137,8 +144,8 @@ export function publicHealth() {
 export function authValidation() {
   group('auth validation and trace envelope', () => {
     const response = post('/api/v1/auth/login', {
-      email: 'not-a-real-load-user@example.invalid',
-      password: 'Wrong@1234',
+      email: invalidLoginEmail,
+      password: invalidLoginPassword,
       platform: 'WEB',
     }, commonHeaders('WEB'));
     check(response, {
@@ -171,8 +178,8 @@ export function riderJourney() {
 
     check(post('/api/v1/locations', {
       alias: 'CUSTOM',
-      label: `Load point ${exec.vu.idInTest}`,
-      address: 'Synthetic staging location',
+      label: `${loadLocationLabel} ${exec.vu.idInTest}`,
+      address: loadLocationAddress,
       latitude,
       longitude,
     }, headers), {
@@ -184,8 +191,8 @@ export function riderJourney() {
     }, { type: 'contract' });
 
     check(post('/api/v1/safety-reports', {
-      category: 'LOAD_TEST_RECORD',
-      details: 'Synthetic staging report to validate safety-report create path under load.',
+      category: loadSafetyCategory,
+      details: loadSafetyDetails,
       contactAllowed: false,
       latitude,
       longitude,
@@ -199,7 +206,7 @@ export function riderJourney() {
       currentLongitude: longitude,
       destinationLatitude,
       destinationLongitude,
-      destinationAddress: 'Marina Bay Sands, Singapore',
+      destinationAddress: loadDestinationAddress,
     }), { headers, timeout: requestTimeout }), {
       'discovery toggle available': (res) => [200, 400, 401, 429].includes(res.status),
     }, { type: 'contract' });

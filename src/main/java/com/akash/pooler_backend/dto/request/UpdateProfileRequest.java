@@ -19,10 +19,6 @@ public class UpdateProfileRequest {
     private String firstName;
     @Size(min=2,max=100)
     private String lastName;
-    @Size(max=500)
-    private String profilePictureUrl;
-    @Size(max=500)
-    private String paymentQrCodeUrl;
     private Gender gender;
     private MatchPreference matchPreference;
     @Size(max=120)
