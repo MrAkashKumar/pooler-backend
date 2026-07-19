@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.controller;
 
 import com.akash.pooler_backend.constants.ApiMapping;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.AddContactRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.ContactResponse;
@@ -61,6 +62,6 @@ public class ContactController {
             @CurrentUser PbUserEntity owner,
             @PathVariable String contactEntityId) {
         contactService.remove(owner, contactEntityId);
-        return ResponseEntity.ok(ApiResponse.message("Contact removed"));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.CONTACT_REMOVED));
     }
 }

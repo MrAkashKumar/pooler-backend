@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.security.filter;
 
 import com.akash.pooler_backend.constants.ApiMapping;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.exception.TokenExpiredException;
 import com.akash.pooler_backend.exception.TokenInvalidException;
@@ -67,9 +68,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 PbUserEntity user = userRepository.findByEntityId(entityId)
-                        .orElseThrow(() -> new TokenInvalidException("JWT token is invalid"));
+                        .orElseThrow(() -> new TokenInvalidException(ResponseMessages.JWT_TOKEN_INVALID));
                 if (!user.isEnabled() || !user.isAccountNonLocked()) {
-                    throw new TokenInvalidException("JWT token is invalid");
+                    throw new TokenInvalidException(ResponseMessages.JWT_TOKEN_INVALID);
                 }
 
                 // ─── ④ Validate token against this specific user ─────────

@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.controller;
 
 import com.akash.pooler_backend.constants.ApiMapping;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.ShareTelegramRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.TelegramProfileResponse;
@@ -37,13 +38,13 @@ public class TelegramController {
     @DeleteMapping(ApiMapping.ME)
     public ResponseEntity<ApiResponse<Void>> delete(@CurrentUser PbUserEntity user) {
         telegramService.removeTelegramProfile(user.getEntityId());
-        return ResponseEntity.ok(ApiResponse.message("Telegram profile removed"));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.TELEGRAM_PROFILE_REMOVED));
     }
 
     @PostMapping(ApiMapping.TELEGRAM_CHAT_SHARE)
     public ResponseEntity<ApiResponse<Void>> share(
             @CurrentUser PbUserEntity user, @PathVariable String threadId) {
         telegramService.shareTelegramInChat(threadId, user);
-        return ResponseEntity.ok(ApiResponse.message("Telegram handle shared"));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.TELEGRAM_HANDLE_SHARED));
     }
 }

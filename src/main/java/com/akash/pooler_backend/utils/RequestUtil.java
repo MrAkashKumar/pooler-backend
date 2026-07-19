@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.utils;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.enums.PlatformType;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
@@ -18,7 +19,7 @@ public class RequestUtil {
     };
 
     private RequestUtil(){
-        throw new IllegalArgumentException("Request utils class thrown");
+        throw new IllegalStateException(ResponseMessages.UTILITY_CLASS);
     }
 
     public static String extractBearerToken(HttpServletRequest req) {

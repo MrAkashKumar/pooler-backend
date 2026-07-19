@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.controller;
 
 import com.akash.pooler_backend.constants.ApiMapping;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.ChangePasswordRequest;
 import com.akash.pooler_backend.dto.request.UpdateProfileRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
@@ -45,7 +46,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
             @CurrentUser PbUserEntity pbUserEntity,
             @Valid @RequestBody UpdateProfileRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("Profile updated", userService.updateProfile(pbUserEntity, req)));
+        return ResponseEntity.ok(ApiResponse.ok(ResponseMessages.PROFILE_UPDATED, userService.updateProfile(pbUserEntity, req)));
     }
 
     @PostMapping(value = ApiMapping.MEDIA, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -55,7 +56,7 @@ public class UserController {
             @CurrentUser PbUserEntity pbUserEntity,
             @RequestParam ProfileMediaPurpose purpose,
             @RequestPart("file") MultipartFile file) {
-        return ResponseEntity.ok(ApiResponse.ok("Profile media updated",
+        return ResponseEntity.ok(ApiResponse.ok(ResponseMessages.PROFILE_MEDIA_UPDATED,
                 profileMediaService.uploadProfileMedia(pbUserEntity, purpose, file)));
     }
 
@@ -65,13 +66,13 @@ public class UserController {
             @CurrentUser PbUserEntity pbUserEntity,
             @Valid @RequestBody ChangePasswordRequest req) {
         userService.changePassword(pbUserEntity, req);
-        return ResponseEntity.ok(ApiResponse.message("Password changed. Please login again."));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.PASSWORD_CHANGED_LOGIN_AGAIN));
     }
 
     @DeleteMapping(ApiMapping.ME)
     @Operation(summary = "Delete account permanently")
     public ResponseEntity<ApiResponse<Void>> deleteAccount(@CurrentUser PbUserEntity pbUserEntity) {
         userService.deleteAccount(pbUserEntity);
-        return ResponseEntity.ok(ApiResponse.message("Account deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.ACCOUNT_DELETED));
     }
 }

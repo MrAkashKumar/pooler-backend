@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.exceptionHandlers;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.enums.ErrorCode;
 import com.akash.pooler_backend.exception.BaseException;
@@ -114,13 +115,13 @@ public class GlobalExceptionHandlers {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(
             MethodArgumentTypeMismatchException ex, HttpServletRequest request, HttpServletResponse response) {
-        return buildResponse(ErrorCode.INVALID_REQUEST, "Invalid parameter type: " + ex.getName(), request, response);
+        return buildResponse(ErrorCode.INVALID_REQUEST, ResponseMessages.invalidParameterType(ex.getName()), request, response);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnreadableBody(
             HttpMessageNotReadableException ex, HttpServletRequest request, HttpServletResponse response) {
-        return buildResponse(ErrorCode.INVALID_REQUEST, "Invalid request body", request, response);
+        return buildResponse(ErrorCode.INVALID_REQUEST, ResponseMessages.INVALID_REQUEST_BODY, request, response);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -150,12 +151,14 @@ public class GlobalExceptionHandlers {
         String traceId = TraceContextUtil.currentCorrelationId(request);
         String errorReferenceId = TraceContextUtil.attachErrorReference(request, response);
         if (exception == null) {
-            log.warn("API error response errorCode={} status={} path={} traceId={} errorReferenceId={}",
-                    errorCode.getCode(), errorCode.getHttpStatus().value(), request.getRequestURI(), traceId, errorReferenceId);
+            log.warn("apiError className={} methodName={} errorCode={} status={} path={} traceId={} errorReferenceId={}",
+                    getClass().getSimpleName(), "buildResponse", errorCode.getCode(), errorCode.getHttpStatus().value(),
+                    request.getRequestURI(), traceId, errorReferenceId);
         } else {
-            log.error("API error response errorCode={} status={} path={} traceId={} errorReferenceId={} type={}",
+            log.error("apiError className={} methodName={} errorCode={} status={} path={} traceId={} errorReferenceId={} type={}",
+                    getClass().getSimpleName(), "buildResponse",
                     errorCode.getCode(), errorCode.getHttpStatus().value(), request.getRequestURI(),
-                    traceId, errorReferenceId, exception.getClass().getSimpleName());
+                    traceId, errorReferenceId, exception.getClass().getSimpleName(), exception);
         }
 
         ApiResponse<Void> body = ApiResponse.<Void>builder()

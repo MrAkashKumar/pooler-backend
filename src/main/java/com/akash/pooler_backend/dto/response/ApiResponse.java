@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.dto.response;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
@@ -41,7 +42,7 @@ public class ApiResponse<T> {
     }
 
     public static <T> ApiResponse<T> created(T data) {
-        return ApiResponse.<T>builder().success(true).message("Resource created successfully").data(data).build();
+        return ApiResponse.<T>builder().success(true).message(ResponseMessages.RESOURCE_CREATED).data(data).build();
     }
 
     public static ApiResponse<Void> noContent(String message) {

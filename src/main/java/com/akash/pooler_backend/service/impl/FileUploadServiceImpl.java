@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.service.impl;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.dto.response.ChatFileDownload;
 import com.akash.pooler_backend.dto.response.FileUploadResponse;
@@ -9,6 +10,7 @@ import com.akash.pooler_backend.exception.ChatAccessDeniedException;
 import com.akash.pooler_backend.exception.FileUploadException;
 import com.akash.pooler_backend.service.ChatService;
 import com.akash.pooler_backend.service.FileUploadService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
+@Slf4j
 public class FileUploadServiceImpl implements FileUploadService {
 
     private static final Set<String> ALLOWED_TYPES = Set.of(
@@ -58,25 +61,31 @@ public class FileUploadServiceImpl implements FileUploadService {
         }
         cleanupExpiredFiles();
         if (files.size() >= maxTrackedFiles) {
-            throw new FileUploadException(ErrorCode.RATE_LIMIT_EXCEEDED, "Temporary file capacity reached. Please try again later.");
+            throw new FileUploadException(ErrorCode.RATE_LIMIT_EXCEEDED, ResponseMessages.FILE_CAPACITY_REACHED);
         }
         validateFileSize(file);
         String contentType = file.getContentType() == null ? "application/octet-stream" : file.getContentType();
         if (!ALLOWED_TYPES.contains(contentType)) {
-            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, "Only JPEG, PNG, WebP, PDF, and text files are allowed");
+            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, ResponseMessages.FILE_TYPE_NOT_ALLOWED);
         }
         String fileId = "file-" + UUID.randomUUID().toString().replace("-", "").substring(0, 24);
         String originalName = safeOriginalName(file.getOriginalFilename());
         Path target = storagePath.resolve(fileId).normalize();
-        if (!target.startsWith(storagePath)) throw new FileUploadException("Invalid file path");
+        if (!target.startsWith(storagePath)) throw new FileUploadException(ResponseMessages.FILE_PATH_INVALID);
         Instant expiresAt = Instant.now().plus(expiry);
         try {
             Files.createDirectories(storagePath);
             Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException exception) {
-            throw new FileUploadException("Could not store chat file");
+            log.error("chatFileUploadFailed className={} methodName={} threadId={} uploaderId={} fileId={} exceptionType={}",
+                    getClass().getSimpleName(), "uploadMessageFile", threadId, uploader.getEntityId(),
+                    fileId, exception.getClass().getSimpleName(), exception);
+            throw new FileUploadException(ResponseMessages.FILE_STORE_FAILED);
         }
         files.put(fileId, new StoredFile(threadId, originalName, contentType, target, expiresAt));
+        log.info("chatFileUploaded className={} methodName={} threadId={} uploaderId={} fileId={} sizeBytes={} contentType={} expiresAt={}",
+                getClass().getSimpleName(), "uploadMessageFile", threadId, uploader.getEntityId(),
+                fileId, file.getSize(), contentType, expiresAt);
         return FileUploadResponse.builder()
                 .fileEntityId(fileId)
                 .originalFileName(originalName)
@@ -97,15 +106,23 @@ public class FileUploadServiceImpl implements FileUploadService {
     public void cleanupExpiredFiles() {
         files.forEach((fileId, file) -> {
             if (file.expiresAt().isBefore(Instant.now())) {
-                try { Files.deleteIfExists(file.path()); } catch (IOException ignored) { }
+                try {
+                    Files.deleteIfExists(file.path());
+                } catch (IOException exception) {
+                    log.warn("expiredChatFileDeleteFailed className={} methodName={} fileId={} threadId={} exceptionType={}",
+                            getClass().getSimpleName(), "cleanupExpiredFiles", fileId, file.threadId(),
+                            exception.getClass().getSimpleName());
+                }
                 files.remove(fileId);
+                log.debug("expiredChatFileRemoved className={} methodName={} fileId={} threadId={}",
+                        getClass().getSimpleName(), "cleanupExpiredFiles", fileId, file.threadId());
             }
         });
     }
 
     @Override
     public void validateFileSize(MultipartFile file) {
-        if (file.isEmpty()) throw new FileUploadException(ErrorCode.VALIDATION_ERROR, "File is empty");
+        if (file.isEmpty()) throw new FileUploadException(ErrorCode.VALIDATION_ERROR, ResponseMessages.FILE_EMPTY);
         if (file.getSize() > maxBytes) throw new FileUploadException();
     }
 

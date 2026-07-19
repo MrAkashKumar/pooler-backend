@@ -2,6 +2,7 @@ package com.akash.pooler_backend.aspect;
 
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.enums.Role;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.exception.AuthenticationException;
 import com.akash.pooler_backend.interceptors.annotation.RequiresAuth;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +36,7 @@ public class AuthorizationAspect {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated() || !(auth.getPrincipal() instanceof PbUserEntity pbUserEntity)) {
-            throw new AuthenticationException("Authentication required");
+            throw new AuthenticationException(ResponseMessages.AUTHENTICATION_REQUIRED);
         }
 
         Role[] requiredRoles = requiresAuth.roles();

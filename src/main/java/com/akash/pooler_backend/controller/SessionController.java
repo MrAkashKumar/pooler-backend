@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.controller;
 
 import com.akash.pooler_backend.constants.ApiMapping;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.SessionListResponse;
 import com.akash.pooler_backend.dto.response.TokenInfoResponse;
@@ -80,7 +81,7 @@ public class SessionController {
         session.setStatus(TokenStatus.REVOKED);
         sessionTokenRepo.save(session);
 
-        return ResponseEntity.ok(ApiResponse.message("Session revoked successfully"));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.SESSION_REVOKED));
     }
 
     @GetMapping(ApiMapping.TOKEN_INFO)

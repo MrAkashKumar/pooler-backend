@@ -17,9 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -70,12 +70,12 @@ public class ContactServiceImpl implements ContactService {
         if (contacts.isEmpty()) return List.of();
 
         // Single batch fetch of contact users
-        List<String> ids = contacts.stream().map(PbContactEntity::getContactUserEntityId).toList();
-        Map<String, PbUserEntity> usersById = new HashMap<>();
-        userRepository.findAll().stream()
-                .filter(u -> ids.contains(u.getEntityId()))
-                .collect(Collectors.toMap(PbUserEntity::getEntityId, Function.identity(), (a, b) -> a))
-                .forEach(usersById::put);
+        Set<String> contactUserIds = contacts.stream()
+                .map(PbContactEntity::getContactUserEntityId)
+                .collect(Collectors.toSet());
+        Map<String, PbUserEntity> usersById = userRepository.findAll().stream()
+                .filter(user -> contactUserIds.contains(user.getEntityId()))
+                .collect(Collectors.toMap(PbUserEntity::getEntityId, Function.identity(), (first, duplicate) -> first));
 
         return contacts.stream()
                 .map(c -> ContactResponse.from(c, usersById.get(c.getContactUserEntityId())))

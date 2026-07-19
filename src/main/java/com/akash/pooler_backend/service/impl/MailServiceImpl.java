@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.service.impl;
 
 import com.akash.pooler_backend.config.AppProperties;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.exception.MailDispatchException;
 import com.akash.pooler_backend.service.MailService;
@@ -23,6 +24,7 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class MailServiceImpl implements MailService {
+    private static final String TEMPLATE_VARIABLE_USER_NAME = "userName";
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
@@ -49,7 +51,7 @@ public class MailServiceImpl implements MailService {
         Context ctx = buildContext(pbUserEntity, Map.of(
                 "verifyLink", verifyLink,
                 "expiryMinutes", props.getEmailVerification().getTokenExpiryMinutes(),
-                "userName", pbUserEntity.getFirstName()
+                TEMPLATE_VARIABLE_USER_NAME, pbUserEntity.getFirstName()
         ));
         sendHtmlMail(pbUserEntity.getEmail(), "Activate your " + props.getName() + " account", "mail/email-verification", ctx);
         log.info("Email verification mail dispatched for userId={}", pbUserEntity.getEntityId());
@@ -59,7 +61,7 @@ public class MailServiceImpl implements MailService {
     @Async("mailExecutor")
     public void sendWelcomeMail(PbUserEntity pbUserEntity) {
         Context ctx = buildContext(pbUserEntity, Map.of(
-                "userName",  pbUserEntity.getFirstName(),
+                TEMPLATE_VARIABLE_USER_NAME, pbUserEntity.getFirstName(),
                 "loginLink", props.getFrontendBaseUrl() + "/sign-in"
         ));
         sendHtmlMail(pbUserEntity.getEmail(), "Welcome to " + props.getName(), "mail/welcome", ctx);
@@ -71,7 +73,7 @@ public class MailServiceImpl implements MailService {
     @Async("mailExecutor")
     public void sendAccountLockedMail(PbUserEntity pbUserEntity) {
         Context ctx = buildContext(pbUserEntity, Map.of(
-                "userName", pbUserEntity.getFirstName(),
+                TEMPLATE_VARIABLE_USER_NAME, pbUserEntity.getFirstName(),
                 "lockMinutes", props.getSecurity().getLockDurationMinutes(),
                 "supportEmail", props.getMail().getFrom()
         ));
@@ -93,8 +95,9 @@ public class MailServiceImpl implements MailService {
             helper.setText(html, true);
             mailSender.send(message);
         } catch (MessagingException | MailException | java.io.UnsupportedEncodingException e) {
-            log.error("Failed to send mail: type={}", e.getClass().getSimpleName());
-            throw new MailDispatchException("Failed to send mail", e);
+            log.error("mailDispatchFailed className={} methodName={} template={} exceptionType={}",
+                    getClass().getSimpleName(), "sendHtmlMail", template, e.getClass().getSimpleName(), e);
+            throw new MailDispatchException(ResponseMessages.MAIL_SEND_FAILED, e);
         }
     }
 

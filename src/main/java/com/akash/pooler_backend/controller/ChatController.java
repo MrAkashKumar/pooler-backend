@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.controller;
 
 import com.akash.pooler_backend.constants.ApiMapping;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.AddReactionRequest;
 import com.akash.pooler_backend.dto.request.EditMessageRequest;
 import com.akash.pooler_backend.dto.request.MarkAsReadRequest;
@@ -88,7 +89,7 @@ public class ChatController {
             @PathVariable String threadId,
             @Valid @RequestBody MarkAsReadRequest request) {
         chatService.markMessagesAsRead(threadId, request.getMessageIds(), user);
-        return ResponseEntity.ok(ApiResponse.message("Messages marked as read"));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.CHAT_MESSAGES_MARKED_READ));
     }
 
     @PostMapping(ApiMapping.THREAD_MESSAGE_REACTIONS)
@@ -129,6 +130,6 @@ public class ChatController {
     public ResponseEntity<ApiResponse<Void>> close(
             @CurrentUser PbUserEntity user, @PathVariable String threadId) {
         chatService.closeChat(threadId, user);
-        return ResponseEntity.ok(ApiResponse.message("Chat closed"));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.CHAT_CLOSED));
     }
 }

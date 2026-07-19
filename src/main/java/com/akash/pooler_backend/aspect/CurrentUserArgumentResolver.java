@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.aspect;
 
 import com.akash.pooler_backend.entity.PbUserEntity;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.exception.AuthenticationException;
 import com.akash.pooler_backend.interceptors.annotation.CurrentUser;
 import org.springframework.core.MethodParameter;
@@ -30,7 +31,7 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
                                   NativeWebRequest req, WebDataBinderFactory factory) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || !(auth.getPrincipal() instanceof PbUserEntity)) {
-            throw new AuthenticationException("No authenticated user in security context");
+            throw new AuthenticationException(ResponseMessages.AUTH_CONTEXT_MISSING);
         }
         return auth.getPrincipal();
     }

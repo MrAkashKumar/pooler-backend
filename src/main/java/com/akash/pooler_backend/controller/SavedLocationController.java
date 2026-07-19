@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.controller;
 
 import com.akash.pooler_backend.constants.ApiMapping;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.SaveLocationRequest;
 import com.akash.pooler_backend.dto.request.UpdateLocationRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
@@ -60,7 +61,7 @@ public class SavedLocationController {
             @CurrentUser PbUserEntity user,
             @PathVariable String locationEntityId,
             @Valid @RequestBody UpdateLocationRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("Location updated",
+        return ResponseEntity.ok(ApiResponse.ok(ResponseMessages.LOCATION_UPDATED,
                 savedLocationService.update(user, locationEntityId, req)));
     }
 
@@ -70,6 +71,6 @@ public class SavedLocationController {
             @CurrentUser PbUserEntity user,
             @PathVariable String locationEntityId) {
         savedLocationService.delete(user, locationEntityId);
-        return ResponseEntity.ok(ApiResponse.message("Location deleted"));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.LOCATION_DELETED));
     }
 }

@@ -41,6 +41,9 @@ public class AppProperties {
     private Mail mail = new Mail();
 
     @NotNull
+    private Auth auth = new Auth();
+
+    @NotNull
     private PasswordReset passwordReset = new PasswordReset();
 
     @NotNull
@@ -87,8 +90,28 @@ public class AppProperties {
     @Setter
     public static class Mail {
         @NotBlank
-        private String from = "noreply@pooler.com";
-        private String fromName = "pooler Auth";
+        private String from;
+        @NotBlank
+        private String fromName;
+    }
+
+    @Getter
+    @Setter
+    public static class Auth {
+        @NotNull
+        private Google google = new Google();
+
+        @Getter
+        @Setter
+        public static class Google {
+            @NotBlank
+            private String tokenInfoUrl;
+            private String clientIds;
+            @Positive
+            private int requestTimeoutSeconds = 5;
+            @Positive
+            private int connectTimeoutSeconds = 3;
+        }
     }
 
     @Getter

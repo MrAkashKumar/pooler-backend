@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.controller;
 
 import com.akash.pooler_backend.constants.ApiMapping;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.AcceptInvitationRequest;
 import com.akash.pooler_backend.dto.request.SendRideInvitationRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
@@ -51,7 +52,7 @@ public class RideInvitationController {
             @CurrentUser PbUserEntity receiver,
             @PathVariable String invitationEntityId,
             @Valid @RequestBody AcceptInvitationRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("Invitation accepted",
+        return ResponseEntity.ok(ApiResponse.ok(ResponseMessages.INVITATION_ACCEPTED,
                 invitationService.accept(receiver, invitationEntityId, req)));
     }
 
@@ -60,7 +61,7 @@ public class RideInvitationController {
     public ResponseEntity<ApiResponse<RideInvitationResponse>> decline(
             @CurrentUser PbUserEntity receiver,
             @PathVariable String invitationEntityId) {
-        return ResponseEntity.ok(ApiResponse.ok("Invitation declined",
+        return ResponseEntity.ok(ApiResponse.ok(ResponseMessages.INVITATION_DECLINED,
                 invitationService.decline(receiver, invitationEntityId)));
     }
 
@@ -72,8 +73,8 @@ public class RideInvitationController {
             @PathVariable String invitationEntityId) {
         ConfirmResult result = invitationService.confirmPickup(user, invitationEntityId);
         String message = result.ride() != null
-                ? "Both parties confirmed — ride created"
-                : "Pickup confirmed; waiting on the other party";
+                ? ResponseMessages.INVITATION_RIDE_CREATED
+                : ResponseMessages.INVITATION_PICKUP_CONFIRMED_WAITING;
         return ResponseEntity.ok(ApiResponse.ok(message, result));
     }
 
@@ -82,7 +83,7 @@ public class RideInvitationController {
     public ResponseEntity<ApiResponse<RideInvitationResponse>> cancel(
             @CurrentUser PbUserEntity user,
             @PathVariable String invitationEntityId) {
-        return ResponseEntity.ok(ApiResponse.ok("Invitation cancelled",
+        return ResponseEntity.ok(ApiResponse.ok(ResponseMessages.INVITATION_CANCELLED,
                 invitationService.cancel(user, invitationEntityId)));
     }
 

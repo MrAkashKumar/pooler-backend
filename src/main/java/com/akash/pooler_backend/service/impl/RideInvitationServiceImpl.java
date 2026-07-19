@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.service.impl;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.AcceptInvitationRequest;
 import com.akash.pooler_backend.dto.request.SendRideInvitationRequest;
 import com.akash.pooler_backend.dto.response.CommonPickupPointResponse;
@@ -143,7 +144,7 @@ public class RideInvitationServiceImpl implements RideInvitationService {
         }
         if (inv.getStatus() != InvitationStatusEnums.ACCEPTED) {
             throw new InvitationInvalidStateException(
-                    "Invitation must be ACCEPTED before confirming pickup");
+                    ResponseMessages.INVITATION_ACCEPTED_REQUIRED);
         }
 
         if (inv.getSenderEntityId().equals(user.getEntityId())) {
@@ -174,7 +175,7 @@ public class RideInvitationServiceImpl implements RideInvitationService {
             throw new InvitationForbiddenException();
         }
         if (inv.getStatus() == InvitationStatusEnums.DECLINED) {
-            throw new InvitationInvalidStateException("Invitation already declined");
+            throw new InvitationInvalidStateException(ResponseMessages.INVITATION_ALREADY_DECLINED);
         }
         inv.setStatus(InvitationStatusEnums.DECLINED);
         inv.setRespondedAt(Instant.now());
@@ -215,7 +216,7 @@ public class RideInvitationServiceImpl implements RideInvitationService {
     private void ensurePendingAndFresh(PbRideInvitationEntity inv) {
         if (inv.getStatus() != InvitationStatusEnums.PENDING) {
             throw new InvitationInvalidStateException(
-                    "Invitation is " + inv.getStatus() + " and cannot be modified");
+                    ResponseMessages.invitationStatusCannotBeModified(inv.getStatus()));
         }
         if (inv.isExpired()) {
             inv.setStatus(InvitationStatusEnums.DECLINED);

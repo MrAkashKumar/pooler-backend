@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.service.impl;
 
 import com.akash.pooler_backend.config.AppProperties;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.entity.PbRefreshTokenEntity;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.entity.PbUserSessionEntity;
@@ -74,9 +75,9 @@ public class TokenServiceImpl implements TokenService {
     @Transactional(readOnly = true)
     public PbRefreshTokenEntity validateRefreshToken(String token) {
         PbRefreshTokenEntity pbRefreshTokenEntity = refreshTokenRepo.findByRefreshToken(token)
-                .orElseThrow(() -> new TokenInvalidException("Refresh token not found"));
+                .orElseThrow(() -> new TokenInvalidException(ResponseMessages.REFRESH_TOKEN_NOT_FOUND));
 
-        if (pbRefreshTokenEntity.isRevoked())  throw new TokenInvalidException("Refresh token has been revoked");
+        if (pbRefreshTokenEntity.isRevoked())  throw new TokenInvalidException(ResponseMessages.REFRESH_TOKEN_REVOKED);
         if (pbRefreshTokenEntity.isExpired())  throw new RefreshTokenExpiredException();
         return pbRefreshTokenEntity;
     }

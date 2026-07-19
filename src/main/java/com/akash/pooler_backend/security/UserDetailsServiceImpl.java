@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.security;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.enums.UserStatus;
 import com.akash.pooler_backend.repository.PbUserRepository;
@@ -59,7 +60,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .orElseThrow(() -> {
                     log.warn("UserDetailsService: user not found for authentication request");
                     // Use generic message — never confirm whether email exists
-                    return new UsernameNotFoundException("Invalid credentials");
+                    return new UsernameNotFoundException(ResponseMessages.INVALID_CREDENTIALS);
                 });
 
 
@@ -69,18 +70,18 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         if (pbUserEntity.getStatus() == UserStatus.LOCKED) {
             log.warn("UserDetailsService: account locked for userId={}", pbUserEntity.getEntityId());
-            throw new LockedException("Account is temporarily locked");
+            throw new LockedException(ResponseMessages.ACCOUNT_TEMPORARILY_LOCKED);
         }
 
         if (pbUserEntity.getStatus() == UserStatus.SUSPENDED) {
             log.warn("UserDetailsService: account suspended for userId={}", pbUserEntity.getEntityId());
-            throw new DisabledException("Account has been suspended");
+            throw new DisabledException(ResponseMessages.ACCOUNT_SUSPENDED);
         }
 
         if (pbUserEntity.getStatus() == UserStatus.INACTIVE
                 || pbUserEntity.getStatus() == UserStatus.PENDING_VERIFICATION) {
             log.warn("UserDetailsService: account inactive for userId={}", pbUserEntity.getEntityId());
-            throw new DisabledException("Account is not active");
+            throw new DisabledException(ResponseMessages.ACCOUNT_NOT_ACTIVE);
         }
 
         log.debug("User loaded: id={} role={}", pbUserEntity.getEntityId(), pbUserEntity.getRole());

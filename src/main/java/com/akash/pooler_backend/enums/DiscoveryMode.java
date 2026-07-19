@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.enums;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
@@ -20,7 +21,7 @@ public enum DiscoveryMode {
         return switch (value.trim().toUpperCase()) {
             case "ON", "VISIBLE" -> ON;
             case "OFF", "HIDDEN" -> OFF;
-            default -> throw new IllegalArgumentException("Unsupported discovery mode: " + value);
+            default -> throw new IllegalArgumentException(ResponseMessages.unsupportedDiscoveryMode(value));
         };
     }
 }

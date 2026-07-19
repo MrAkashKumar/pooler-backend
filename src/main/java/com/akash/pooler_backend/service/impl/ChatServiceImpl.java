@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.service.impl;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.EditMessageRequest;
 import com.akash.pooler_backend.dto.request.SendMessageRequest;
 import com.akash.pooler_backend.dto.response.ChatMessageResponse;
@@ -107,7 +108,7 @@ public class ChatServiceImpl implements ChatService {
         PbChatMessageEntity message = requireMessage(messageId);
         requireActiveThread(message.getThreadId(), editor);
         if (!message.getSender().equals(editor.getEntityId())) {
-            throw new ChatAccessDeniedException("Only the sender can edit this message");
+            throw new ChatAccessDeniedException(ResponseMessages.MESSAGE_EDIT_SENDER_ONLY);
         }
         if (message.getCreatedAt().plus(Duration.ofMinutes(editWindowMinutes)).isBefore(Instant.now())) {
             throw new MessageEditLimitExceededException();

@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.exception;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.enums.ErrorCode;
 
 /**
@@ -10,6 +11,6 @@ import com.akash.pooler_backend.enums.ErrorCode;
 public class FeedbackNotFoundException extends BaseException {
 
     public FeedbackNotFoundException(String feedbackEntityId) {
-        super(ErrorCode.RESOURCE_NOT_FOUND, "Feedback not found: " + feedbackEntityId);
+        super(ErrorCode.RESOURCE_NOT_FOUND, ResponseMessages.feedbackNotFound(feedbackEntityId));
     }
 }

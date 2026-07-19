@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.service.impl;
 
 import com.akash.pooler_backend.config.AppProperties;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.*;
 import com.akash.pooler_backend.dto.response.AuthResponse;
 import com.akash.pooler_backend.dto.response.TokenRefreshResponse;
@@ -22,12 +23,12 @@ import com.akash.pooler_backend.service.MailService;
 import com.akash.pooler_backend.service.TokenService;
 import com.akash.pooler_backend.service.UserService;
 import com.akash.pooler_backend.utils.RequestUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -55,6 +56,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+    private static final String GOOGLE_ID_TOKEN_QUERY_PARAM = "id_token";
 
     private final AuthenticationManager authManager;
     private final PasswordEncoder passwordEncoder;
@@ -69,9 +71,14 @@ public class AuthServiceImpl implements AuthService {
     private final PbEntitySequenceRepository pbEntitySequenceRepository;
     private final UserService userService;
     private final ObjectMapper objectMapper;
+    private HttpClient googleAuthHttpClient;
 
-    @Value("${app.google.client-ids:}")
-    private String googleClientIds;
+    @PostConstruct
+    void initializeGoogleAuthHttpClient() {
+        googleAuthHttpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(props.getAuth().getGoogle().getConnectTimeoutSeconds()))
+                .build();
+    }
 
 
     // ── Register ──────────────────────────────────────────────────────
@@ -81,7 +88,7 @@ public class AuthServiceImpl implements AuthService {
     @AuditAction("USER_REGISTER")
     public void register(RegisterRequest req, HttpServletRequest httpReq) {
         if (!req.getPassword().equals(req.getConfirmPassword())) {
-            throw new IllegalArgumentException("Passwords do not match");
+            throw new IllegalArgumentException(ResponseMessages.PASSWORDS_DO_NOT_MATCH);
         }
         if (userRepo.existsByEmail(req.getEmail())) {
             throw new UserAlreadyExistsException(req.getEmail());
@@ -122,7 +129,7 @@ public class AuthServiceImpl implements AuthService {
     @AuditAction("USER_LOGIN")
     public AuthResponse login(LoginRequest req, HttpServletRequest httpReq) {
         PbUserEntity pbUserEntity = userRepo.findByEmail(req.getEmail().toLowerCase())
-                .orElseThrow(() -> new AuthenticationException("Invalid credentials"));
+                .orElseThrow(() -> new AuthenticationException(ResponseMessages.INVALID_CREDENTIALS));
 
         checkAccountStatus(pbUserEntity);
 
@@ -131,7 +138,7 @@ public class AuthServiceImpl implements AuthService {
                     new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword()));
         } catch (BadCredentialsException e) {
             handleFailedLogin(pbUserEntity);
-            throw new AuthenticationException("Invalid credentials");
+            throw new AuthenticationException(ResponseMessages.INVALID_CREDENTIALS);
         }
 
         pbUserEntity.resetFailedAttempts();
@@ -178,7 +185,6 @@ public class AuthServiceImpl implements AuthService {
         PbRefreshTokenEntity pbRefreshTokenEntity = tokenService.validateRefreshToken(req.getRefreshToken());
 
         String entityId = pbRefreshTokenEntity.getEntityId();
-        //ADD Validation
         PbUserEntity pbUserEntity = userService.getUserEntity(entityId);
         checkAccountStatus(pbUserEntity);
 
@@ -350,19 +356,22 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private Map<String, String> verifyGoogleIdToken(String idToken) {
+        AppProperties.Auth.Google google = props.getAuth().getGoogle();
+        String googleClientIds = google.getClientIds();
         if (googleClientIds == null || googleClientIds.isBlank()) {
-            throw new AuthenticationException("Google sign-in is not configured on this server");
+            throw new AuthenticationException(ResponseMessages.GOOGLE_SIGN_IN_NOT_CONFIGURED);
         }
         try {
             String token = URLEncoder.encode(idToken, StandardCharsets.UTF_8);
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://oauth2.googleapis.com/tokeninfo?id_token=" + token))
-                    .timeout(Duration.ofSeconds(5))
+                    .uri(buildGoogleTokenInfoUri(google.getTokenInfoUrl(), token))
+                    .timeout(Duration.ofSeconds(google.getRequestTimeoutSeconds()))
                     .GET()
                     .build();
-            HttpResponse<String> response = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build()
-                    .send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) throw new AuthenticationException("Invalid Google ID token");
+            HttpResponse<String> response = googleAuthHttpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                throw new AuthenticationException(ResponseMessages.GOOGLE_ID_TOKEN_INVALID);
+            }
 
             Map<String, String> claims = objectMapper.readValue(response.body(), new TypeReference<>() {});
             boolean acceptedAudience = Arrays.stream(googleClientIds.split(","))
@@ -372,21 +381,32 @@ public class AuthServiceImpl implements AuthService {
             long expiresAt = Long.parseLong(claims.getOrDefault("exp", "0"));
             if (!acceptedAudience || !verifiedEmail || claims.get("email") == null
                     || expiresAt <= Instant.now().getEpochSecond()) {
-                throw new AuthenticationException("Google token validation failed");
+                throw new AuthenticationException(ResponseMessages.GOOGLE_TOKEN_VALIDATION_FAILED);
             }
             return claims;
         } catch (AuthenticationException exception) {
             throw exception;
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            log.warn("googleTokenVerificationInterrupted className={} methodName={}",
+                    getClass().getSimpleName(), "verifyGoogleToken");
+            throw new AuthenticationException(ResponseMessages.GOOGLE_SIGN_IN_VERIFY_FAILED);
         } catch (Exception exception) {
-            log.warn("Google token verification failed: {}", exception.getMessage());
-            throw new AuthenticationException("Unable to verify Google sign-in");
+            log.warn("googleTokenVerificationFailed className={} methodName={} exceptionType={}",
+                    getClass().getSimpleName(), "verifyGoogleToken", exception.getClass().getSimpleName());
+            throw new AuthenticationException(ResponseMessages.GOOGLE_SIGN_IN_VERIFY_FAILED);
         }
+    }
+
+    private URI buildGoogleTokenInfoUri(String tokenInfoUrl, String encodedIdToken) {
+        String separator = tokenInfoUrl.contains("?") ? "&" : "?";
+        return URI.create(tokenInfoUrl + separator + GOOGLE_ID_TOKEN_QUERY_PARAM + "=" + encodedIdToken);
     }
 
     private void checkAccountStatus(PbUserEntity user) {
         if (user.getStatus() == UserStatus.SUSPENDED) throw new AccountSuspendedException();
         if (!user.isAccountNonLocked()) throw new AccountLockedException();
-        if (!user.isEnabled()) throw new AuthenticationException("Account is not active");
+        if (!user.isEnabled()) throw new AuthenticationException(ResponseMessages.ACCOUNT_NOT_ACTIVE);
     }
 
     private void handleFailedLogin(PbUserEntity pbUserEntity) {
@@ -398,8 +418,8 @@ public class AuthServiceImpl implements AuthService {
             pbUserEntity.setStatus(UserStatus.LOCKED);
             userRepo.save(pbUserEntity);
             mailService.sendAccountLockedMail(pbUserEntity);
-            log.warn("Account locked after {} failed attempts: {}", max, pbUserEntity.getEmail());
-            throw new AccountLockedException("Account locked after " + max + " failed attempts");
+            log.warn("Account locked after {} failed attempts: userId={}", max, pbUserEntity.getEntityId());
+            throw new AccountLockedException(ResponseMessages.accountLockedAfterAttempts(max));
         }
         userRepo.save(pbUserEntity);
     }

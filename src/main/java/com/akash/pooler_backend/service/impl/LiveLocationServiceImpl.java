@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.service.impl;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.LiveLocationUpdateRequest;
 import com.akash.pooler_backend.dto.response.LiveLocationResponse;
 import com.akash.pooler_backend.entity.PbLiveLocationEntity;
@@ -36,8 +37,7 @@ public class LiveLocationServiceImpl implements LiveLocationService {
     public LiveLocationResponse publish(PbUserEntity user, String rideEntityId, LiveLocationUpdateRequest req) {
         PbRideEntity ride = loadParticipantRide(user, rideEntityId);
         if (ride.getStatus().isTerminal()) {
-            throw new RideInvalidStateException("Cannot publish location for a "
-                    + ride.getStatus() + " ride");
+            throw new RideInvalidStateException(ResponseMessages.liveLocationTerminalRide(ride.getStatus()));
         }
 
         PbLiveLocationEntity entity = repo

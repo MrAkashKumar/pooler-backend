@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.controller;
 
 import com.akash.pooler_backend.constants.ApiMapping;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.CancelRideRequest;
 import com.akash.pooler_backend.dto.request.UpdateFareSplitRequest;
 import com.akash.pooler_backend.dto.request.UpdateRideStatusRequest;
@@ -62,7 +63,7 @@ public class RideController {
             @CurrentUser PbUserEntity user,
             @PathVariable String rideEntityId,
             @Valid @RequestBody UpdateRideStatusRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("Ride status updated",
+        return ResponseEntity.ok(ApiResponse.ok(ResponseMessages.RIDE_STATUS_UPDATED,
                 rideService.updateStatus(user, rideEntityId, req)));
     }
 
@@ -73,7 +74,7 @@ public class RideController {
             @CurrentUser PbUserEntity user,
             @PathVariable String rideEntityId,
             @Valid @RequestBody(required = false) CancelRideRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("Ride cancelled",
+        return ResponseEntity.ok(ApiResponse.ok(ResponseMessages.RIDE_CANCELLED,
                 rideService.cancel(user, rideEntityId, req)));
     }
 
@@ -84,7 +85,7 @@ public class RideController {
             @CurrentUser PbUserEntity user,
             @PathVariable String rideEntityId,
             @Valid @RequestBody UpdateFareSplitRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("Fare split updated",
+        return ResponseEntity.ok(ApiResponse.ok(ResponseMessages.FARE_SPLIT_UPDATED,
                 rideService.updateFareSplit(user, rideEntityId, req)));
     }
 

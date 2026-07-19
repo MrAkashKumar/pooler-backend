@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.service.impl;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.config.ProfileMediaProperties;
 import com.akash.pooler_backend.dto.response.UserResponse;
 import com.akash.pooler_backend.entity.PbUserEntity;
@@ -10,6 +11,7 @@ import com.akash.pooler_backend.interceptors.annotation.AuditAction;
 import com.akash.pooler_backend.repository.PbUserRepository;
 import com.akash.pooler_backend.service.ProfileMediaService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -25,9 +27,11 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProfileMediaServiceImpl implements ProfileMediaService {
 
     private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
+    private static final String METHOD_UPLOAD_PROFILE_MEDIA = "uploadProfileMedia";
 
     private final PbUserRepository userRepository;
     private final ProfileMediaProperties properties;
@@ -38,13 +42,13 @@ public class ProfileMediaServiceImpl implements ProfileMediaService {
     public UserResponse uploadProfileMedia(PbUserEntity user, ProfileMediaPurpose purpose, MultipartFile file) {
         validate(file);
         if (properties.getS3Bucket() == null || properties.getS3Bucket().isBlank()) {
-            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, "S3 bucket is not configured");
+            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, ResponseMessages.S3_BUCKET_NOT_CONFIGURED);
         }
         if (properties.getS3Region() == null || properties.getS3Region().isBlank()) {
-            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, "S3 region is not configured");
+            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, ResponseMessages.S3_REGION_NOT_CONFIGURED);
         }
         if (properties.getKeyPrefix() == null || properties.getKeyPrefix().isBlank()) {
-            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, "S3 key prefix is not configured");
+            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, ResponseMessages.S3_KEY_PREFIX_NOT_CONFIGURED);
         }
 
         String contentType = file.getContentType() == null ? "application/octet-stream" : file.getContentType();
@@ -57,9 +61,15 @@ public class ProfileMediaServiceImpl implements ProfileMediaService {
                             .build(),
                     RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
         } catch (IOException exception) {
-            throw new FileUploadException("Could not read uploaded profile media");
+            log.error("profileMediaReadFailed className={} methodName={} userId={} purpose={} exceptionType={}",
+                    getClass().getSimpleName(), METHOD_UPLOAD_PROFILE_MEDIA, user.getEntityId(), purpose,
+                    exception.getClass().getSimpleName(), exception);
+            throw new FileUploadException(ResponseMessages.PROFILE_MEDIA_READ_FAILED);
         } catch (RuntimeException exception) {
-            throw new FileUploadException("Could not upload profile media to S3");
+            log.error("profileMediaUploadFailed className={} methodName={} userId={} purpose={} bucket={} keyPrefix={} exceptionType={}",
+                    getClass().getSimpleName(), METHOD_UPLOAD_PROFILE_MEDIA, user.getEntityId(), purpose,
+                    properties.getS3Bucket(), properties.getKeyPrefix(), exception.getClass().getSimpleName(), exception);
+            throw new FileUploadException(ResponseMessages.PROFILE_MEDIA_S3_UPLOAD_FAILED);
         }
 
         String mediaUrl = publicUrl(key);
@@ -68,20 +78,22 @@ public class ProfileMediaServiceImpl implements ProfileMediaService {
         } else {
             user.setPaymentQrCodeUrl(mediaUrl);
         }
+        log.info("profileMediaUploaded className={} methodName={} userId={} purpose={} contentType={} sizeBytes={} key={}",
+                getClass().getSimpleName(), METHOD_UPLOAD_PROFILE_MEDIA, user.getEntityId(), purpose, contentType, file.getSize(), key);
         return UserResponse.from(userRepository.save(user));
     }
 
     private void validate(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, "Profile media file is required");
+            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, ResponseMessages.PROFILE_MEDIA_REQUIRED);
         }
         if (file.getSize() > properties.getMaxSizeMb() * 1024 * 1024) {
             throw new FileUploadException(ErrorCode.VALIDATION_ERROR,
-                    "Profile media must be %d MB or smaller".formatted(properties.getMaxSizeMb()));
+                    ResponseMessages.profileMediaMaxSize(properties.getMaxSizeMb()));
         }
         String contentType = file.getContentType() == null ? "application/octet-stream" : file.getContentType();
         if (!ALLOWED_IMAGE_TYPES.contains(contentType)) {
-            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, "Only JPEG, PNG, and WebP images are allowed");
+            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, ResponseMessages.PROFILE_MEDIA_IMAGE_ONLY);
         }
     }
 

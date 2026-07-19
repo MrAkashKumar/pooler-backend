@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.security;
 
 import com.akash.pooler_backend.config.AppProperties;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.enums.TokenType;
 import com.akash.pooler_backend.exception.TokenExpiredException;
@@ -75,10 +76,10 @@ public class JwtUtil {
                     .getPayload();
         } catch (ExpiredJwtException ex) {
             log.debug("JWT expired");
-            throw new TokenExpiredException("JWT token has expired");
+            throw new TokenExpiredException(ResponseMessages.JWT_TOKEN_EXPIRED);
         } catch (JwtException | IllegalArgumentException ex) {
             log.debug("JWT invalid");
-            throw new TokenInvalidException("JWT token is invalid");
+            throw new TokenInvalidException(ResponseMessages.JWT_TOKEN_INVALID);
         }
     }
 

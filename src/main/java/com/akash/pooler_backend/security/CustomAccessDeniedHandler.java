@@ -96,7 +96,9 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
             if (auth != null && auth.getPrincipal() instanceof PbUserEntity pbUserEntity) {
                 return pbUserEntity.getRole().name();
             }
-        } catch (Exception ignored) {}
+        } catch (RuntimeException exception) {
+            log.debug("accessDeniedRoleResolveSkipped exceptionType={}", exception.getClass().getSimpleName());
+        }
         return null;
     }
 }

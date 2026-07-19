@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.service.impl;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.entity.PbChatArchiveEntity;
 import com.akash.pooler_backend.entity.PbChatMessageEntity;
 import com.akash.pooler_backend.entity.PbChatThreadEntity;
@@ -11,6 +12,7 @@ import com.akash.pooler_backend.service.ChatArchivalService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +23,9 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChatArchivalServiceImpl implements ChatArchivalService {
+    private static final String METHOD_ARCHIVE_THREAD = "archiveThread";
 
     private final PbChatArchiveRepository archiveRepository;
     private final PbChatThreadRepository threadRepository;
@@ -31,7 +35,11 @@ public class ChatArchivalServiceImpl implements ChatArchivalService {
     @Override
     @Transactional
     public void archiveThread(String threadId) {
-        if (archiveRepository.findByThreadId(threadId).isPresent()) return;
+        if (archiveRepository.findByThreadId(threadId).isPresent()) {
+            log.debug("chatArchiveSkipped className={} methodName={} threadId={} reason=alreadyArchived",
+                    getClass().getSimpleName(), METHOD_ARCHIVE_THREAD, threadId);
+            return;
+        }
         PbChatThreadEntity thread = threadRepository.findByEntityId(threadId).orElseThrow(ChatNotFoundException::new);
         List<PbChatMessageEntity> messages = messageRepository.findByThreadAndCreatedAfter(threadId, Instant.EPOCH);
         Map<String, Object> archive = Map.of(
@@ -55,8 +63,12 @@ public class ChatArchivalServiceImpl implements ChatArchivalService {
                     .archiveData(archive)
                     .sizeBytes((long) serialized.length)
                     .build());
+            log.info("chatArchived className={} methodName={} threadId={} messageCount={} sizeBytes={}",
+                    getClass().getSimpleName(), METHOD_ARCHIVE_THREAD, threadId, messages.size(), serialized.length);
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Could not archive chat " + threadId, exception);
+            log.error("chatArchiveFailed className={} methodName={} threadId={} exceptionType={}",
+                    getClass().getSimpleName(), METHOD_ARCHIVE_THREAD, threadId, exception.getClass().getSimpleName(), exception);
+            throw new IllegalStateException(ResponseMessages.chatArchiveWriteFailed(threadId), exception);
         }
     }
 
@@ -64,8 +76,17 @@ public class ChatArchivalServiceImpl implements ChatArchivalService {
     @Transactional(readOnly = true)
     public String retrieveArchivedThread(String threadId) {
         PbChatArchiveEntity archive = archiveRepository.findByThreadId(threadId).orElseThrow(ChatNotFoundException::new);
-        try { return objectMapper.writeValueAsString(archive.getArchiveData()); }
-        catch (JsonProcessingException exception) { throw new IllegalStateException("Could not read chat archive", exception); }
+        try {
+            String serializedArchive = objectMapper.writeValueAsString(archive.getArchiveData());
+            log.debug("chatArchiveRead className={} methodName={} threadId={}",
+                    getClass().getSimpleName(), "retrieveArchivedThread", threadId);
+            return serializedArchive;
+        } catch (JsonProcessingException exception) {
+            log.error("chatArchiveReadFailed className={} methodName={} threadId={} exceptionType={}",
+                    getClass().getSimpleName(), "retrieveArchivedThread", threadId,
+                    exception.getClass().getSimpleName(), exception);
+            throw new IllegalStateException(ResponseMessages.CHAT_ARCHIVE_READ_FAILED, exception);
+        }
     }
 
     @Override

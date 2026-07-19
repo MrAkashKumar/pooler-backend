@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.controller;
 
 import com.akash.pooler_backend.constants.ApiMapping;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.CreateFeedbackRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.FeedbackResponse;
@@ -62,6 +63,6 @@ public class FeedbackController {
     @Operation(summary = "Delete one feedback record")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String feedbackEntityId) {
         feedbackService.delete(feedbackEntityId);
-        return ResponseEntity.ok(ApiResponse.message("Feedback deleted"));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.FEEDBACK_DELETED));
     }
 }

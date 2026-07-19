@@ -10,6 +10,7 @@ import com.akash.pooler_backend.repository.PbTelegramProfileRepository;
 import com.akash.pooler_backend.service.ChatService;
 import com.akash.pooler_backend.service.TelegramService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TelegramServiceImpl implements TelegramService {
 
     private final PbTelegramProfileRepository repository;
@@ -35,7 +37,11 @@ public class TelegramServiceImpl implements TelegramService {
         if (handle != null && !handle.isBlank() && !handle.startsWith("@")) handle = "@" + handle;
         profile.setTelegramHandle(handle);
         profile.setTelegramPhoneNumber(request.getTelegramPhoneNumber());
-        return TelegramProfileResponse.from(repository.save(profile));
+        profile = repository.save(profile);
+        log.info("telegramProfileSaved className={} methodName={} userId={} profileId={} handlePresent={}",
+                getClass().getSimpleName(), "saveOrUpdateTelegramProfile", user.getEntityId(),
+                profile.getEntityId(), profile.getTelegramHandle() != null && !profile.getTelegramHandle().isBlank());
+        return TelegramProfileResponse.from(profile);
     }
 
     @Override
@@ -49,7 +55,11 @@ public class TelegramServiceImpl implements TelegramService {
     @Override
     @Transactional
     public void removeTelegramProfile(String userId) {
-        repository.findByUserEntityId(userId).ifPresent(repository::delete);
+        repository.findByUserEntityId(userId).ifPresent(profile -> {
+            repository.delete(profile);
+            log.info("telegramProfileRemoved className={} methodName={} userId={} profileId={}",
+                    getClass().getSimpleName(), "removeTelegramProfile", userId, profile.getEntityId());
+        });
     }
 
     @Override
@@ -61,5 +71,7 @@ public class TelegramServiceImpl implements TelegramService {
                 .messageType("TELEGRAM_ID_SHARE")
                 .metadata(Map.of("telegramHandle", profile.getTelegramHandle()))
                 .build());
+        log.info("telegramHandleShared className={} methodName={} userId={} threadId={}",
+                getClass().getSimpleName(), "shareTelegramInChat", user.getEntityId(), threadId);
     }
 }

@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.controller;
 
 import com.akash.pooler_backend.constants.ApiMapping;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.UserResponse;
 import com.akash.pooler_backend.entity.PbUserEntity;
@@ -55,7 +56,7 @@ public class AdminController {
         PbUserEntity pbUserEntity = userRepo.findById(id).orElseThrow(() -> new UserNotFoundException(id.toString()));
         pbUserEntity.setStatus(UserStatus.SUSPENDED);
         userRepo.save(pbUserEntity);
-        return ResponseEntity.ok(ApiResponse.message("User suspended: " + pbUserEntity.getEmail()));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.adminUserSuspended(pbUserEntity.getEntityId())));
     }
 
     @PutMapping(ApiMapping.USER_ACTIVATE)
@@ -65,6 +66,6 @@ public class AdminController {
         pbUserEntity.setStatus(UserStatus.ACTIVE);
         pbUserEntity.resetFailedAttempts();
         userRepo.save(pbUserEntity);
-        return ResponseEntity.ok(ApiResponse.message("User activated: " + pbUserEntity.getEmail()));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.adminUserActivated(pbUserEntity.getEntityId())));
     }
 }

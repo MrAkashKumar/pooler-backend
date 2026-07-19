@@ -63,42 +63,54 @@ public class GeoServiceImpl implements GeoService {
 
     @Override
     public RouteCompatibilityResponse computeCompatibility(
-            double aOriginLat, double aOriginLng,
-            double aDestLat,   double aDestLng,
-            double bOriginLat, double bOriginLng,
-            double bDestLat,   double bDestLng) {
+            double userAOriginLatitude, double userAOriginLongitude,
+            double userADestinationLatitude, double userADestinationLongitude,
+            double userBOriginLatitude, double userBOriginLongitude,
+            double userBDestinationLatitude, double userBDestinationLongitude) {
 
         // Trip distances
-        double aTrip = GeoUtil.haversineKm(aOriginLat, aOriginLng, aDestLat, aDestLng);
-        double bTrip = GeoUtil.haversineKm(bOriginLat, bOriginLng, bDestLat, bDestLng);
+        double userATripKm = GeoUtil.haversineKm(
+                userAOriginLatitude, userAOriginLongitude,
+                userADestinationLatitude, userADestinationLongitude);
+        double userBTripKm = GeoUtil.haversineKm(
+                userBOriginLatitude, userBOriginLongitude,
+                userBDestinationLatitude, userBDestinationLongitude);
 
         // Common pickup hub for the two origins
-        double[] hub = GeoUtil.midpoint(aOriginLat, aOriginLng, bOriginLat, bOriginLng);
+        double[] hub = GeoUtil.midpoint(
+                userAOriginLatitude, userAOriginLongitude,
+                userBOriginLatitude, userBOriginLongitude);
 
         // Bearing of each trip from the common hub toward its drop-off
-        double aBearing = GeoUtil.bearingDegrees(hub[0], hub[1], aDestLat, aDestLng);
-        double bBearing = GeoUtil.bearingDegrees(hub[0], hub[1], bDestLat, bDestLng);
-        double bearingDelta = GeoUtil.bearingDelta(aBearing, bBearing);
+        double userABearing = GeoUtil.bearingDegrees(
+                hub[0], hub[1], userADestinationLatitude, userADestinationLongitude);
+        double userBBearing = GeoUtil.bearingDegrees(
+                hub[0], hub[1], userBDestinationLatitude, userBDestinationLongitude);
+        double bearingDelta = GeoUtil.bearingDelta(userABearing, userBBearing);
 
         // Identify primary (longer trip) and secondary (shorter)
-        boolean aIsPrimary = aTrip >= bTrip;
-        String primary   = aIsPrimary ? "A" : "B";
-        String secondary = aIsPrimary ? "B" : "A";
-        double primaryTrip   = aIsPrimary ? aTrip : bTrip;
-        double secondaryTrip = aIsPrimary ? bTrip : aTrip;
+        boolean userAIsPrimary = userATripKm >= userBTripKm;
+        String primary = userAIsPrimary ? "A" : "B";
+        String secondary = userAIsPrimary ? "B" : "A";
+        double primaryTripKm = userAIsPrimary ? userATripKm : userBTripKm;
+        double secondaryTripKm = userAIsPrimary ? userBTripKm : userATripKm;
 
         // Cab path: hub -> shorter drop -> longer drop
-        double legHubToShortDrop = aIsPrimary
-                ? GeoUtil.haversineKm(hub[0], hub[1], bDestLat, bDestLng)
-                : GeoUtil.haversineKm(hub[0], hub[1], aDestLat, aDestLng);
-        double legShortDropToLongDrop = aIsPrimary
-                ? GeoUtil.haversineKm(bDestLat, bDestLng, aDestLat, aDestLng)
-                : GeoUtil.haversineKm(aDestLat, aDestLng, bDestLat, bDestLng);
-        double cabPath = legHubToShortDrop + legShortDropToLongDrop;
+        double legHubToShortDropKm = userAIsPrimary
+                ? GeoUtil.haversineKm(hub[0], hub[1], userBDestinationLatitude, userBDestinationLongitude)
+                : GeoUtil.haversineKm(hub[0], hub[1], userADestinationLatitude, userADestinationLongitude);
+        double legShortDropToLongDropKm = userAIsPrimary
+                ? GeoUtil.haversineKm(
+                        userBDestinationLatitude, userBDestinationLongitude,
+                        userADestinationLatitude, userADestinationLongitude)
+                : GeoUtil.haversineKm(
+                        userADestinationLatitude, userADestinationLongitude,
+                        userBDestinationLatitude, userBDestinationLongitude);
+        double cabPathKm = legHubToShortDropKm + legShortDropToLongDropKm;
 
-        double detourPercent = primaryTrip <= 0
+        double detourPercent = primaryTripKm <= 0
                 ? 0
-                : ((cabPath - primaryTrip) / primaryTrip) * 100.0;
+                : ((cabPathKm - primaryTripKm) / primaryTripKm) * 100.0;
 
         RouteCompatibility compat;
         if (bearingDelta >= REVERSE_BEARING_THRESHOLD) {
@@ -113,9 +125,9 @@ public class GeoServiceImpl implements GeoService {
         return RouteCompatibilityResponse.builder()
                 .compatibility(compat)
                 .bearingDeltaDegrees(round(bearingDelta, 2))
-                .userATripKm(round(aTrip, 4))
-                .userBTripKm(round(bTrip, 4))
-                .sharedKm(round(secondaryTrip, 4))
+                .userATripKm(round(userATripKm, 4))
+                .userBTripKm(round(userBTripKm, 4))
+                .sharedKm(round(secondaryTripKm, 4))
                 .detourPercent(round(detourPercent, 2))
                 .primaryRoute(primary)
                 .secondaryRoute(secondary)

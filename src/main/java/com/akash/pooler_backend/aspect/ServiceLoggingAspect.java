@@ -18,27 +18,31 @@ import org.springframework.stereotype.Component;
 public class ServiceLoggingAspect {
 
     @Pointcut("execution(* com.akash.pooler_backend.service.impl.*.*(..))")
-    public void serviceMethods() {}
+    public void serviceMethods() {
+        // Pointcut signature for service implementation methods.
+    }
 
     @Around("serviceMethods()")
     public Object logExecutionTime(ProceedingJoinPoint pjp) throws Throwable {
         long start = System.currentTimeMillis();
-        String method = pjp.getSignature().toShortString();
+        String method = pjp.getSignature().toLongString();
         try {
             Object result = pjp.proceed();
             long elapsed = System.currentTimeMillis() - start;
             if (elapsed > 500) {
-                log.warn("SLOW SERVICE [{}] took {}ms", method, elapsed);
+                log.warn("serviceFlow classMethod=\"{}\" outcome=slow durationMs={}", method, elapsed);
             } else {
-                log.debug("SERVICE [{}] completed in {}ms", method, elapsed);
+                log.debug("serviceFlow classMethod=\"{}\" outcome=success durationMs={}", method, elapsed);
             }
             return result;
         } catch (Throwable t) {
             long elapsed = System.currentTimeMillis() - start;
             if (t instanceof BaseException) {
-                log.warn("SERVICE [{}] rejected request with {} in {}ms", method, t.getClass().getSimpleName(), elapsed);
+                log.warn("serviceFlow classMethod=\"{}\" outcome=rejected exceptionType={} durationMs={}",
+                        method, t.getClass().getSimpleName(), elapsed);
             } else {
-                log.error("SERVICE [{}] threw {} in {}ms", method, t.getClass().getSimpleName(), elapsed);
+                log.error("serviceFlow classMethod=\"{}\" outcome=failed exceptionType={} durationMs={}",
+                        method, t.getClass().getSimpleName(), elapsed, t);
             }
             throw t;
         }

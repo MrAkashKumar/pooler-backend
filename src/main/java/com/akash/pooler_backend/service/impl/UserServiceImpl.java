@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.service.impl;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.ChangePasswordRequest;
 import com.akash.pooler_backend.dto.request.UpdateProfileRequest;
 import com.akash.pooler_backend.dto.response.UserResponse;
@@ -85,13 +86,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public void changePassword(PbUserEntity pbUserEntity, ChangePasswordRequest req) {
         if (!passwordEncoder.matches(req.getCurrentPassword(), pbUserEntity.getPasswordHash())) {
-            throw new AuthenticationException("Current password is incorrect");
+            throw new AuthenticationException(ResponseMessages.CURRENT_PASSWORD_INCORRECT);
         }
         if (!req.getNewPassword().equals(req.getConfirmPassword())) {
-            throw new AuthenticationException("New passwords do not match");
+            throw new AuthenticationException(ResponseMessages.NEW_PASSWORDS_DO_NOT_MATCH);
         }
         if (passwordEncoder.matches(req.getNewPassword(), pbUserEntity.getPasswordHash())) {
-            throw new AuthenticationException("New password must differ from current");
+            throw new AuthenticationException(ResponseMessages.NEW_PASSWORD_MUST_DIFFER);
         }
         pbUserEntity.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         pbUserRepository.save(pbUserEntity);
@@ -134,7 +135,8 @@ public class UserServiceImpl implements UserService {
         auditLogRepository.deleteByEntityId(userId);
 
         pbUserRepository.delete(pbUserEntity);
-        log.info("Account permanently deleted");
+        log.info("accountDeleted className={} methodName={} userId={}",
+                getClass().getSimpleName(), "deleteAccount", userId);
 
     }
 

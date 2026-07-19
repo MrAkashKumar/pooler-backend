@@ -42,7 +42,7 @@ public class ChatSearchServiceImpl implements ChatSearchService {
 
         List<String> messageIds = messages.stream()
                 .map(PbChatMessageEntity::getEntityId)
-                .collect(Collectors.toList());
+                .toList();
 
         PbChatSearchIndexEntity index = PbChatSearchIndexEntity.builder()
                 .threadId(threadId)
@@ -82,8 +82,7 @@ public class ChatSearchServiceImpl implements ChatSearchService {
     @Override
     @Transactional
     public void archiveSearchIndex(String threadId) {
-        searchIndexRepository.findByThreadId(threadId).ifPresent(index -> {
-            log.info("Archiving search index for thread: {}", threadId);
-        });
+        searchIndexRepository.findByThreadId(threadId)
+                .ifPresent(index -> log.info("Archiving search index for thread: {}", threadId));
     }
 }

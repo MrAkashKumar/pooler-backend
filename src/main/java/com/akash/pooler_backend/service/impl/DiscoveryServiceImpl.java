@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -127,12 +128,12 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         if (candidates.isEmpty()) return List.of();
 
         // Resolve user details in batch
-        List<String> userIds = candidates.stream()
+        Set<String> userIds = candidates.stream()
                 .map(PbDiscoveryStatusEntity::getUserEntityId)
-                .toList();
+                .collect(Collectors.toSet());
         Map<String, PbUserEntity> userById = userRepo.findAll().stream()
-                .filter(u -> userIds.contains(u.getEntityId()))
-                .collect(Collectors.toMap(PbUserEntity::getEntityId, Function.identity(), (a, b) -> a));
+                .filter(candidateUser -> userIds.contains(candidateUser.getEntityId()))
+                .collect(Collectors.toMap(PbUserEntity::getEntityId, Function.identity(), (first, duplicate) -> first));
 
         // Resolve contacts of the requester for "inContacts" flag
         Set<String> contactIds = contactRepo
@@ -142,35 +143,37 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                 .collect(Collectors.toSet());
 
         return candidates.stream()
-                .map(d -> {
-                    double dist = GeoUtil.haversineKm(
+                .map(candidate -> {
+                    double distanceKm = GeoUtil.haversineKm(
                             req.getLatitude(), req.getLongitude(),
-                            d.getCurrentLatitude(), d.getCurrentLongitude());
-                    if (dist > req.getRadiusKm()) return null;
+                            candidate.getCurrentLatitude(), candidate.getCurrentLongitude());
+                    if (distanceKm > req.getRadiusKm()) return null;
 
                     double bearing = GeoUtil.bearingDegrees(
                             req.getLatitude(), req.getLongitude(),
-                            d.getCurrentLatitude(), d.getCurrentLongitude());
+                            candidate.getCurrentLatitude(), candidate.getCurrentLongitude());
 
-                    PbUserEntity u = userById.get(d.getUserEntityId());
-                    if (!isMutualPreferenceMatch(user, u)) return null;
+                    PbUserEntity candidateUser = userById.get(candidate.getUserEntityId());
+                    if (!isMutualPreferenceMatch(user, candidateUser)) return null;
                     return NearbyUserResponse.builder()
-                            .userEntityId(d.getUserEntityId())
-                            .fullName(u != null ? u.getFullName() : null)
-                            .profilePictureUrl(u != null ? u.getProfilePictureUrl() : null)
-                            .gender(u != null ? safeGender(u.getGender()) : Gender.UNKNOWN)
-                            .matchPreference(u != null ? safePreference(u.getMatchPreference()) : MatchPreference.ANY)
-                            .currentLatitude(d.getCurrentLatitude())
-                            .currentLongitude(d.getCurrentLongitude())
-                            .destinationLatitude(d.getDestinationLatitude())
-                            .destinationLongitude(d.getDestinationLongitude())
-                            .distanceKm(round(dist, 4))
+                            .userEntityId(candidate.getUserEntityId())
+                            .fullName(candidateUser != null ? candidateUser.getFullName() : null)
+                            .profilePictureUrl(candidateUser != null ? candidateUser.getProfilePictureUrl() : null)
+                            .gender(candidateUser != null ? safeGender(candidateUser.getGender()) : Gender.UNKNOWN)
+                            .matchPreference(candidateUser != null
+                                    ? safePreference(candidateUser.getMatchPreference())
+                                    : MatchPreference.ANY)
+                            .currentLatitude(candidate.getCurrentLatitude())
+                            .currentLongitude(candidate.getCurrentLongitude())
+                            .destinationLatitude(candidate.getDestinationLatitude())
+                            .destinationLongitude(candidate.getDestinationLongitude())
+                            .distanceKm(round(distanceKm, 4))
                             .bearingDegrees(round(bearing, 2))
-                            .inContacts(contactIds.contains(d.getUserEntityId()))
+                            .inContacts(contactIds.contains(candidate.getUserEntityId()))
                             .build();
                 })
                 .filter(java.util.Objects::nonNull)
-                .sorted((a, b) -> Double.compare(a.getDistanceKm(), b.getDistanceKm()))
+                .sorted(Comparator.comparingDouble(NearbyUserResponse::getDistanceKm))
                 .toList();
     }
 

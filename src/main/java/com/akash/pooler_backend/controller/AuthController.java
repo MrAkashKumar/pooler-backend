@@ -1,6 +1,7 @@
 package com.akash.pooler_backend.controller;
 
 import com.akash.pooler_backend.constants.ApiMapping;
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.*;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.AuthResponse;
@@ -49,8 +50,7 @@ public class AuthController {
             @Valid @RequestBody RegisterRequest req,
             HttpServletRequest httpReq) {
         authService.register(req, httpReq);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.message(
-                "Signup created. Check your email to activate your account."));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.message(ResponseMessages.SIGNUP_CREATED));
     }
 
     @PostMapping(ApiMapping.VERIFY_EMAIL)
@@ -58,7 +58,7 @@ public class AuthController {
     @Operation(summary = "Verify email", description = "Activates a pending email/password account.")
     public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyEmailRequest req) {
         authService.verifyEmail(req);
-        return ResponseEntity.ok(ApiResponse.message("Email verified. Please sign in."));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.EMAIL_VERIFIED));
     }
 
     @PostMapping(ApiMapping.RESEND_VERIFICATION)
@@ -68,8 +68,7 @@ public class AuthController {
             @Valid @RequestBody ResendVerificationRequest req,
             HttpServletRequest httpReq) {
         authService.resendVerification(req, httpReq);
-        return ResponseEntity.ok(ApiResponse.message(
-                "If this email is pending verification, a new activation link has been sent."));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.VERIFICATION_LINK_SENT_IF_PENDING));
     }
 
     // ── Login ─────────────────────────────────────────────────────────
@@ -110,7 +109,7 @@ public class AuthController {
             HttpServletRequest httpReq) {
         String token = RequestUtil.extractBearerToken(httpReq);
         authService.logout(token, httpReq);
-        return ResponseEntity.ok(ApiResponse.message("Logged out successfully"));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.LOGGED_OUT));
     }
 
     @PostMapping(ApiMapping.LOGOUT_ALL)
@@ -119,7 +118,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> logoutAll(HttpServletRequest httpReq) {
         String token = RequestUtil.extractBearerToken(httpReq);
         authService.logoutAll(token);
-        return ResponseEntity.ok(ApiResponse.message("Logged out from all devices"));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.LOGGED_OUT_ALL));
     }
 
     // ── Password Reset ────────────────────────────────────────────────
@@ -132,8 +131,7 @@ public class AuthController {
             HttpServletRequest httpReq) {
         authService.forgotPassword(req, httpReq);
         // Always 200 — never reveal whether email exists
-        return ResponseEntity.ok(ApiResponse.message(
-                "If this email is registered, a reset link has been sent."));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.RESET_LINK_SENT_IF_REGISTERED));
     }
 
     @PostMapping(ApiMapping.RESET_PASSWORD)
@@ -142,6 +140,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @Valid @RequestBody ResetPasswordRequest req) {
         authService.resetPassword(req);
-        return ResponseEntity.ok(ApiResponse.message("Password reset successful. Please login."));
+        return ResponseEntity.ok(ApiResponse.message(ResponseMessages.PASSWORD_RESET_SUCCESS));
     }
 }

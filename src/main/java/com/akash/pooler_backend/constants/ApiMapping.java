@@ -11,7 +11,7 @@ package com.akash.pooler_backend.constants;
 public final class ApiMapping {
 
     private ApiMapping() {
-        throw new IllegalArgumentException("Illegal Argument Exception");
+        throw new IllegalArgumentException(ResponseMessages.UTILITY_CLASS);
     }
 
     public static final String API_V1 = "/api/v1";

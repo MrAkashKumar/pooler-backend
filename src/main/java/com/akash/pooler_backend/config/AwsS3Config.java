@@ -16,7 +16,7 @@ public class AwsS3Config {
     public S3Client profileMediaS3Client(ProfileMediaProperties properties) {
         return S3Client.builder()
                 .region(Region.of(nonBlankOrDefault(properties.getS3Region(), "ap-southeast-1")))
-                .credentialsProvider(DefaultCredentialsProvider.create())
+                .credentialsProvider(DefaultCredentialsProvider.builder().build())
                 .overrideConfiguration(ClientOverrideConfiguration.builder()
                         .apiCallAttemptTimeout(Duration.ofSeconds(10))
                         .apiCallTimeout(Duration.ofSeconds(30))

@@ -1,5 +1,7 @@
 package com.akash.pooler_backend.utils;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
+
 /**
  * Lightweight, dependency-free geographic utility helpers used by the
  * "Meet-in-the-Middle" engine and the route-compatibility checker.
@@ -14,7 +16,7 @@ public final class GeoUtil {
     public static final double EARTH_RADIUS_KM = 6371.0088;
 
     private GeoUtil() {
-        throw new IllegalStateException("Utility class");
+        throw new IllegalStateException(ResponseMessages.UTILITY_CLASS);
     }
 
     /**

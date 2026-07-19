@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.exception;
 
+import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.enums.ErrorCode;
 import com.akash.pooler_backend.enums.LocationAlias;
 
@@ -12,6 +13,6 @@ import com.akash.pooler_backend.enums.LocationAlias;
 public class LocationAliasConflictException extends BaseException {
     public LocationAliasConflictException(LocationAlias alias) {
         super(ErrorCode.LOCATION_ALIAS_CONFLICT,
-                "A " + alias.name() + " location already exists for this user");
+                ResponseMessages.locationAliasAlreadyExists(alias.name()));
     }
 }
