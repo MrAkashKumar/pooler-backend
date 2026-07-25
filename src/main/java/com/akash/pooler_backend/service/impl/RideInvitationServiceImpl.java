@@ -1,5 +1,6 @@
 package com.akash.pooler_backend.service.impl;
 
+import com.akash.pooler_backend.config.AppProperties;
 import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.AcceptInvitationRequest;
 import com.akash.pooler_backend.dto.request.SendRideInvitationRequest;
@@ -13,21 +14,26 @@ import com.akash.pooler_backend.exception.InvitationExpiredException;
 import com.akash.pooler_backend.exception.InvitationForbiddenException;
 import com.akash.pooler_backend.exception.InvitationInvalidStateException;
 import com.akash.pooler_backend.exception.InvitationNotFoundException;
+import com.akash.pooler_backend.exception.InvitationParticipantBusyException;
+import com.akash.pooler_backend.exception.InvitationRetryLockedException;
 import com.akash.pooler_backend.exception.InvitationSelfNotAllowedException;
 import com.akash.pooler_backend.exception.UserNotFoundException;
 import com.akash.pooler_backend.interceptors.annotation.AuditAction;
 import com.akash.pooler_backend.repository.PbRideInvitationRepository;
+import com.akash.pooler_backend.repository.PbRideRepository;
 import com.akash.pooler_backend.repository.PbUserRepository;
 import com.akash.pooler_backend.service.GeoService;
 import com.akash.pooler_backend.service.ChatService;
 import com.akash.pooler_backend.service.RideInvitationService;
 import com.akash.pooler_backend.service.RideService;
+import com.akash.pooler_backend.enums.RideStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,13 +45,16 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RideInvitationServiceImpl implements RideInvitationService {
 
-    private static final int DEFAULT_TTL_SECONDS = 300; // 5 minutes
+    private static final String SYSTEM_MATCH_LOCK_ACTOR = "system:match-lock";
+    private static final List<RideStatus> TERMINAL_RIDE_STATUSES = List.of(RideStatus.COMPLETED, RideStatus.CANCELLED);
 
     private final PbRideInvitationRepository invitationRepository;
+    private final PbRideRepository rideRepository;
     private final PbUserRepository userRepository;
     private final GeoService geoService;
     private final RideService rideService;
     private final ChatService chatService;
+    private final AppProperties appProperties;
 
     @Override
     @Transactional
@@ -57,7 +66,13 @@ public class RideInvitationServiceImpl implements RideInvitationService {
         userRepository.findByEntityId(req.getReceiverEntityId())
                 .orElseThrow(() -> new UserNotFoundException(req.getReceiverEntityId()));
 
-        int ttl = req.getTtlSeconds() != null ? req.getTtlSeconds() : DEFAULT_TTL_SECONDS;
+        Instant now = Instant.now();
+        ensureParticipantsAvailable(sender.getEntityId(), req.getReceiverEntityId());
+        ensurePairCanBeInvited(sender.getEntityId(), req.getReceiverEntityId(), now);
+
+        int ttl = req.getTtlSeconds() != null
+                ? req.getTtlSeconds()
+                : appProperties.getInvitation().getDefaultTtlSeconds();
 
         PbRideInvitationEntity entity = PbRideInvitationEntity.builder()
                 .entityId(newId())
@@ -69,13 +84,13 @@ public class RideInvitationServiceImpl implements RideInvitationService {
                 .senderDestLng(req.getSenderDestinationLongitude())
                 .senderDestAddress(req.getSenderDestinationAddress())
                 .status(InvitationStatusEnums.PENDING)
-                .expiresAt(Instant.now().plusSeconds(ttl))
+                .expiresAt(now.plusSeconds(ttl))
                 .message(req.getMessage())
                 .build();
 
         entity = invitationRepository.save(entity);
-        log.info("Invitation {} sent from {} to {}",
-                entity.getEntityId(), sender.getEntityId(), req.getReceiverEntityId());
+        log.info("Invitation {} sent from {} to {} ttlSeconds={}",
+                entity.getEntityId(), sender.getEntityId(), req.getReceiverEntityId(), ttl);
         return RideInvitationResponse.from(entity);
     }
 
@@ -90,6 +105,7 @@ public class RideInvitationServiceImpl implements RideInvitationService {
             throw new InvitationForbiddenException();
         }
         ensurePendingAndFresh(inv);
+        ensureParticipantsAvailable(inv.getSenderEntityId(), inv.getReceiverEntityId());
 
         inv.setReceiverLat(req.getReceiverLatitude());
         inv.setReceiverLng(req.getReceiverLongitude());
@@ -109,12 +125,21 @@ public class RideInvitationServiceImpl implements RideInvitationService {
                 Math.max(pickup.getDistanceFromUserAKm(), pickup.getDistanceFromUserBKm()));
 
         inv.setStatus(InvitationStatusEnums.ACCEPTED);
-        inv.setRespondedAt(Instant.now());
+        Instant now = Instant.now();
+        inv.setRespondedAt(now);
+        inv.setRespondedByEntityId(receiver.getEntityId());
 
         inv = invitationRepository.save(inv);
+        int clearedPending = invitationRepository.declinePendingForParticipantsExcept(
+                List.of(inv.getSenderEntityId(), inv.getReceiverEntityId()),
+                inv.getEntityId(),
+                InvitationStatusEnums.PENDING,
+                InvitationStatusEnums.DECLINED,
+                SYSTEM_MATCH_LOCK_ACTOR,
+                now);
         chatService.createChatThread(receiver, inv);
-        log.info("Invitation {} accepted; pickup hub computed at ({}, {})",
-                invitationEntityId, inv.getPickupLat(), inv.getPickupLng());
+        log.info("Invitation {} accepted; pickup hub computed at ({}, {}), clearedPendingInvites={}",
+                invitationEntityId, inv.getPickupLat(), inv.getPickupLng(), clearedPending);
         return RideInvitationResponse.from(inv);
     }
 
@@ -130,6 +155,7 @@ public class RideInvitationServiceImpl implements RideInvitationService {
         ensurePendingAndFresh(inv);
         inv.setStatus(InvitationStatusEnums.DECLINED);
         inv.setRespondedAt(Instant.now());
+        inv.setRespondedByEntityId(receiver.getEntityId());
         return RideInvitationResponse.from(invitationRepository.save(inv));
     }
 
@@ -179,6 +205,7 @@ public class RideInvitationServiceImpl implements RideInvitationService {
         }
         inv.setStatus(InvitationStatusEnums.DECLINED);
         inv.setRespondedAt(Instant.now());
+        inv.setRespondedByEntityId(user.getEntityId());
         inv.setMessage((inv.getMessage() == null ? "" : inv.getMessage() + " | ")
                 + "Cancelled by " + user.getEntityId());
         return RideInvitationResponse.from(invitationRepository.save(inv));
@@ -212,6 +239,31 @@ public class RideInvitationServiceImpl implements RideInvitationService {
     }
 
     // ─── helpers ──────────────────────────────────────────────────────
+
+    private void ensurePairCanBeInvited(String senderEntityId, String receiverEntityId, Instant now) {
+        if (invitationRepository.existsPendingPair(
+                senderEntityId, receiverEntityId, InvitationStatusEnums.PENDING, now)) {
+            throw new InvitationInvalidStateException(ResponseMessages.INVITATION_PENDING_PAIR_EXISTS);
+        }
+
+        int lockHours = appProperties.getInvitation().getDeclineRetryLockHours();
+        Instant retryCutoff = now.minus(lockHours, ChronoUnit.HOURS);
+        if (invitationRepository.existsRecentReceiverDecline(
+                senderEntityId, receiverEntityId, InvitationStatusEnums.DECLINED, retryCutoff)) {
+            throw new InvitationRetryLockedException(lockHours);
+        }
+    }
+
+    private void ensureParticipantsAvailable(String senderEntityId, String receiverEntityId) {
+        if (isUserBusy(senderEntityId) || isUserBusy(receiverEntityId)) {
+            throw new InvitationParticipantBusyException();
+        }
+    }
+
+    private boolean isUserBusy(String userEntityId) {
+        return invitationRepository.existsActiveAcceptedMeetup(userEntityId, InvitationStatusEnums.ACCEPTED)
+                || rideRepository.existsActiveForUser(userEntityId, TERMINAL_RIDE_STATUSES);
+    }
 
     private void ensurePendingAndFresh(PbRideInvitationEntity inv) {
         if (inv.getStatus() != InvitationStatusEnums.PENDING) {

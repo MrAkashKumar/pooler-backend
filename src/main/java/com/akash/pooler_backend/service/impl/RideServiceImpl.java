@@ -2,6 +2,7 @@ package com.akash.pooler_backend.service.impl;
 
 import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.CancelRideRequest;
+import com.akash.pooler_backend.dto.request.ConfirmArrivalRequest;
 import com.akash.pooler_backend.dto.request.UpdateFareSplitRequest;
 import com.akash.pooler_backend.dto.request.UpdateRideStatusRequest;
 import com.akash.pooler_backend.dto.response.RideResponse;
@@ -20,6 +21,7 @@ import com.akash.pooler_backend.repository.PbRideRepository;
 import com.akash.pooler_backend.service.GeoService;
 import com.akash.pooler_backend.service.RideService;
 import com.akash.pooler_backend.utils.GeoUtil;
+import com.akash.pooler_backend.utils.RideHandoffUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -163,6 +165,7 @@ public class RideServiceImpl implements RideService {
     @AuditAction("RIDE_FARE_SPLIT_UPDATE")
     public RideResponse updateFareSplit(PbUserEntity user, String rideEntityId, UpdateFareSplitRequest req) {
         PbRideEntity ride = loadParticipant(user, rideEntityId);
+        ensureHandoffUnlocked(ride);
         if (req.getTotalFare() == null || req.getTotalFare() <= 0) {
             throw new RideInvalidStateException(ResponseMessages.FARE_TOTAL_REQUIRED);
         }
@@ -214,17 +217,25 @@ public class RideServiceImpl implements RideService {
     @Override
     @Transactional
     @AuditAction("RIDER_ARRIVAL_CONFIRM")
-    public ArrivalConfirmationResponse confirmArrival(PbUserEntity user, String rideEntityId) {
+    public ArrivalConfirmationResponse confirmArrival(PbUserEntity user, String rideEntityId, ConfirmArrivalRequest req) {
         PbRideEntity ride = loadParticipant(user, rideEntityId);
         if (ride.getStatus().isTerminal()) {
             throw new RideInvalidStateException(ResponseMessages.rideAlready(ride.getStatus()));
         }
-        if (ride.getPrimaryEntityId().equals(user.getEntityId())) ride.setPrimaryArrived(true);
-        else ride.setSecondaryArrived(true);
-        if (ride.bothArrived()) ride.setStatus(RideStatus.AT_PICKUP);
+        Instant confirmedAt = Instant.now();
+        Double distanceKm = RideHandoffUtil.distanceFromPickupKm(ride, req);
+        if (ride.getPrimaryEntityId().equals(user.getEntityId())) {
+            applyPrimaryArrival(ride, req, confirmedAt, distanceKm);
+        } else {
+            applySecondaryArrival(ride, req, confirmedAt, distanceKm);
+        }
+        if (ride.bothArrived()) {
+            ride.setStatus(RideStatus.AT_PICKUP);
+        }
         ride = rideRepository.save(ride);
-        log.info("rideArrivalConfirmed className={} methodName={} rideId={} userId={} bothArrived={}",
-                getClass().getSimpleName(), "confirmArrival", rideEntityId, user.getEntityId(), ride.bothArrived());
+        log.info("rideArrivalConfirmed className={} methodName={} rideId={} userId={} bothArrived={} distanceKm={}",
+                getClass().getSimpleName(), "confirmArrival", rideEntityId, user.getEntityId(),
+                ride.bothArrived(), distanceKm);
         return ArrivalConfirmationResponse.builder()
                 .ride(RideResponse.from(ride))
                 .bothArrived(ride.bothArrived())
@@ -240,6 +251,34 @@ public class RideServiceImpl implements RideService {
             throw new RideForbiddenException();
         }
         return ride;
+    }
+
+    private void ensureHandoffUnlocked(PbRideEntity ride) {
+        if (!RideHandoffUtil.isHandoffUnlocked(ride)) {
+            throw new RideInvalidStateException(ResponseMessages.RIDE_HANDOFF_LOCKED);
+        }
+    }
+
+    private void applyPrimaryArrival(PbRideEntity ride, ConfirmArrivalRequest req, Instant confirmedAt, Double distanceKm) {
+        ride.setPrimaryArrived(true);
+        ride.setPrimaryArrivedAt(confirmedAt);
+        ride.setPrimaryArrivalDistanceKm(distanceKm);
+        if (req != null) {
+            ride.setPrimaryArrivalLat(req.getLatitude());
+            ride.setPrimaryArrivalLng(req.getLongitude());
+            ride.setPrimaryArrivalAccuracyMeters(req.getAccuracyMeters());
+        }
+    }
+
+    private void applySecondaryArrival(PbRideEntity ride, ConfirmArrivalRequest req, Instant confirmedAt, Double distanceKm) {
+        ride.setSecondaryArrived(true);
+        ride.setSecondaryArrivedAt(confirmedAt);
+        ride.setSecondaryArrivalDistanceKm(distanceKm);
+        if (req != null) {
+            ride.setSecondaryArrivalLat(req.getLatitude());
+            ride.setSecondaryArrivalLng(req.getLongitude());
+            ride.setSecondaryArrivalAccuracyMeters(req.getAccuracyMeters());
+        }
     }
 
     private static double round(double v, int d) {

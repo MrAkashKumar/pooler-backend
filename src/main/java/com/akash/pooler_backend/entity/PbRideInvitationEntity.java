@@ -82,6 +82,9 @@ public class PbRideInvitationEntity extends BaseEntity {
     @Column(name = "responded_at")
     private Instant respondedAt;
 
+    @Column(name = "responded_by_entity_id", length = 64)
+    private String respondedByEntityId;
+
     @Column(name = "message", length = 500)
     private String message;
 

@@ -3,6 +3,7 @@ package com.akash.pooler_backend.controller;
 import com.akash.pooler_backend.constants.ApiMapping;
 import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.dto.request.CancelRideRequest;
+import com.akash.pooler_backend.dto.request.ConfirmArrivalRequest;
 import com.akash.pooler_backend.dto.request.UpdateFareSplitRequest;
 import com.akash.pooler_backend.dto.request.UpdateRideStatusRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
@@ -94,7 +95,8 @@ public class RideController {
     @Operation(summary = "Confirm physical arrival; cab handoff unlocks after both riders confirm")
     public ResponseEntity<ApiResponse<ArrivalConfirmationResponse>> arrive(
             @CurrentUser PbUserEntity user,
-            @PathVariable String rideEntityId) {
-        return ResponseEntity.ok(ApiResponse.ok(rideService.confirmArrival(user, rideEntityId)));
+            @PathVariable String rideEntityId,
+            @Valid @RequestBody(required = false) ConfirmArrivalRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok(rideService.confirmArrival(user, rideEntityId, req)));
     }
 }

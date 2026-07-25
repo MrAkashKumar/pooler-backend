@@ -63,6 +63,8 @@ public enum ErrorCode {
     INVITATION_ALREADY_RESOLVED("INV-003", "Ride invitation has already been resolved", HttpStatus.CONFLICT),
     INVITATION_FORBIDDEN("INV-004", "You are not allowed to act on this invitation", HttpStatus.FORBIDDEN),
     INVITATION_SELF_NOT_ALLOWED("INV-005", "You cannot send a ride invitation to yourself", HttpStatus.BAD_REQUEST),
+    INVITATION_PARTICIPANT_BUSY("INV-006", "A rider is already in an active meetup", HttpStatus.CONFLICT),
+    INVITATION_RETRY_LOCKED("INV-007", "Invitation retry is temporarily locked", HttpStatus.CONFLICT),
 
     // Ride
     RIDE_NOT_FOUND("RIDE-001", "Ride not found", HttpStatus.NOT_FOUND),

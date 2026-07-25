@@ -13,8 +13,10 @@ import com.akash.pooler_backend.entity.PbSavedLocationEntity;
 import com.akash.pooler_backend.enums.Gender;
 import com.akash.pooler_backend.enums.LocationAlias;
 import com.akash.pooler_backend.enums.Role;
+import com.akash.pooler_backend.enums.RideStatus;
 import com.akash.pooler_backend.enums.SafetyReportStatus;
 import com.akash.pooler_backend.enums.UserStatus;
+import com.akash.pooler_backend.exception.RideInvalidStateException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +56,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
@@ -316,7 +319,7 @@ class ApiSmokeIntegrationTests {
         var akash = userRepository.findByEmail(RIDER_A_EMAIL).orElseThrow();
         var alice = userRepository.findByEmail(RIDER_B_EMAIL).orElseThrow();
         String rideId = "ride-test-" + UUID.randomUUID().toString().substring(0, 8);
-        rideRepository.save(PbRideEntity.builder()
+        var ride = rideRepository.save(PbRideEntity.builder()
                 .entityId(rideId)
                 .primaryEntityId(alice.getEntityId())
                 .secondaryEntityId(akash.getEntityId())
@@ -331,6 +334,14 @@ class ApiSmokeIntegrationTests {
                 .totalDistanceKm(15.0)
                 .estimatedFare(30.0)
                 .build());
+
+        assertThrows(RideInvalidStateException.class, () -> rideService.updateFareSplit(akash, rideId,
+                new UpdateFareSplitRequest(30.0, "SGD", "Grab")));
+
+        ride.setPrimaryArrived(true);
+        ride.setSecondaryArrived(true);
+        ride.setStatus(RideStatus.AT_PICKUP);
+        rideRepository.save(ride);
 
         var response = rideService.updateFareSplit(akash, rideId,
                 new UpdateFareSplitRequest(30.0, "SGD", "Grab"));

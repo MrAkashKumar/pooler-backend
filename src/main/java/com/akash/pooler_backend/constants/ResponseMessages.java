@@ -52,10 +52,16 @@ public final class ResponseMessages {
     public static final String INVITATION_RIDE_CREATED = "Both parties confirmed - ride created";
     public static final String INVITATION_ALREADY_DECLINED = "Invitation already declined";
     public static final String INVITATION_ACCEPTED_REQUIRED = "Invitation must be ACCEPTED before confirming pickup";
+    public static final String INVITATION_PARTICIPANT_BUSY =
+            "This rider is already in an active meetup. Please try another match.";
+    public static final String INVITATION_PENDING_PAIR_EXISTS =
+            "You already sent this rider an invitation. Please wait for their response or try again after it expires.";
 
     public static final String RIDE_STATUS_UPDATED = "Ride status updated";
     public static final String RIDE_CANCELLED = "Ride cancelled";
     public static final String FARE_SPLIT_UPDATED = "Fare split updated";
+    public static final String RIDE_HANDOFF_LOCKED =
+            "Cab handoff and fare split unlock after both riders confirm arrival at the Common Point";
     public static final String FARE_TOTAL_REQUIRED = "Total fare must be greater than zero";
     public static final String FARE_TOTAL_TOO_HIGH = "Total fare is too high";
     public static final String FARE_PROVIDER_REQUIRED = "Cab provider is required";
@@ -137,6 +143,10 @@ public final class ResponseMessages {
 
     public static String invitationStatusCannotBeModified(InvitationStatusEnums status) {
         return "Invitation is " + status + " and cannot be modified";
+    }
+
+    public static String invitationRetryLocked(int lockHours) {
+        return "This rider declined your invitation. You can invite them again after " + lockHours + " hours.";
     }
 
     public static String accountLockedAfterAttempts(int attempts) {

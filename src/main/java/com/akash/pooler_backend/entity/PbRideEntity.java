@@ -96,6 +96,19 @@ public class PbRideEntity extends BaseEntity {
     @Builder.Default
     private boolean secondaryArrived = false;
 
+    @Column(name = "primary_arrived_at") private Instant primaryArrivedAt;
+    @Column(name = "secondary_arrived_at") private Instant secondaryArrivedAt;
+
+    @Column(name = "primary_arrival_lat") private Double primaryArrivalLat;
+    @Column(name = "primary_arrival_lng") private Double primaryArrivalLng;
+    @Column(name = "primary_arrival_accuracy_meters") private Double primaryArrivalAccuracyMeters;
+    @Column(name = "primary_arrival_distance_km") private Double primaryArrivalDistanceKm;
+
+    @Column(name = "secondary_arrival_lat") private Double secondaryArrivalLat;
+    @Column(name = "secondary_arrival_lng") private Double secondaryArrivalLng;
+    @Column(name = "secondary_arrival_accuracy_meters") private Double secondaryArrivalAccuracyMeters;
+    @Column(name = "secondary_arrival_distance_km") private Double secondaryArrivalDistanceKm;
+
     public boolean isParticipant(String userEntityId) {
         return primaryEntityId.equals(userEntityId) || secondaryEntityId.equals(userEntityId);
     }

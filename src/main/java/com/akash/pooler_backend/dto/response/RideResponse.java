@@ -54,6 +54,11 @@ public class RideResponse {
     private String cancelReason;
     private boolean primaryArrived;
     private boolean secondaryArrived;
+    private Instant primaryArrivedAt;
+    private Instant secondaryArrivedAt;
+    private Double primaryArrivalDistanceKm;
+    private Double secondaryArrivalDistanceKm;
+    private boolean handoffUnlocked;
     private Instant createdAt;
 
     public static RideResponse from(PbRideEntity r) {
@@ -88,6 +93,11 @@ public class RideResponse {
                 .cancelReason(r.getCancelReason())
                 .primaryArrived(r.isPrimaryArrived())
                 .secondaryArrived(r.isSecondaryArrived())
+                .primaryArrivedAt(r.getPrimaryArrivedAt())
+                .secondaryArrivedAt(r.getSecondaryArrivedAt())
+                .primaryArrivalDistanceKm(r.getPrimaryArrivalDistanceKm())
+                .secondaryArrivalDistanceKm(r.getSecondaryArrivalDistanceKm())
+                .handoffUnlocked(com.akash.pooler_backend.utils.RideHandoffUtil.isHandoffUnlocked(r))
                 .createdAt(r.getCreatedAt())
                 .build();
     }

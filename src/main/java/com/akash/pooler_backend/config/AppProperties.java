@@ -50,6 +50,9 @@ public class AppProperties {
     private EmailVerification emailVerification = new EmailVerification();
 
     @NotNull
+    private Invitation invitation = new Invitation();
+
+    @NotNull
     private Async async = new Async();
 
     // ─── Nested config classes ────────────────────────────────────
@@ -125,6 +128,15 @@ public class AppProperties {
     @Setter
     public static class EmailVerification {
         private int tokenExpiryMinutes = 60;
+    }
+
+    @Getter
+    @Setter
+    public static class Invitation {
+        @Positive
+        private int defaultTtlSeconds = 300;
+        @Positive
+        private int declineRetryLockHours = 8;
     }
 
     @Getter

@@ -35,6 +35,15 @@ public interface PbRideRepository extends JpaRepository<PbRideEntity, Long> {
             @Param("terminalStatuses") List<RideStatus> terminalStatuses);
 
     @Query("""
+            SELECT COUNT(r) > 0 FROM PbRideEntity r
+             WHERE (r.primaryEntityId = :userEntityId OR r.secondaryEntityId = :userEntityId)
+               AND r.status NOT IN :terminalStatuses
+            """)
+    boolean existsActiveForUser(
+            @Param("userEntityId") String userEntityId,
+            @Param("terminalStatuses") List<RideStatus> terminalStatuses);
+
+    @Query("""
             SELECT r.entityId FROM PbRideEntity r
              WHERE r.primaryEntityId = :userEntityId OR r.secondaryEntityId = :userEntityId
             """)
