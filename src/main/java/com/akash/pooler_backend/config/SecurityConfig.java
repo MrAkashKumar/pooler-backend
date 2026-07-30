@@ -151,7 +151,7 @@ public class SecurityConfig {
                 //    1st — RequestLoggingFilter (attaches correlation ID, logs request)
                 //    2nd — JwtAuthenticationFilter (validates token, sets SecurityContext)
                 .addFilterBefore(requestLoggingFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthFilter, RequestLoggingFilter.class)
+                .addFilterAfter(jwtAuthFilter, RequestLoggingFilter.class)
 
                 .build();
     }

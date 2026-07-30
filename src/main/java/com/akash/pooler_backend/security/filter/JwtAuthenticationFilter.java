@@ -89,8 +89,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                    log.debug("JWT auth OK — userId={} role={} ip={}",
-                            user.getEntityId(), user.getRole(), RequestUtil.getClientIp(request));
+                    log.debug("JWT auth OK — userId={} role={}", user.getEntityId(), user.getRole());
                 } else {
                     log.debug("JWT validation failed for resolved user");
                 }

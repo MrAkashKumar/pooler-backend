@@ -71,6 +71,8 @@ public enum ErrorCode {
     RIDE_FORBIDDEN("RIDE-002", "You are not a participant of this ride", HttpStatus.FORBIDDEN),
     RIDE_INVALID_STATE("RIDE-003", "Ride is not in a valid state for this operation", HttpStatus.CONFLICT),
     INCOMPATIBLE_ROUTE("RIDE-004", "Routes are not compatible for ride sharing", HttpStatus.UNPROCESSABLE_ENTITY),
+    PAYMENT_QR_NOT_CONFIGURED("RIDE-005", "Add a payment QR before sharing it", HttpStatus.CONFLICT),
+    PAYMENT_QR_NOT_SHARED("RIDE-006", "Payment QR is not shared with you or is no longer available", HttpStatus.FORBIDDEN),
 
     // Chat & Messaging
     CHAT_NOT_FOUND("CHAT-001", "Chat thread not found", HttpStatus.NOT_FOUND),

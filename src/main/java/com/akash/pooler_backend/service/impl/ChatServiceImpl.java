@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,6 +55,9 @@ public class ChatServiceImpl implements ChatService {
 
     @Value("${chat.rate-limit-messages-per-minute:10}")
     private long messagesPerMinute;
+
+    @Value("${chat.cleanup-batch-size:100}")
+    private int cleanupBatchSize;
 
     @Override
     @Transactional
@@ -200,7 +204,8 @@ public class ChatServiceImpl implements ChatService {
     @Override
     @Transactional
     public void archiveExpiredChats() {
-        List<PbChatThreadEntity> expired = threadRepository.findExpiredThreads(Instant.now(), ChatThreadStatus.ACTIVE);
+        Pageable cleanupPage = PageRequest.of(0, Math.max(1, cleanupBatchSize));
+        List<PbChatThreadEntity> expired = threadRepository.findExpiredThreads(Instant.now(), ChatThreadStatus.ACTIVE, cleanupPage);
         expired.forEach(thread -> {
             archivalService.archiveThread(thread.getEntityId());
             thread.setStatus(ChatThreadStatus.ARCHIVED);

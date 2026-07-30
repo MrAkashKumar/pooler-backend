@@ -4,20 +4,20 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime
-    image: hoppo/pooler-backend:staging
-    container_name: hoppo-pooler-backend-staging
+    image: hoppo/pooler-backend:prod
+    container_name: hoppo-pooler-backend-prod
     restart: unless-stopped
     env_file:
-      - ./scripts/aws-staging.env
+      - ./scripts/aws-prod.env
     environment:
-      SPRING_PROFILES_ACTIVE: staging
+      SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
       DB_DDL_AUTO: validate
       LOG_PATH: /var/log/hoppo/pooler-backend
     ports:
       - "${HOST_PORT:-8080}:8080"
     volumes:
-      - hoppo-staging-logs:/var/log/hoppo/pooler-backend
+      - hoppo-prod-logs:/var/log/hoppo/pooler-backend
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/pooler-backend/api/v1/public/health"]
       interval: 30s
@@ -28,5 +28,5 @@ services:
       - no-new-privileges:true
 
 volumes:
-  hoppo-staging-logs:
+  hoppo-prod-logs:
     driver: local

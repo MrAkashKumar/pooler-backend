@@ -17,6 +17,7 @@ public class ProfileMediaProperties {
     private String s3Region;
     private String keyPrefix;
     private String publicBaseUrl;
+    private long privateUrlExpiryMinutes = 5;
 
     @Positive
     private long maxSizeMb;

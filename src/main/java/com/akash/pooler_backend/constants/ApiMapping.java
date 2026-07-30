@@ -111,6 +111,9 @@ public final class ApiMapping {
     public static final String RIDE_CANCEL = "/{rideEntityId}/cancel";
     public static final String FARE_SPLIT = "/{rideEntityId}/fare-split";
     public static final String ARRIVE = "/{rideEntityId}/arrive";
+    public static final String PAYMENT_QR_STATUS = "/{rideEntityId}/payment-qr/status";
+    public static final String PAYMENT_QR_SHARE = "/{rideEntityId}/payment-qr/share";
+    public static final String PAYMENT_QR_DOWNLOAD = "/{rideEntityId}/payment-qr";
 
     public static final String TELEGRAM_CHAT_SHARE = "/chats/{threadId}/share";
     public static final String FEEDBACK_ID = "/{feedbackEntityId}";

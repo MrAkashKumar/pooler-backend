@@ -148,6 +148,8 @@ public class AppProperties {
         private ExecutorPool mail = new ExecutorPool(2, 6, 100, 60);
         @NotNull
         private ExecutorPool audit = new ExecutorPool(2, 4, 500, 30);
+        @NotNull
+        private ExecutorPool notification = new ExecutorPool(2, 6, 200, 60);
         private int shutdownAwaitSeconds = 30;
 
         @Getter

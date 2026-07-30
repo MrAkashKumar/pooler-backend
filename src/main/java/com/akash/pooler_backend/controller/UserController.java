@@ -60,6 +60,15 @@ public class UserController {
                 profileMediaService.uploadProfileMedia(pbUserEntity, purpose, file)));
     }
 
+    @GetMapping(ApiMapping.MEDIA)
+    @Operation(summary = "Create a short-lived owner-only URL for private profile media")
+    public ResponseEntity<ApiResponse<String>> getPrivateProfileMedia(
+            @CurrentUser PbUserEntity pbUserEntity,
+            @RequestParam ProfileMediaPurpose purpose) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                profileMediaService.createOwnerDownloadUrl(pbUserEntity, purpose)));
+    }
+
     @PutMapping(ApiMapping.CHANGE_PASSWORD)
     @Operation(summary = "Change password (requires current password)")
     public ResponseEntity<ApiResponse<Void>> changePassword(

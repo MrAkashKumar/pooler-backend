@@ -136,13 +136,15 @@ profile-media.public-base-url=https://cdn.yourdomain.com
 profile-media.max-size-mb=5
 ```
 
-Development keeps `profile-media.s3-bucket` blank so accidental local uploads fail clearly. Staging and production can resolve the same keys from deployment-provided Spring placeholders. The S3 bucket or CloudFront distribution must allow read access for returned media URLs. Hoppo does not automatically expose payment QR during discovery; the mobile client shares it only when the owner taps **Share payment QR** in meetup chat.
+Development keeps `profile-media.s3-bucket` blank so accidental local uploads fail clearly. Staging and production can resolve the same keys from deployment-provided Spring placeholders. The S3 bucket or CloudFront distribution must allow read access for returned profile-photo URLs. Hoppo does not expose payment QR during discovery. The owner may explicitly share it with the matched rider from `CAB_DISPATCHED` through the active journey, with a two-hour settlement window after completion. Missing QR setup is optional and never blocks matching, chat, booking, ride progress, or fare calculation. Ride-scoped access is revocable and produces short-lived S3 URLs.
 
 AWS mail and S3 production setup is documented in [AWS-MAIL-S3-INTEGRATION.md](../docs/AWS-MAIL-S3-INTEGRATION.md).
 
 ## AWS EC2 staging deployment
 
 EC2 staging setup is documented in [AWS-EC2-STAGING-DEPLOYMENT.md](../docs/AWS-EC2-STAGING-DEPLOYMENT.md).
+The combined staging/production server design is documented in
+[AWS-JAVA-STAGING-PRODUCTION.md](../docs/AWS-JAVA-STAGING-PRODUCTION.md).
 
 Available backend scripts:
 

@@ -54,6 +54,11 @@ public class AsyncConfig implements AsyncConfigurer {
         return buildExecutor("audit-", appProperties.getAsync().getAudit());
     }
 
+    @Bean("notificationExecutor")
+    public Executor notificationExecutor() {
+        return buildExecutor("notification-", appProperties.getAsync().getNotification());
+    }
+
     private ThreadPoolTaskExecutor buildExecutor(String threadNamePrefix, AppProperties.Async.ExecutorPool pool) {
         int corePoolSize = Math.max(1, pool.getCorePoolSize());
         int maxPoolSize = Math.max(corePoolSize, pool.getMaxPoolSize());
@@ -89,7 +94,14 @@ public class AsyncConfig implements AsyncConfigurer {
         });
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(Math.max(1, appProperties.getAsync().getShutdownAwaitSeconds()));
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.setRejectedExecutionHandler((task, threadPoolExecutor) -> {
+            log.warn("asyncExecutorSaturated threadNamePrefix={} activeCount={} poolSize={} queueSize={}",
+                    threadNamePrefix,
+                    threadPoolExecutor.getActiveCount(),
+                    threadPoolExecutor.getPoolSize(),
+                    threadPoolExecutor.getQueue().size());
+            new ThreadPoolExecutor.CallerRunsPolicy().rejectedExecution(task, threadPoolExecutor);
+        });
         executor.initialize();
         return executor;
     }

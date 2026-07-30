@@ -26,6 +26,7 @@ public class UserResponse {
     private Instant lastLoginAt;
     private String profilePictureUrl;
     private String paymentQrCodeUrl;
+    private boolean paymentQrCodeConfigured;
     private Gender gender;
     private MatchPreference matchPreference;
     private String emergencyContactName;
@@ -40,7 +41,11 @@ public class UserResponse {
                 .status(pbUserEntity.getStatus()).createdAt(pbUserEntity.getCreatedAt())
                 .lastLoginAt(pbUserEntity.getLastLoginAt())
                 .profilePictureUrl(pbUserEntity.getProfilePictureUrl())
-                .paymentQrCodeUrl(pbUserEntity.getPaymentQrCodeUrl())
+                // Payment QR storage references are private. The owner requests a
+                // short-lived URL from GET /users/me/media?purpose=PAYMENT_QR.
+                .paymentQrCodeUrl(null)
+                .paymentQrCodeConfigured(pbUserEntity.getPaymentQrCodeUrl() != null
+                        && pbUserEntity.getPaymentQrCodeUrl().startsWith("s3://"))
                 .gender(pbUserEntity.getGender())
                 .matchPreference(MatchPreference.normalized(pbUserEntity.getMatchPreference()))
                 .emergencyContactName(pbUserEntity.getEmergencyContactName())

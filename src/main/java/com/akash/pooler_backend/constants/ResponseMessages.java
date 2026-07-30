@@ -98,6 +98,9 @@ public final class ResponseMessages {
     public static final String PROFILE_MEDIA_IMAGE_ONLY = "Only JPEG, PNG, and WebP images are allowed";
     public static final String PROFILE_MEDIA_READ_FAILED = "Could not read uploaded profile media";
     public static final String PROFILE_MEDIA_S3_UPLOAD_FAILED = "Could not upload profile media to S3";
+    public static final String PAYMENT_QR_NOT_CONFIGURED = "Add a payment QR before sharing it";
+    public static final String PAYMENT_QR_NOT_SHARED = "Payment QR is not shared with you or is no longer available";
+    public static final String PAYMENT_QR_SHARE_NOT_ALLOWED = "Payment QR can be shared after the cab is booked and during the journey";
     public static final String S3_BUCKET_NOT_CONFIGURED = "S3 bucket is not configured";
     public static final String S3_REGION_NOT_CONFIGURED = "S3 region is not configured";
     public static final String S3_KEY_PREFIX_NOT_CONFIGURED = "S3 key prefix is not configured";

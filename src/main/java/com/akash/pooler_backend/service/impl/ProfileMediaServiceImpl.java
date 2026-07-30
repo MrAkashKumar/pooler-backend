@@ -17,10 +17,15 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
@@ -36,6 +41,7 @@ public class ProfileMediaServiceImpl implements ProfileMediaService {
     private final PbUserRepository userRepository;
     private final ProfileMediaProperties properties;
     private final S3Client profileMediaS3Client;
+    private final S3Presigner profileMediaS3Presigner;
 
     @Override
     @AuditAction("PROFILE_MEDIA_UPLOAD")
@@ -66,21 +72,47 @@ public class ProfileMediaServiceImpl implements ProfileMediaService {
                     exception.getClass().getSimpleName(), exception);
             throw new FileUploadException(ResponseMessages.PROFILE_MEDIA_READ_FAILED);
         } catch (RuntimeException exception) {
-            log.error("profileMediaUploadFailed className={} methodName={} userId={} purpose={} bucket={} keyPrefix={} exceptionType={}",
+            log.error("profileMediaUploadFailed className={} methodName={} userId={} purpose={} exceptionType={}",
                     getClass().getSimpleName(), METHOD_UPLOAD_PROFILE_MEDIA, user.getEntityId(), purpose,
-                    properties.getS3Bucket(), properties.getKeyPrefix(), exception.getClass().getSimpleName(), exception);
+                    exception.getClass().getSimpleName(), exception);
             throw new FileUploadException(ResponseMessages.PROFILE_MEDIA_S3_UPLOAD_FAILED);
         }
 
-        String mediaUrl = publicUrl(key);
+        String mediaUrl = purpose == ProfileMediaPurpose.PAYMENT_QR
+                ? privateObjectReference(key)
+                : publicUrl(key);
         if (purpose == ProfileMediaPurpose.PROFILE_PHOTO) {
             user.setProfilePictureUrl(mediaUrl);
         } else {
             user.setPaymentQrCodeUrl(mediaUrl);
         }
-        log.info("profileMediaUploaded className={} methodName={} userId={} purpose={} contentType={} sizeBytes={} key={}",
-                getClass().getSimpleName(), METHOD_UPLOAD_PROFILE_MEDIA, user.getEntityId(), purpose, contentType, file.getSize(), key);
+        log.info("profileMediaUploaded className={} methodName={} userId={} purpose={} contentType={} sizeBytes={}",
+                getClass().getSimpleName(), METHOD_UPLOAD_PROFILE_MEDIA, user.getEntityId(), purpose, contentType, file.getSize());
         return UserResponse.from(userRepository.save(user));
+    }
+
+    @Override
+    public String createOwnerDownloadUrl(PbUserEntity user, ProfileMediaPurpose purpose) {
+        String storedReference = purpose == ProfileMediaPurpose.PAYMENT_QR
+                ? user.getPaymentQrCodeUrl()
+                : user.getProfilePictureUrl();
+        if (storedReference == null || storedReference.isBlank()) {
+            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, ResponseMessages.PROFILE_MEDIA_REQUIRED);
+        }
+        if (purpose != ProfileMediaPurpose.PAYMENT_QR) {
+            return storedReference;
+        }
+        String key = keyFromPrivateReference(storedReference);
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(properties.getS3Bucket())
+                .key(key)
+                .build();
+        return profileMediaS3Presigner.presignGetObject(GetObjectPresignRequest.builder()
+                        .signatureDuration(Duration.ofMinutes(properties.getPrivateUrlExpiryMinutes()))
+                        .getObjectRequest(getObjectRequest)
+                        .build())
+                .url()
+                .toString();
     }
 
     private void validate(MultipartFile file) {
@@ -119,6 +151,29 @@ public class ProfileMediaServiceImpl implements ProfileMediaService {
                 properties.getS3Bucket(),
                 properties.getS3Region(),
                 encodeKey(key));
+    }
+
+    private String privateObjectReference(String key) {
+        return "s3://%s/%s".formatted(properties.getS3Bucket(), key);
+    }
+
+    private String keyFromPrivateReference(String reference) {
+        URI uri;
+        try {
+            uri = URI.create(reference);
+        } catch (IllegalArgumentException exception) {
+            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, ResponseMessages.PROFILE_MEDIA_REQUIRED);
+        }
+        String expectedHost = properties.getS3Bucket();
+        if (!"s3".equals(uri.getScheme()) || !expectedHost.equals(uri.getHost())) {
+            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, ResponseMessages.PROFILE_MEDIA_REQUIRED);
+        }
+        String key = uri.getPath() == null ? "" : uri.getPath().replaceFirst("^/", "");
+        String expectedUserSegment = "/" + "payment-qr/";
+        if (key.isBlank() || !key.contains(expectedUserSegment)) {
+            throw new FileUploadException(ErrorCode.VALIDATION_ERROR, ResponseMessages.PROFILE_MEDIA_REQUIRED);
+        }
+        return key;
     }
 
     private static String encodeKey(String key) {

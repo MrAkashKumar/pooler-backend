@@ -1,9 +1,8 @@
 package com.akash.pooler_backend.aspect;
 
-import com.akash.pooler_backend.entity.PbAuditLogEntity;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.interceptors.annotation.AuditAction;
-import com.akash.pooler_backend.repository.PbAuditLogRepository;
+import com.akash.pooler_backend.service.AuditService;
 import com.akash.pooler_backend.utils.RequestUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -26,20 +24,18 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AuditAspect {
 
-    private final PbAuditLogRepository auditLogRepository;
+    private final AuditService auditService;
 
     @AfterReturning("@annotation(auditAction)")
-    @Async("auditExecutor")
     public void audit(JoinPoint jp, AuditAction auditAction) {
         try {
             String entity = resolveUserId();
             String ip   = resolveIp();
             String details = auditAction.includeArgs()
-                    ? "args=" + java.util.Arrays.toString(jp.getArgs())
+                    ? "argsRedacted=true,argCount=" + jp.getArgs().length
                     : null;
 
-            PbAuditLogEntity log = PbAuditLogEntity.of(entity, auditAction.value(), details, ip);
-            auditLogRepository.save(log);
+            auditService.log(entity, auditAction.value(), details, ip);
         } catch (Exception e) {
             log.warn("Audit logging failed: type={}", e.getClass().getSimpleName());
         }

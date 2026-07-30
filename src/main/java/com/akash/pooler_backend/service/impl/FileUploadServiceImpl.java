@@ -59,9 +59,11 @@ public class FileUploadServiceImpl implements FileUploadService {
         if (!chatService.hasAccessToChat(threadId, uploader) || chatService.isChatExpired(threadId)) {
             throw new ChatAccessDeniedException();
         }
-        cleanupExpiredFiles();
         if (files.size() >= maxTrackedFiles) {
-            throw new FileUploadException(ErrorCode.RATE_LIMIT_EXCEEDED, ResponseMessages.FILE_CAPACITY_REACHED);
+            cleanupExpiredFiles();
+            if (files.size() >= maxTrackedFiles) {
+                throw new FileUploadException(ErrorCode.RATE_LIMIT_EXCEEDED, ResponseMessages.FILE_CAPACITY_REACHED);
+            }
         }
         validateFileSize(file);
         String contentType = file.getContentType() == null ? "application/octet-stream" : file.getContentType();

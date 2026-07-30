@@ -9,10 +9,13 @@ import com.akash.pooler_backend.dto.request.UpdateRideStatusRequest;
 import com.akash.pooler_backend.dto.response.ApiResponse;
 import com.akash.pooler_backend.dto.response.RideResponse;
 import com.akash.pooler_backend.dto.response.ArrivalConfirmationResponse;
+import com.akash.pooler_backend.dto.response.PaymentQrDownloadResponse;
+import com.akash.pooler_backend.dto.response.PaymentQrShareStatusResponse;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.interceptors.annotation.CurrentUser;
 import com.akash.pooler_backend.interceptors.annotation.ValidSession;
 import com.akash.pooler_backend.service.RideService;
+import com.akash.pooler_backend.service.PaymentQrSharingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,6 +39,7 @@ import java.util.List;
 public class RideController {
 
     private final RideService rideService;
+    private final PaymentQrSharingService paymentQrSharingService;
 
     @GetMapping(ApiMapping.RIDE_ID)
     @Operation(summary = "Fetch a single ride (must be a participant)")
@@ -98,5 +102,41 @@ public class RideController {
             @PathVariable String rideEntityId,
             @Valid @RequestBody(required = false) ConfirmArrivalRequest req) {
         return ResponseEntity.ok(ApiResponse.ok(rideService.confirmArrival(user, rideEntityId, req)));
+    }
+
+    @GetMapping(ApiMapping.PAYMENT_QR_STATUS)
+    @Operation(summary = "Get optional payment QR availability and ride-scoped sharing status")
+    public ResponseEntity<ApiResponse<PaymentQrShareStatusResponse>> paymentQrStatus(
+            @CurrentUser PbUserEntity user,
+            @PathVariable String rideEntityId) {
+        return ResponseEntity.ok(ApiResponse.ok(paymentQrSharingService.status(user, rideEntityId)));
+    }
+
+    @PostMapping(ApiMapping.PAYMENT_QR_SHARE)
+    @ValidSession(reason = "Sharing a payment QR requires an active session")
+    @Operation(summary = "Share the current user's payment QR with the matched rider")
+    public ResponseEntity<ApiResponse<PaymentQrShareStatusResponse>> sharePaymentQr(
+            @CurrentUser PbUserEntity user,
+            @PathVariable String rideEntityId) {
+        return ResponseEntity.ok(ApiResponse.ok(paymentQrSharingService.share(user, rideEntityId)));
+    }
+
+    @DeleteMapping(ApiMapping.PAYMENT_QR_SHARE)
+    @ValidSession(reason = "Revoking a payment QR share requires an active session")
+    @Operation(summary = "Revoke payment QR access for the matched rider")
+    public ResponseEntity<ApiResponse<PaymentQrShareStatusResponse>> revokePaymentQr(
+            @CurrentUser PbUserEntity user,
+            @PathVariable String rideEntityId) {
+        return ResponseEntity.ok(ApiResponse.ok(paymentQrSharingService.revoke(user, rideEntityId)));
+    }
+
+    @GetMapping(ApiMapping.PAYMENT_QR_DOWNLOAD)
+    @Operation(summary = "Get a short-lived QR URL as the owner or authorized matched rider")
+    public ResponseEntity<ApiResponse<PaymentQrDownloadResponse>> paymentQrDownload(
+            @CurrentUser PbUserEntity user,
+            @PathVariable String rideEntityId,
+            @RequestParam(required = false) String ownerEntityId) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                paymentQrSharingService.download(user, rideEntityId, ownerEntityId)));
     }
 }

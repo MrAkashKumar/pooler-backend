@@ -138,8 +138,8 @@ public class RideInvitationServiceImpl implements RideInvitationService {
                 SYSTEM_MATCH_LOCK_ACTOR,
                 now);
         chatService.createChatThread(receiver, inv);
-        log.info("Invitation {} accepted; pickup hub computed at ({}, {}), clearedPendingInvites={}",
-                invitationEntityId, inv.getPickupLat(), inv.getPickupLng(), clearedPending);
+        log.info("Invitation {} accepted; pickup hub computed, clearedPendingInvites={}",
+                invitationEntityId, clearedPending);
         return RideInvitationResponse.from(inv);
     }
 

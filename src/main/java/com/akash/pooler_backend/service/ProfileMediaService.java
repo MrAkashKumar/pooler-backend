@@ -8,4 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 public interface ProfileMediaService {
 
     UserResponse uploadProfileMedia(PbUserEntity user, ProfileMediaPurpose purpose, MultipartFile file);
+
+    String createOwnerDownloadUrl(PbUserEntity user, ProfileMediaPurpose purpose);
 }
