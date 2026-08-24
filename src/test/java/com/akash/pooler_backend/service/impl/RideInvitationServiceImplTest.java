@@ -16,7 +16,9 @@ import com.akash.pooler_backend.repository.PbRideRepository;
 import com.akash.pooler_backend.repository.PbUserRepository;
 import com.akash.pooler_backend.service.ChatService;
 import com.akash.pooler_backend.service.GeoService;
+import com.akash.pooler_backend.service.RideInvitationService;
 import com.akash.pooler_backend.service.RideService;
+import com.akash.pooler_backend.support.ArchitectureAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,6 +59,11 @@ class RideInvitationServiceImplTest {
     private ChatService chatService;
 
     private RideInvitationServiceImpl service;
+
+    @Test
+    void followsServiceImplementationContract() {
+        ArchitectureAssertions.assertServiceImplementation(RideInvitationServiceImpl.class, RideInvitationService.class);
+    }
 
     @BeforeEach
     void setUp() {

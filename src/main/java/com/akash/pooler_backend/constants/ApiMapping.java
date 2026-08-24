@@ -52,6 +52,7 @@ public final class ApiMapping {
     public static final String RESEND_VERIFICATION = "/resend-verification";
     public static final String LOGIN = "/login";
     public static final String GOOGLE = "/google";
+    public static final String APPLE = "/apple";
     public static final String REFRESH = "/refresh";
     public static final String LOGOUT = "/logout";
     public static final String LOGOUT_ALL = "/logout-all";
@@ -132,6 +133,7 @@ public final class ApiMapping {
     public static final String AUTH_RESEND_VERIFICATION_MATCHER = "/**/auth/resend-verification";
     public static final String AUTH_LOGIN_MATCHER = "/**/auth/login";
     public static final String AUTH_GOOGLE_MATCHER = "/**/auth/google";
+    public static final String AUTH_APPLE_MATCHER = "/**/auth/apple";
     public static final String AUTH_REFRESH_MATCHER = "/**/auth/refresh";
     public static final String AUTH_FORGOT_PASSWORD_MATCHER = "/**/auth/forgot-password";
     public static final String AUTH_RESET_PASSWORD_MATCHER = "/**/auth/reset-password";

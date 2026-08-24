@@ -17,12 +17,15 @@ import com.akash.pooler_backend.repository.PbEmailVerificationTokenRepository;
 import com.akash.pooler_backend.repository.PbPasswordResetTokenRepository;
 import com.akash.pooler_backend.repository.PbRefreshTokenRepository;
 import com.akash.pooler_backend.repository.PbUserRepository;
+import com.akash.pooler_backend.security.AppleIdentityClaims;
+import com.akash.pooler_backend.security.AppleIdentityTokenVerifier;
 import com.akash.pooler_backend.security.JwtUtil;
 import com.akash.pooler_backend.service.AuthService;
 import com.akash.pooler_backend.service.MailService;
 import com.akash.pooler_backend.service.TokenService;
 import com.akash.pooler_backend.service.UserService;
 import com.akash.pooler_backend.utils.RequestUtil;
+import com.akash.pooler_backend.utils.SecureTokenUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -46,7 +49,6 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * @author Akash Kumar
@@ -57,6 +59,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
     private static final String GOOGLE_ID_TOKEN_QUERY_PARAM = "id_token";
+    private static final int ACCOUNT_TOKEN_BYTES = 32;
+    private static final int SOCIAL_LOGIN_PASSWORD_BYTES = 48;
 
     private final AuthenticationManager authManager;
     private final PasswordEncoder passwordEncoder;
@@ -71,6 +75,7 @@ public class AuthServiceImpl implements AuthService {
     private final PbEntitySequenceRepository pbEntitySequenceRepository;
     private final UserService userService;
     private final ObjectMapper objectMapper;
+    private final AppleIdentityTokenVerifier appleIdentityTokenVerifier;
     private HttpClient googleAuthHttpClient;
 
     @PostConstruct
@@ -109,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         pbUserEntity = userRepo.save(pbUserEntity);
-        String verificationToken = UUID.randomUUID().toString().replace("-", "");
+        String verificationToken = SecureTokenUtil.urlSafeToken(ACCOUNT_TOKEN_BYTES);
         emailVerificationTokenRepo.save(PbEmailVerificationTokenEntity.builder()
                 .token(verificationToken)
                 .entityId(pbUserEntity.getEntityId())
@@ -161,7 +166,7 @@ public class AuthServiceImpl implements AuthService {
             String familyName = claims.getOrDefault("family_name", "Rider").trim();
             return userRepo.save(PbUserEntity.builder()
                     .email(email)
-                    .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .passwordHash(passwordEncoder.encode(SecureTokenUtil.urlSafeToken(SOCIAL_LOGIN_PASSWORD_BYTES)))
                     .entityId(Long.toString(sequence.getId()))
                     .username("user-" + sequence.getId())
                     .role(Role.ROLE_USER)
@@ -174,6 +179,35 @@ public class AuthServiceImpl implements AuthService {
 
         checkAccountStatus(user);
         userRepo.updateLoginSuccess(user.getEntityId(), Instant.now());
+        return buildAuthResponse(user, httpReq);
+    }
+
+    @Override
+    @Transactional
+    @AuditAction("USER_APPLE_LOGIN")
+    public AuthResponse loginWithApple(AppleAuthRequest req, HttpServletRequest httpReq) {
+        AppleIdentityClaims claims = appleIdentityTokenVerifier.verify(req.getIdentityToken());
+        String email = claims.email();
+
+        PbUserEntity user = userRepo.findByEmail(email).orElseGet(() -> {
+            PbEntityIdSequence sequence = pbEntitySequenceRepository.save(new PbEntityIdSequence());
+            String firstName = cleanName(req.getFirstName(), "Hoppo");
+            String lastName = cleanName(req.getLastName(), "Rider");
+            return userRepo.save(PbUserEntity.builder()
+                    .email(email)
+                    .passwordHash(passwordEncoder.encode(SecureTokenUtil.urlSafeToken(SOCIAL_LOGIN_PASSWORD_BYTES)))
+                    .entityId(Long.toString(sequence.getId()))
+                    .username("user-" + sequence.getId())
+                    .role(Role.ROLE_USER)
+                    .firstName(firstName)
+                    .lastName(lastName)
+                    .status(UserStatus.ACTIVE)
+                    .build());
+        });
+
+        checkAccountStatus(user);
+        userRepo.updateLoginSuccess(user.getEntityId(), Instant.now());
+        log.info("User logged in with Apple: userId={}", user.getEntityId());
         return buildAuthResponse(user, httpReq);
     }
 
@@ -251,7 +285,7 @@ public class AuthServiceImpl implements AuthService {
         userRepo.findByEmail(req.getEmail().toLowerCase()).ifPresent(user -> {
             resetTokenRepo.revokeAllByEntityId(user.getEntityId());
 
-            String rawToken = UUID.randomUUID().toString().replace("-", "");
+            String rawToken = SecureTokenUtil.urlSafeToken(ACCOUNT_TOKEN_BYTES);
             PbPasswordResetTokenEntity prt = PbPasswordResetTokenEntity.builder()
                     .token(rawToken)
                     .entityId(user.getEntityId())
@@ -296,7 +330,7 @@ public class AuthServiceImpl implements AuthService {
                 .filter(user -> user.getStatus() == UserStatus.PENDING_VERIFICATION)
                 .ifPresent(user -> {
                     emailVerificationTokenRepo.revokeAllByEntityId(user.getEntityId());
-                    String verificationToken = UUID.randomUUID().toString().replace("-", "");
+                    String verificationToken = SecureTokenUtil.urlSafeToken(ACCOUNT_TOKEN_BYTES);
                     emailVerificationTokenRepo.save(PbEmailVerificationTokenEntity.builder()
                             .token(verificationToken)
                             .entityId(user.getEntityId())
@@ -401,6 +435,10 @@ public class AuthServiceImpl implements AuthService {
     private URI buildGoogleTokenInfoUri(String tokenInfoUrl, String encodedIdToken) {
         String separator = tokenInfoUrl.contains("?") ? "&" : "?";
         return URI.create(tokenInfoUrl + separator + GOOGLE_ID_TOKEN_QUERY_PARAM + "=" + encodedIdToken);
+    }
+
+    private static String cleanName(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value.trim();
     }
 
     private void checkAccountStatus(PbUserEntity user) {

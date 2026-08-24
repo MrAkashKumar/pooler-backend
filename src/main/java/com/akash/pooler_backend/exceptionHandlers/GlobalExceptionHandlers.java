@@ -16,11 +16,19 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingPathVariableException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -112,16 +120,58 @@ public class GlobalExceptionHandlers {
         return buildResponse(ErrorCode.VALIDATION_ERROR, ex.getMessage(), request, response);
     }
 
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHandlerMethodValidation(
+            HandlerMethodValidationException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.VALIDATION_ERROR, ErrorCode.VALIDATION_ERROR.getDefaultMessage(), request, response);
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(
             MethodArgumentTypeMismatchException ex, HttpServletRequest request, HttpServletResponse response) {
         return buildResponse(ErrorCode.INVALID_REQUEST, ResponseMessages.invalidParameterType(ex.getName()), request, response);
     }
 
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingServletRequestParameter(
+            MissingServletRequestParameterException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.INVALID_REQUEST, ResponseMessages.missingRequiredParameter(ex.getParameterName()), request, response);
+    }
+
+    @ExceptionHandler(MissingPathVariableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingPathVariable(
+            MissingPathVariableException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.INVALID_REQUEST, ResponseMessages.missingPathVariable(ex.getVariableName()), request, response);
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnreadableBody(
             HttpMessageNotReadableException ex, HttpServletRequest request, HttpServletResponse response) {
         return buildResponse(ErrorCode.INVALID_REQUEST, ResponseMessages.INVALID_REQUEST_BODY, request, response);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.REQUEST_METHOD_NOT_SUPPORTED, ResponseMessages.REQUEST_METHOD_NOT_SUPPORTED, request, response);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMediaTypeNotSupported(
+            HttpMediaTypeNotSupportedException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.UNSUPPORTED_MEDIA_TYPE, ResponseMessages.UNSUPPORTED_MEDIA_TYPE, request, response);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMediaTypeNotAcceptable(
+            HttpMediaTypeNotAcceptableException ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.MEDIA_TYPE_NOT_ACCEPTABLE, ResponseMessages.MEDIA_TYPE_NOT_ACCEPTABLE, request, response);
+    }
+
+    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+    public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(
+            Exception ex, HttpServletRequest request, HttpServletResponse response) {
+        return buildResponse(ErrorCode.RESOURCE_NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND.getDefaultMessage(), request, response);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -155,10 +205,10 @@ public class GlobalExceptionHandlers {
                     getClass().getSimpleName(), "buildResponse", errorCode.getCode(), errorCode.getHttpStatus().value(),
                     request.getRequestURI(), traceId, errorReferenceId);
         } else {
-            log.error("apiError className={} methodName={} errorCode={} status={} path={} traceId={} errorReferenceId={} type={}",
+            log.error("apiError className={} methodName={} errorCode={} status={} path={} traceId={} errorReferenceId={} type={} origin={}",
                     getClass().getSimpleName(), "buildResponse",
                     errorCode.getCode(), errorCode.getHttpStatus().value(), request.getRequestURI(),
-                    traceId, errorReferenceId, exception.getClass().getSimpleName(), exception);
+                    traceId, errorReferenceId, exception.getClass().getSimpleName(), origin(exception));
         }
 
         ApiResponse<Void> body = ApiResponse.<Void>builder()
@@ -172,5 +222,14 @@ public class GlobalExceptionHandlers {
         return ResponseEntity.status(errorCode.getHttpStatus()).body(body);
     }
 
+    private static String origin(Exception exception) {
+        for (StackTraceElement element : exception.getStackTrace()) {
+            if (element.getClassName().startsWith("com.akash.pooler_backend")) {
+                return element.getClassName() + "." + element.getMethodName() + ":" + element.getLineNumber();
+            }
+        }
+        StackTraceElement[] stackTrace = exception.getStackTrace();
+        return stackTrace.length == 0 ? "unknown" : stackTrace[0].getClassName() + "." + stackTrace[0].getMethodName() + ":" + stackTrace[0].getLineNumber();
+    }
 
 }

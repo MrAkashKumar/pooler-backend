@@ -95,8 +95,8 @@ public class MailServiceImpl implements MailService {
             helper.setText(html, true);
             mailSender.send(message);
         } catch (MessagingException | MailException | java.io.UnsupportedEncodingException e) {
-            log.error("mailDispatchFailed className={} methodName={} template={} exceptionType={}",
-                    getClass().getSimpleName(), "sendHtmlMail", template, e.getClass().getSimpleName(), e);
+            log.error("mailDispatchFailed className={} methodName={} template={} exceptionType={} origin={}",
+                    getClass().getSimpleName(), "sendHtmlMail", template, e.getClass().getSimpleName(), origin(e));
             throw new MailDispatchException(ResponseMessages.MAIL_SEND_FAILED, e);
         }
     }
@@ -108,5 +108,14 @@ public class MailServiceImpl implements MailService {
         ctx.setVariable("baseUrl", props.getBaseUrl());
         extras.forEach(ctx::setVariable);
         return ctx;
+    }
+
+    private static String origin(Exception exception) {
+        StackTraceElement[] stackTrace = exception.getStackTrace();
+        if (stackTrace.length == 0) {
+            return "unknown";
+        }
+        StackTraceElement element = stackTrace[0];
+        return element.getClassName() + "." + element.getMethodName() + ":" + element.getLineNumber();
     }
 }

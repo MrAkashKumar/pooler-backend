@@ -81,6 +81,7 @@ public class SecurityConfig {
             ApiMapping.AUTH_RESEND_VERIFICATION_MATCHER,
             ApiMapping.AUTH_LOGIN_MATCHER,
             ApiMapping.AUTH_GOOGLE_MATCHER,
+            ApiMapping.AUTH_APPLE_MATCHER,
             ApiMapping.AUTH_REFRESH_MATCHER,
             ApiMapping.AUTH_FORGOT_PASSWORD_MATCHER,
             ApiMapping.AUTH_RESET_PASSWORD_MATCHER,

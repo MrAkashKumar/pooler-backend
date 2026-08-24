@@ -91,6 +91,15 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok(authService.loginWithGoogle(req, httpReq)));
     }
 
+    @PostMapping(ApiMapping.APPLE)
+    @RateLimit(maxRequests = 10, windowSeconds = 60)
+    @Operation(summary = "Apple sign-in", description = "Verifies an Apple identity token and returns Hoppo mobile tokens.")
+    public ResponseEntity<ApiResponse<AuthResponse>> apple(
+            @Valid @RequestBody AppleAuthRequest req,
+            HttpServletRequest httpReq) {
+        return ResponseEntity.ok(ApiResponse.ok(authService.loginWithApple(req, httpReq)));
+    }
+
     // ── Refresh Token ─────────────────────────────────────────────────
 
     @PostMapping(ApiMapping.REFRESH)

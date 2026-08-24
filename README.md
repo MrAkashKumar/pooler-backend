@@ -202,3 +202,40 @@ API collections are under `doc/`, and the executable product wireframe is under 
 ## Google OAuth note
 
 The backend does not expose `/oauthredirect`. That route belongs to the Expo client and is registered in Google Cloud as the OAuth redirect URI. After Google redirects back to the client, the client sends the received ID token to `POST /api/v1/auth/google`, where this backend verifies the token audience against `app.google.client-ids`.
+
+## Apple Authentication
+
+The backend exposes `POST /api/v1/auth/apple` for Sign in with Apple. The mobile app sends the Apple identity token received from iOS, and optional `firstName` / `lastName` values when Apple returns the name on the first authorization.
+
+```json
+{
+  "identityToken": "<apple-id-token>",
+  "firstName": "Akash",
+  "lastName": "Kumar"
+}
+```
+
+Backend validation:
+
+- verifies the Apple JWT signature with Apple's JWKS endpoint
+- requires `iss=https://appleid.apple.com`
+- verifies `aud` against configured Apple client IDs
+- verifies `exp`, `iat`, and `email_verified`
+- rejects blank, malformed, or oversized Apple identity tokens before verification
+- never logs the raw identity token, email, or request body
+- creates or loads the Hoppo user, then returns the normal Hoppo access, refresh, and session tokens
+- auth verification/reset tokens and social-login placeholder passwords are generated with `SecureRandom`
+
+Required backend configuration:
+
+```properties
+APPLE_CLIENT_IDS=com.yourcompany.hoppo,com.yourcompany.hoppo.service
+APPLE_ISSUER=https://appleid.apple.com
+APPLE_JWKS_URL=https://appleid.apple.com/auth/keys
+APPLE_JWKS_REQUEST_TIMEOUT_SECONDS=5
+APPLE_JWKS_CONNECT_TIMEOUT_SECONDS=3
+APPLE_JWKS_CACHE_MINUTES=60
+APPLE_TOKEN_ALLOWED_CLOCK_SKEW_SECONDS=60
+```
+
+`APPLE_CLIENT_IDS` is comma-separated. Use the iOS bundle ID for native iOS sign-in and the Services ID for web/Android flows, depending on what the frontend sends as the token audience.

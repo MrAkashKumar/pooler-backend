@@ -10,6 +10,7 @@ public interface AuthService {
     void register(RegisterRequest req, HttpServletRequest httpReq);
     AuthResponse login(LoginRequest req, HttpServletRequest httpReq);
     AuthResponse loginWithGoogle(GoogleAuthRequest req, HttpServletRequest httpReq);
+    AuthResponse loginWithApple(AppleAuthRequest req, HttpServletRequest httpReq);
     TokenRefreshResponse refresh(RefreshTokenRequest req);
     void logout(String accessToken, HttpServletRequest httpReq);
     void logoutAll(String accessToken);

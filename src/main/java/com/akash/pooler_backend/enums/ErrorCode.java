@@ -36,6 +36,9 @@ public enum ErrorCode {
     // Validation
     VALIDATION_ERROR("VAL-001", "Validation failed", HttpStatus.BAD_REQUEST),
     INVALID_REQUEST("VAL-002", "Invalid request body", HttpStatus.BAD_REQUEST),
+    REQUEST_METHOD_NOT_SUPPORTED("VAL-003", "HTTP method is not supported for this endpoint", HttpStatus.METHOD_NOT_ALLOWED),
+    UNSUPPORTED_MEDIA_TYPE("VAL-004", "Unsupported content type", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
+    MEDIA_TYPE_NOT_ACCEPTABLE("VAL-005", "Requested response type is not supported", HttpStatus.NOT_ACCEPTABLE),
 
     // Rate Limiting
     RATE_LIMIT_EXCEEDED("RATE-001", "Too many requests. Please try again later.", HttpStatus.TOO_MANY_REQUESTS),

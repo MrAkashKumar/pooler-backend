@@ -82,6 +82,10 @@ public final class ResponseMessages {
     public static final String GOOGLE_ID_TOKEN_INVALID = "Invalid Google ID token";
     public static final String GOOGLE_TOKEN_VALIDATION_FAILED = "Google token validation failed";
     public static final String GOOGLE_SIGN_IN_VERIFY_FAILED = "Unable to verify Google sign-in";
+    public static final String APPLE_SIGN_IN_NOT_CONFIGURED = "Apple sign-in is not configured on this server";
+    public static final String APPLE_ID_TOKEN_INVALID = "Invalid Apple identity token";
+    public static final String APPLE_TOKEN_VALIDATION_FAILED = "Apple token validation failed";
+    public static final String APPLE_SIGN_IN_VERIFY_FAILED = "Unable to verify Apple sign-in";
 
     public static final String JWT_TOKEN_EXPIRED = "JWT token has expired";
     public static final String JWT_TOKEN_INVALID = "JWT token is invalid";
@@ -111,6 +115,9 @@ public final class ResponseMessages {
     public static final String CHAT_ARCHIVE_READ_FAILED = "Could not read chat archive";
     public static final String CHAT_ARCHIVE_WRITE_FAILED = "Could not archive chat";
     public static final String INVALID_REQUEST_BODY = "Invalid request body";
+    public static final String REQUEST_METHOD_NOT_SUPPORTED = "HTTP method is not supported for this endpoint";
+    public static final String UNSUPPORTED_MEDIA_TYPE = "Unsupported content type";
+    public static final String MEDIA_TYPE_NOT_ACCEPTABLE = "Requested response type is not supported";
 
     public static String unsupportedDiscoveryMode(String value) {
         return "Unsupported discovery mode: " + value;
@@ -118,6 +125,14 @@ public final class ResponseMessages {
 
     public static String invalidParameterType(String name) {
         return "Invalid parameter type: " + name;
+    }
+
+    public static String missingRequiredParameter(String name) {
+        return "Missing required parameter: " + name;
+    }
+
+    public static String missingPathVariable(String name) {
+        return "Missing path variable: " + name;
     }
 
     public static String locationAliasAlreadyExists(String alias) {

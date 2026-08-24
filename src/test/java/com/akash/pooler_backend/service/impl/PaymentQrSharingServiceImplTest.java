@@ -13,7 +13,9 @@ import com.akash.pooler_backend.exception.RideInvalidStateException;
 import com.akash.pooler_backend.repository.PbPaymentQrShareRepository;
 import com.akash.pooler_backend.repository.PbRideRepository;
 import com.akash.pooler_backend.repository.PbUserRepository;
+import com.akash.pooler_backend.service.PaymentQrSharingService;
 import com.akash.pooler_backend.service.ProfileMediaService;
+import com.akash.pooler_backend.support.ArchitectureAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +47,11 @@ class PaymentQrSharingServiceImplTest {
     @Mock private ProfileMediaService profileMediaService;
 
     private PaymentQrSharingServiceImpl service;
+
+    @Test
+    void followsServiceImplementationContract() {
+        ArchitectureAssertions.assertServiceImplementation(PaymentQrSharingServiceImpl.class, PaymentQrSharingService.class);
+    }
 
     @BeforeEach
     void setUp() {

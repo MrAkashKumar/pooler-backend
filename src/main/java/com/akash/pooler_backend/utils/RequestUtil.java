@@ -9,7 +9,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 /*
 Request util
  */
-public class RequestUtil {
+public final class RequestUtil {
 
     private static final String[] IP_HEADERS = {
             "X-Forwarded-For","Proxy-Client-IP","WL-Proxy-Client-IP",

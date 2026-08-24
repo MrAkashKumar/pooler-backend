@@ -103,6 +103,8 @@ public class AppProperties {
     public static class Auth {
         @NotNull
         private Google google = new Google();
+        @NotNull
+        private Apple apple = new Apple();
 
         @Getter
         @Setter
@@ -114,6 +116,23 @@ public class AppProperties {
             private int requestTimeoutSeconds = 5;
             @Positive
             private int connectTimeoutSeconds = 3;
+        }
+
+        @Getter
+        @Setter
+        public static class Apple {
+            private String clientIds;
+            @NotBlank
+            private String issuer = "https://appleid.apple.com";
+            @NotBlank
+            private String jwksUrl = "https://appleid.apple.com/auth/keys";
+            @Positive
+            private int requestTimeoutSeconds = 5;
+            @Positive
+            private int connectTimeoutSeconds = 3;
+            @Positive
+            private int jwksCacheMinutes = 60;
+            private int allowedClockSkewSeconds = 60;
         }
     }
 
